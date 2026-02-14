@@ -84,7 +84,7 @@ export function GenerateAdvancedModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Erweiterte Generierung</DialogTitle>
           <DialogDescription>
@@ -92,7 +92,7 @@ export function GenerateAdvancedModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="flex-1 space-y-4 overflow-y-auto py-2">
           {/* Standard Prompt */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -110,7 +110,7 @@ export function GenerateAdvancedModal({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={!promptEditable}
-              className="min-h-[100px] text-sm"
+              className="min-h-[100px] text-sm resize-none"
             />
           </div>
 
@@ -121,7 +121,7 @@ export function GenerateAdvancedModal({
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder="z. B. 'Schwerpunkt auf Internationalität', 'Bitte kurz halten'"
-              className="min-h-[80px] text-sm"
+              className="min-h-[80px] text-sm resize-none"
               autoFocus
             />
             <div className="flex flex-wrap gap-1.5">
@@ -129,7 +129,7 @@ export function GenerateAdvancedModal({
                 <Badge
                   key={instr}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-primary/20 transition-colors"
+                  className="cursor-pointer hover:bg-primary/20"
                   onClick={() => setInstructions(instr)}
                 >
                   {instr}

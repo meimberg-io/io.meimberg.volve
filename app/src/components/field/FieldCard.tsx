@@ -311,24 +311,48 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         id={`field-${field.id}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium">{template?.name ?? "Feld"}</h4>
-            {isTask && (
-              <span className="rounded bg-status-warning/20 px-1.5 py-0.5 text-xs text-status-warning">
-                Task
-              </span>
-            )}
-            {saving && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Speichern...
-              </span>
-            )}
-          </div>
+        <div
+          className={cn(
+            "-mx-4 -mt-4 mb-3 px-4 py-2.5 rounded-t-lg space-y-1.5",
+            isClosed
+              ? "bg-accent/8"
+              : streaming
+                ? "bg-primary/8"
+                : isEmpty
+                  ? "bg-muted/50"
+                  : "bg-status-warning/8"
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "inline-block h-2 w-2 rounded-full",
+                  isClosed
+                    ? "bg-accent"
+                    : streaming
+                      ? "bg-primary animate-pulse"
+                      : isEmpty
+                        ? "bg-destructive/70"
+                        : "bg-status-warning"
+                )}
+              />
+              <h4 className="text-sm font-medium">{template?.name ?? "Feld"}</h4>
+              {isTask && (
+                <span className="rounded bg-status-warning/20 px-1.5 py-0.5 text-xs text-status-warning">
+                  Task
+                </span>
+              )}
+              {saving && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Speichern...
+                </span>
+              )}
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
             {isClosed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -414,15 +438,16 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
               </>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Dependency Hint */}
-        {dependencies.length > 0 && (
-          <DependencyHint
-            dependencyTemplateIds={dependencies}
-            processId={processId}
-          />
-        )}
+          {/* Dependency Hint */}
+          {dependencies.length > 0 && (
+            <DependencyHint
+              dependencyTemplateIds={dependencies}
+              processId={processId}
+            />
+          )}
+        </div>
 
         {/* Content Area */}
         <div className="mt-2">

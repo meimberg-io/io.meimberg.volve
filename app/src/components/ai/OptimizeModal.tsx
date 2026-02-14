@@ -86,7 +86,7 @@ export function OptimizeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Inhalt optimieren</DialogTitle>
           <DialogDescription>
@@ -94,15 +94,17 @@ export function OptimizeModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="flex-1 space-y-4 overflow-y-auto py-2">
           {/* Current Content Preview */}
           <div className="space-y-2">
             <Label>Aktueller Inhalt</Label>
-            <ScrollArea className="max-h-[200px] rounded-md bg-secondary/30 p-3">
-              <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {currentContent}
+            <div className="max-h-[180px] overflow-y-auto rounded-md border border-border/50 bg-secondary/30 p-3">
+              <div className="text-sm text-muted-foreground whitespace-pre-wrap wrap-break-word">
+                {currentContent.length > 800
+                  ? currentContent.slice(0, 800) + "..."
+                  : currentContent}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -113,7 +115,7 @@ export function OptimizeModal({
                 <Badge
                   key={action}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-primary/20 transition-colors"
+                  className="cursor-pointer hover:bg-primary/20"
                   onClick={() => setInstruction(action)}
                 >
                   {action}
@@ -129,7 +131,7 @@ export function OptimizeModal({
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               placeholder="z. B. 'Fasse kürzer zusammen', 'Ergänze quantitative Daten'"
-              className="min-h-[80px] text-sm"
+              className="min-h-[80px] text-sm resize-none"
               autoFocus
             />
           </div>

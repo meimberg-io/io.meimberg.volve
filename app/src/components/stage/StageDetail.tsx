@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, AlertTriangle } from "lucide-react";
+import { Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Accordion,
@@ -81,17 +81,6 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
           const isCompleted = step.status === "completed";
           const stepLetter = String.fromCharCode(65 + index); // A, B, C, ...
 
-          // Check for dependency warnings (step has fields with dependencies on unclosed fields)
-          const hasDepWarning = step.fields.some((f) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const ft = f.template as any;
-            return (
-              ft?.dependencies &&
-              ft.dependencies.length > 0 &&
-              f.status !== "closed"
-            );
-          });
-
           return (
             <AccordionItem
               key={step.id}
@@ -123,19 +112,9 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                   </div>
 
                   <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">
-                        {stepTemplate?.name ?? "Step"}
-                      </span>
-                      {hasDepWarning && !isCompleted && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-status-warning" />
-                      )}
-                      {!isCompleted && totalFields > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {closedFields}/{totalFields}
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-semibold">
+                      {stepTemplate?.name ?? "Step"}
+                    </span>
                     {stepTemplate?.description && (
                       <p className="text-xs text-muted-foreground line-clamp-1">
                         {stepTemplate.description}
@@ -143,11 +122,30 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                     )}
                   </div>
 
+                  {/* Field status dots */}
                   {!isCompleted && totalFields > 0 && (
-                    <Progress
-                      value={(closedFields / totalFields) * 100}
-                      className="h-1 w-16"
-                    />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {step.fields.map((f) => (
+                        <span
+                          key={f.id}
+                          className={cn(
+                            "inline-block h-3 w-3 rounded-full",
+                            f.status === "closed"
+                              ? "bg-accent"
+                              : f.status === "open"
+                                ? "bg-status-warning"
+                                : "bg-destructive/70"
+                          )}
+                          title={
+                            f.status === "closed"
+                              ? "Abgeschlossen"
+                              : f.status === "open"
+                                ? "In Bearbeitung"
+                                : "Leer"
+                          }
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               </AccordionTrigger>
