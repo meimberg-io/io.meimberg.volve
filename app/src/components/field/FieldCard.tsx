@@ -439,9 +439,11 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
               maxLength={500}
             />
           ) : isClosed ? (
-            <div className="prose prose-sm prose-invert max-w-none opacity-80 text-sm whitespace-pre-wrap">
-              {content}
-            </div>
+            <MarkdownEditor
+              content={content}
+              onChange={() => {}}
+              disabled={true}
+            />
           ) : (
             <MarkdownEditor
               content={content}

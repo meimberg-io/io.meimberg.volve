@@ -3,6 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Markdown } from "tiptap-markdown";
 import { useEffect } from "react";
 
 interface MarkdownEditorProps {
@@ -26,12 +27,18 @@ export function MarkdownEditor({
       Placeholder.configure({
         placeholder,
       }),
+      Markdown.configure({
+        html: false,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
     ],
     content: content || "",
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      // Get plain text for now (markdown serialization)
-      onChange(editor.getText());
+      // Get markdown output via the tiptap-markdown extension
+      const md = editor.storage.markdown.getMarkdown();
+      onChange(md);
     },
     editorProps: {
       attributes: {
@@ -42,10 +49,13 @@ export function MarkdownEditor({
     immediatelyRender: false,
   });
 
-  // Sync content from outside (AI streaming)
+  // Sync content from outside (AI streaming, version restore, etc.)
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
-      editor.commands.setContent(content || "");
+    if (editor) {
+      const currentMd = editor.storage.markdown.getMarkdown();
+      if (content !== currentMd) {
+        editor.commands.setContent(content || "");
+      }
     }
   }, [content, editor]);
 
