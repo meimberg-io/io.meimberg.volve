@@ -81,35 +81,47 @@ export function ProcessShell({
       {/* Persistent Stage Navigation */}
       {!isSeedView && stages.length > 0 && (
         <ScrollArea className="w-full">
-          <div className="flex items-center gap-1 pb-2">
-            {stages.map((stage) => {
+          <div className="flex items-center gap-1.5 pb-2">
+            {stages.map((stage, index) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const template = stage.template as any;
-              const Icon = stageIcons[template?.icon ?? "sparkles"] ?? Sparkles;
               const isActive = stage.id === currentStageId;
               const isCompleted = stage.status === "completed";
+              const stageNumber = index + 1;
 
               return (
                 <Link
                   key={stage.id}
                   href={`/process/${processId}/stage/${stage.id}`}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap",
+                    "group flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-sm font-medium whitespace-nowrap",
                     isActive
-                      ? "bg-primary/10 text-primary border border-primary/20"
+                      ? "bg-primary/15 text-primary border border-primary/30 shadow-[0_0_12px_-3px] shadow-primary/20"
                       : isCompleted
-                        ? "bg-accent/10 text-accent"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        ? "bg-accent/10 text-accent border border-accent/15"
+                        : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground border border-transparent"
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4 text-accent" />
-                  ) : (
-                    <Icon className="h-4 w-4" />
-                  )}
+                  {/* Number badge */}
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : isCompleted
+                          ? "bg-accent text-accent-foreground"
+                          : "bg-secondary text-muted-foreground group-hover:bg-muted-foreground/20"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      stageNumber
+                    )}
+                  </span>
                   <span className="hidden sm:inline">{template?.name ?? "Stage"}</span>
                   {stage.progress > 0 && stage.progress < 100 && (
-                    <Progress value={stage.progress} className="h-1 w-12" />
+                    <Progress value={stage.progress} className="h-1 w-10" />
                   )}
                 </Link>
               );

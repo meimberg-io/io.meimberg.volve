@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Image from "next/image";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -31,9 +32,14 @@ function LoginForm() {
       <Card className="glass-card relative z-10 w-full max-w-md">
         <CardHeader className="text-center">
           {/* Logo */}
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-            <span className="text-2xl font-bold text-primary-foreground">V</span>
-          </div>
+          <Image
+            src="/wolf.png?v=2"
+            alt="Volve"
+            width={56}
+            height={56}
+            className="mx-auto mb-4 h-14 w-14 invert"
+            unoptimized
+          />
           <CardTitle className="text-gradient text-3xl font-bold">
             Volve
           </CardTitle>

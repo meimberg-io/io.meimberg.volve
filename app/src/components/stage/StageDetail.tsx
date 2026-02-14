@@ -71,7 +71,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
         defaultValue={firstOpenStep ? [firstOpenStep.id] : []}
         className="space-y-3"
       >
-        {stage.steps.map((step) => {
+        {stage.steps.map((step, index) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const stepTemplate = step.template as any;
           const totalFields = step.fields.length;
@@ -79,6 +79,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
             (f) => f.status === "closed"
           ).length;
           const isCompleted = step.status === "completed";
+          const stepLetter = String.fromCharCode(65 + index); // A, B, C, ...
 
           // Check for dependency warnings (step has fields with dependencies on unclosed fields)
           const hasDepWarning = step.fields.some((f) => {
@@ -95,25 +96,29 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
             <AccordionItem
               key={step.id}
               value={step.id}
-              className="glass-card border overflow-hidden"
+              className="rounded-xl border border-border/50 overflow-hidden"
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]>div>.step-chevron]:rotate-180">
+              <AccordionTrigger
+                className={cn(
+                  "px-5 py-3.5 hover:no-underline",
+                  "bg-[oklch(0.22_0.025_260)] hover:bg-[oklch(0.24_0.025_260)]",
+                  "data-[state=open]:border-b data-[state=open]:border-border/40"
+                )}
+              >
                 <div className="flex items-center gap-3 w-full">
-                  {/* Status indicator */}
+                  {/* Letter badge */}
                   <div
                     className={cn(
-                      "flex h-7 w-7 items-center justify-center rounded-full shrink-0",
+                      "flex h-8 w-8 items-center justify-center rounded-full shrink-0 text-sm font-bold",
                       isCompleted
-                        ? "bg-accent/20"
-                        : "bg-secondary"
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-primary/15 text-primary"
                     )}
                   >
                     {isCompleted ? (
-                      <Check className="h-4 w-4 text-accent" />
+                      <Check className="h-4 w-4" />
                     ) : (
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {closedFields}/{totalFields}
-                      </span>
+                      stepLetter
                     )}
                   </div>
 
@@ -124,6 +129,11 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                       </span>
                       {hasDepWarning && !isCompleted && (
                         <AlertTriangle className="h-3.5 w-3.5 text-status-warning" />
+                      )}
+                      {!isCompleted && totalFields > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {closedFields}/{totalFields}
+                        </span>
                       )}
                     </div>
                     {stepTemplate?.description && (
@@ -142,8 +152,8 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3 pt-2">
+              <AccordionContent className="bg-card px-5 pb-5">
+                <div className="space-y-3 pt-4">
                   {step.fields.map((field) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const fieldTemplate = field.template as any;

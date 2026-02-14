@@ -6,6 +6,10 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "Volve",
   description: "Von der Idee zur Umsetzung — Multi-Inkubator-Workflow-System",
+  icons: {
+    icon: "/wolf.png",
+    apple: "/wolf.png",
+  },
 };
 
 export default function RootLayout({

@@ -10,8 +10,8 @@ import {
   Menu,
   X,
   Search,
-  Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,9 +78,14 @@ export function AppShell({ children, user }: AppShellProps) {
           {/* Left: Logo & Nav */}
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2.5 hover-lift">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <Image
+                src="/wolf.png?v=2"
+                alt="Volve"
+                width={32}
+                height={32}
+                className="h-8 w-8 invert"
+                unoptimized
+              />
               <span className="hidden text-xl font-bold tracking-tight sm:block">
                 <span className="text-gradient">Volve</span>
               </span>
