@@ -68,9 +68,24 @@ export async function POST(request: Request) {
     if (consolidatedField?.content && (consolidatedField as any).step_instance?.stage_instance?.process_id === process_id) {
       contextParts.push(`## Konsolidierter Seed\n${consolidatedField.content}`);
     } else {
-      contextParts.push(
-        `## Seed-Dokumente\n${seedDocs.map((d) => `- ${d.filename}`).join("\n")}`
-      );
+      // Download actual seed document contents from storage
+      const seedContents: string[] = [];
+      for (const doc of seedDocs) {
+        try {
+          const { data: fileData, error: dlError } = await supabase.storage
+            .from("seeds")
+            .download(doc.storage_path);
+          if (!dlError && fileData) {
+            const text = await fileData.text();
+            seedContents.push(`### ${doc.filename}\n${text}`);
+          } else {
+            seedContents.push(`### ${doc.filename}\n(Inhalt konnte nicht geladen werden)`);
+          }
+        } catch {
+          seedContents.push(`### ${doc.filename}\n(Fehler beim Laden)`);
+        }
+      }
+      contextParts.push(`## Seed-Dokumente\n${seedContents.join("\n\n")}`);
     }
   }
 
