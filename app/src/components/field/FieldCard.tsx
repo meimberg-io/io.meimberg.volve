@@ -1,0 +1,512 @@
+"use client";
+
+import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  Zap,
+  ZapOff,
+  Wrench,
+  Check,
+  Pencil,
+  Loader2,
+  History,
+  Link as LinkIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { MarkdownEditor } from "./MarkdownEditor";
+import { GenerateAdvancedModal } from "@/components/ai/GenerateAdvancedModal";
+import { OptimizeModal } from "@/components/ai/OptimizeModal";
+import { VersionHistoryPanel } from "./VersionHistoryPanel";
+import { DependencyHint } from "./DependencyHint";
+import type { FieldInstance } from "@/types";
+
+interface FieldCardProps {
+  field: FieldInstance;
+  processId: string;
+  onUpdate: () => void;
+}
+
+export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const template = field.template as any;
+  const fieldType = template?.type ?? "long_text";
+  const isTask = fieldType === "task";
+  const isClosed = field.status === "closed";
+  const isEmpty = field.status === "empty" || !field.content?.trim();
+  const dependencies: string[] = template?.dependencies ?? [];
+
+  const [content, setContent] = useState(field.content ?? "");
+  const [saving, setSaving] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showOptimize, setShowOptimize] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const previousContent = useRef<string>(field.content ?? "");
+
+  // Sync state when field prop changes
+  useEffect(() => {
+    setContent(field.content ?? "");
+    previousContent.current = field.content ?? "";
+  }, [field.content]);
+
+  // Autosave with 2s debounce
+  const autosave = useCallback(
+    (value: string) => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(async () => {
+        if (value === previousContent.current) return;
+        setSaving(true);
+        try {
+          const supabase = createClient();
+          const newStatus = value.trim() ? "open" : "empty";
+          await supabase
+            .from("field_instances")
+            .update({ content: value, status: newStatus })
+            .eq("id", field.id);
+
+          // Save version
+          if (value.trim()) {
+            await supabase.from("field_versions").insert({
+              field_instance_id: field.id,
+              content: value,
+              source: "manual",
+            });
+          }
+
+          previousContent.current = value;
+        } finally {
+          setSaving(false);
+        }
+      }, 2000);
+    },
+    [field.id]
+  );
+
+  const handleContentChange = (value: string) => {
+    setContent(value);
+    autosave(value);
+  };
+
+  // Generate (one-click)
+  const handleGenerate = async () => {
+    if (!isEmpty && !confirm("Vorhandener Inhalt wird ersetzt. Fortfahren?")) return;
+
+    setStreaming(true);
+    try {
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          field_instance_id: field.id,
+          process_id: processId,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Generation fehlgeschlagen");
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          accumulated += chunk;
+          setContent(accumulated);
+        }
+      }
+
+      // Save the generated content
+      const supabase = createClient();
+      await supabase
+        .from("field_instances")
+        .update({ content: accumulated, status: "open" })
+        .eq("id", field.id);
+
+      await supabase.from("field_versions").insert({
+        field_instance_id: field.id,
+        content: accumulated,
+        source: "generate",
+      });
+
+      previousContent.current = accumulated;
+      onUpdate();
+    } catch (error) {
+      console.error("Generate error:", error);
+    } finally {
+      setStreaming(false);
+    }
+  };
+
+  // Close field with status cascade
+  const handleClose = async () => {
+    if (!content.trim()) return;
+    const supabase = createClient();
+    await supabase
+      .from("field_instances")
+      .update({ status: "closed" })
+      .eq("id", field.id);
+
+    // Trigger status cascade recalculation
+    await recalculateStatus(field.id);
+    onUpdate();
+
+    // Auto-scroll to next open field
+    setTimeout(() => {
+      const allFieldCards = document.querySelectorAll("[id^='field-']");
+      let foundCurrent = false;
+      for (const card of allFieldCards) {
+        if (card.id === `field-${field.id}`) {
+          foundCurrent = true;
+          continue;
+        }
+        if (foundCurrent && card.querySelector(".field-card-open, .field-card-empty")) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          break;
+        }
+      }
+    }, 100);
+  };
+
+  // Reopen field with reverse cascade
+  const handleReopen = async () => {
+    const supabase = createClient();
+    await supabase
+      .from("field_instances")
+      .update({ status: "open" })
+      .eq("id", field.id);
+
+    // Trigger reverse status cascade
+    await recalculateStatus(field.id);
+    onUpdate();
+  };
+
+  // Recalculate status cascade
+  const recalculateStatus = async (fieldInstanceId: string) => {
+    try {
+      const supabase = createClient();
+
+      // Get field's step
+      const { data: fieldData } = await supabase
+        .from("field_instances")
+        .select("step_instance_id")
+        .eq("id", fieldInstanceId)
+        .single();
+      if (!fieldData) return;
+
+      // Check all fields in the step
+      const { data: stepFields } = await supabase
+        .from("field_instances")
+        .select("status")
+        .eq("step_instance_id", fieldData.step_instance_id);
+
+      const allClosed = stepFields?.every((f) => f.status === "closed") ?? false;
+      const anyActive = stepFields?.some((f) => f.status !== "empty") ?? false;
+      const stepStatus = allClosed ? "completed" : anyActive ? "in_progress" : "open";
+
+      await supabase
+        .from("step_instances")
+        .update({ status: stepStatus })
+        .eq("id", fieldData.step_instance_id);
+
+      // Get step's stage
+      const { data: stepData } = await supabase
+        .from("step_instances")
+        .select("stage_instance_id")
+        .eq("id", fieldData.step_instance_id)
+        .single();
+      if (!stepData) return;
+
+      // Check all steps in the stage
+      const { data: stageSteps } = await supabase
+        .from("step_instances")
+        .select("status")
+        .eq("stage_instance_id", stepData.stage_instance_id);
+
+      const allStepsCompleted = stageSteps?.every((s) => s.status === "completed") ?? false;
+      const anyStepActive = stageSteps?.some((s) => s.status !== "open") ?? false;
+      const stageStatus = allStepsCompleted ? "completed" : anyStepActive ? "in_progress" : "open";
+      const stageProgress = stageSteps
+        ? (stageSteps.filter((s) => s.status === "completed").length / stageSteps.length) * 100
+        : 0;
+
+      await supabase
+        .from("stage_instances")
+        .update({ status: stageStatus, progress: stageProgress })
+        .eq("id", stepData.stage_instance_id);
+
+      // Get stage's process
+      const { data: stageData } = await supabase
+        .from("stage_instances")
+        .select("process_id")
+        .eq("id", stepData.stage_instance_id)
+        .single();
+      if (!stageData) return;
+
+      // Check all stages
+      const { data: processStages } = await supabase
+        .from("stage_instances")
+        .select("status, progress")
+        .eq("process_id", stageData.process_id);
+
+      const allStagesCompleted = processStages?.every((s) => s.status === "completed") ?? false;
+      const processProgress = processStages
+        ? processStages.reduce((sum, s) => sum + (s.progress ?? 0), 0) / processStages.length
+        : 0;
+
+      await supabase
+        .from("processes")
+        .update({
+          status: allStagesCompleted ? "completed" : "active",
+          progress: processProgress,
+        })
+        .eq("id", stageData.process_id);
+    } catch (e) {
+      console.error("Status cascade error:", e);
+    }
+  };
+
+  // Save after AI generation
+  const handleAIResult = async (result: string, source: string) => {
+    setContent(result);
+    const supabase = createClient();
+    await supabase
+      .from("field_instances")
+      .update({ content: result, status: "open" })
+      .eq("id", field.id);
+
+    await supabase.from("field_versions").insert({
+      field_instance_id: field.id,
+      content: result,
+      source,
+    });
+
+    previousContent.current = result;
+    onUpdate();
+  };
+
+  return (
+    <>
+      <div
+        className={cn(
+          "field-card",
+          isClosed
+            ? "field-card-closed"
+            : streaming
+              ? "field-card-streaming"
+              : isEmpty
+                ? "field-card-empty"
+                : "field-card-open"
+        )}
+        id={`field-${field.id}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-medium">{template?.name ?? "Feld"}</h4>
+            {isTask && (
+              <span className="rounded bg-status-warning/20 px-1.5 py-0.5 text-xs text-status-warning">
+                Task
+              </span>
+            )}
+            {saving && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Speichern...
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1">
+            {isClosed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleReopen}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Wieder öffnen</TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                {/* Generate */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={handleGenerate}
+                      disabled={streaming || !template?.ai_prompt}
+                    >
+                      {streaming ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generieren (Ctrl+G)</TooltipContent>
+                </Tooltip>
+
+                {/* Generate Advanced */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setShowAdvanced(true)}
+                      disabled={streaming || !template?.ai_prompt}
+                    >
+                      <ZapOff className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Erweitert generieren</TooltipContent>
+                </Tooltip>
+
+                {/* Optimize */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setShowOptimize(true)}
+                      disabled={streaming || !content.trim()}
+                    >
+                      <Wrench className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Optimieren</TooltipContent>
+                </Tooltip>
+
+                {/* Version History */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setShowHistory(true)}
+                    >
+                      <History className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Versionshistorie</TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Dependency Hint */}
+        {dependencies.length > 0 && (
+          <DependencyHint
+            dependencyTemplateIds={dependencies}
+            processId={processId}
+          />
+        )}
+
+        {/* Content Area */}
+        <div className="mt-2">
+          {fieldType === "text" ? (
+            <Input
+              value={content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              placeholder={isEmpty ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten." : ""}
+              disabled={isClosed}
+              className={cn(
+                "bg-transparent border-none focus-visible:ring-0 px-0",
+                isClosed && "opacity-80"
+              )}
+              maxLength={500}
+            />
+          ) : isClosed ? (
+            <div className="prose prose-sm prose-invert max-w-none opacity-80 text-sm whitespace-pre-wrap">
+              {content}
+            </div>
+          ) : (
+            <MarkdownEditor
+              content={content}
+              onChange={handleContentChange}
+              placeholder={
+                isEmpty
+                  ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten."
+                  : "Schreibe hier..."
+              }
+              disabled={isClosed}
+            />
+          )}
+        </div>
+
+        {/* Footer: Close Button */}
+        {!isClosed && content.trim() && (
+          <div className="flex justify-end mt-3 pt-2 border-t border-border/30">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="gap-1.5 text-xs text-accent hover:text-accent"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Abschließen
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showAdvanced && (
+        <GenerateAdvancedModal
+          open={showAdvanced}
+          onOpenChange={setShowAdvanced}
+          fieldId={field.id}
+          processId={processId}
+          defaultPrompt={template?.ai_prompt ?? ""}
+          onResult={(result) => handleAIResult(result, "generate_advanced")}
+        />
+      )}
+
+      {showOptimize && (
+        <OptimizeModal
+          open={showOptimize}
+          onOpenChange={setShowOptimize}
+          fieldId={field.id}
+          processId={processId}
+          currentContent={content}
+          onResult={(result) => handleAIResult(result, "optimize")}
+        />
+      )}
+
+      {showHistory && (
+        <VersionHistoryPanel
+          open={showHistory}
+          onOpenChange={setShowHistory}
+          fieldInstanceId={field.id}
+          onRestore={(restoredContent) => {
+            setContent(restoredContent);
+            previousContent.current = restoredContent;
+            onUpdate();
+          }}
+        />
+      )}
+    </>
+  );
+}

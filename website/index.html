@@ -1,0 +1,1119 @@
+<html lang="de" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volve – Produktkonzept &amp; Requirements</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            navy: { 900: '#0b1120', 800: '#0f172a', 700: '#1e293b', 600: '#334155' },
+            accent: { blue: '#3B82F6', emerald: '#10B981', cyan: '#06B6D4' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0b1120; color: #e2e8f0; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(59, 130, 246, 0.1); }
+    .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(8px); border: 1px solid rgba(59, 130, 246, 0.08); }
+    .glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
+    .glow-emerald { box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); }
+    .gradient-text { background: linear-gradient(135deg, #3B82F6, #10B981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .nav-link { transition: all 0.2s; border-left: 2px solid transparent; }
+    .nav-link:hover, .nav-link.active { border-left-color: #3B82F6; background: rgba(59, 130, 246, 0.05); color: #3B82F6; }
+    .nav-sub { border-left: 2px solid rgba(59, 130, 246, 0.1); }
+    .nav-sub .nav-link { font-size: 0.8rem; padding: 0.25rem 0.75rem 0.25rem 1.25rem; }
+    .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s, transform 0.6s; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    table { border-collapse: collapse; width: 100%; }
+    th { background: rgba(59, 130, 246, 0.1); text-align: left; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    th, td { padding: 0.625rem 0.875rem; border: 1px solid rgba(59, 130, 246, 0.08); font-size: 0.875rem; }
+    tr:hover td { background: rgba(59, 130, 246, 0.03); }
+    .tag { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+    .tag-must { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .tag-should { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .tag-can { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .tag-freq-high { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .tag-freq-med { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .tag-freq-low { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .sidebar { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+    @media (max-width: 1023px) { .sidebar { display: none; } .main-content { margin-left: 0 !important; } }
+    .mobile-nav-btn { display: none; }
+    @media (max-width: 1023px) { .mobile-nav-btn { display: flex; } }
+    pre { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.1); border-radius: 0.5rem; padding: 1rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.6; }
+    code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- Mobile Nav Toggle -->
+<button onclick="document.getElementById('sidebar').classList.toggle('!block')" class="mobile-nav-btn fixed top-4 left-4 z-50 p-2 rounded-lg glass items-center justify-center">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+
+<!-- Sidebar Navigation -->
+<nav id="sidebar" class="sidebar fixed left-0 top-0 h-screen w-64 glass z-40 overflow-y-auto py-6 px-3 hidden lg:block">
+  <div class="mb-8 px-3">
+    <h1 class="text-xl font-bold gradient-text">Volve</h1>
+    <p class="text-xs text-slate-500 mt-1">Produktkonzept v1.0</p>
+  </div>
+  <div class="space-y-0.5">
+    <a href="#hero" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Start</a>
+
+    <p class="px-3 pt-4 pb-1 text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest">Vision</p>
+    <a href="#problem" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Problemstellung</a>
+    <a href="#concept" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Multi-Inkubator</a>
+    <a href="#levels" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Produktstufen</a>
+    <a href="#architecture" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Prozessarchitektur</a>
+
+    <p class="px-3 pt-4 pb-1 text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest">Use Cases</p>
+    <a href="#actor" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Akteur &amp; Rollen</a>
+    <a href="#core-loop" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Kern-Loop</a>
+    <a href="#journeys" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">User Journeys</a>
+    <a href="#workday" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Typischer Arbeitstag</a>
+    <a href="#efficiency" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Effizienz-Anforderungen</a>
+
+    <p class="px-3 pt-4 pb-1 text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest">Functional Req.</p>
+    <a href="#datamodel" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Datenmodell</a>
+    <a href="#fr-process" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Prozess-Lebenszyklus</a>
+    <a href="#fr-seeding" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Seeding</a>
+    <a href="#fr-stages" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Stages &amp; Navigation</a>
+    <a href="#fr-fields" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Steps &amp; Fields</a>
+    <a href="#fr-ai" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">KI-Integration</a>
+    <a href="#fr-dependencies" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Dependencies</a>
+    <a href="#fr-tasks" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Aufgaben (Tasks)</a>
+    <a href="#fr-status" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Status-Kaskade</a>
+    <a href="#fr-ui" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">UI/UX-Spezifikation</a>
+    <a href="#fr-shortcuts" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Keyboard-Shortcuts</a>
+    <a href="#fr-rules" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Geschaeftsregeln</a>
+    <a href="#fr-template" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Prozessmodell-Template</a>
+
+    <p class="px-3 pt-4 pb-1 text-[0.65rem] font-bold text-slate-600 uppercase tracking-widest">Non-Functional Req.</p>
+    <a href="#nfr-stack" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Tech-Stack</a>
+    <a href="#nfr-perf" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Performance</a>
+    <a href="#nfr-security" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Sicherheit</a>
+    <a href="#nfr-ops" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Deployment &amp; Betrieb</a>
+    <a href="#nfr-ux" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">UX &amp; Barrierefreiheit</a>
+    <a href="#nfr-ai" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">KI-Anforderungen</a>
+    <a href="#nfr-summary" class="nav-link block px-3 py-1.5 rounded-r text-sm text-slate-400">Prioritaets-Matrix</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main-content lg:ml-64">
+
+  <!-- HERO -->
+  <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0">
+      <img src="images/hero.png" alt="Volve Hero" class="w-full h-full object-cover opacity-40">
+      <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-navy-900/80 to-transparent"></div>
+    </div>
+    <div class="relative z-10 text-center px-6 max-w-4xl">
+      <p class="text-accent-blue font-semibold text-sm tracking-widest uppercase mb-4">Produktkonzept v1.0</p>
+      <h1 class="text-6xl md:text-8xl font-black gradient-text mb-6">Volve</h1>
+      <p class="text-xl md:text-2xl text-slate-300 leading-relaxed mb-4">Von der Idee zur Umsetzung</p>
+      <p class="text-base text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10">Ein KI-gestuetztes Workflow-Management-System, das Geschaeftsideen systematisch durch vordefinierte Entwicklungsstufen fuehrt &ndash; vom ersten Gedanken bis zum umsetzbaren Massnahmenplan.</p>
+      <div class="flex flex-wrap gap-3 justify-center">
+        <a href="#problem" class="px-6 py-3 bg-accent-blue/10 border border-accent-blue/30 text-accent-blue rounded-lg font-medium hover:bg-accent-blue/20 transition">Vision &amp; Konzept</a>
+        <a href="#core-loop" class="px-6 py-3 bg-accent-emerald/10 border border-accent-emerald/30 text-accent-emerald rounded-lg font-medium hover:bg-accent-emerald/20 transition">Use Cases</a>
+        <a href="#datamodel" class="px-6 py-3 bg-slate-700/50 border border-slate-600/30 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition">Requirements</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-5xl mx-auto px-6 md:px-10 pb-32">
+
+    <!-- ============================================ -->
+    <!-- VISION -->
+    <!-- ============================================ -->
+
+    <div class="pt-24 mb-4">
+      <p class="text-accent-blue font-semibold text-xs tracking-widest uppercase">01</p>
+      <h2 class="text-4xl font-black text-white mt-1">Vision</h2>
+    </div>
+
+    <!-- Problem -->
+    <section id="problem" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <span class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 text-sm">!</span>
+        Ausgangslage &amp; Problemstellung
+      </h3>
+      <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-red-400 uppercase tracking-widest mb-2">Status Quo</p>
+          <p class="text-sm text-slate-300 leading-relaxed">Es entsteht ein kontinuierlicher Strom an Geschaeftsideen &ndash; von Erweiterungen bestehender Geschaeftsmodelle bis hin zu voellig neuen Vorhaben. Hunderte solcher Ideen existieren, jede mit enormem Potenzial. Diese Ideen werden lediglich in Notizbuchern festgehalten, wo sie unstrukturiert verweilen.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2">Konsequenz</p>
+          <p class="text-sm text-slate-300 leading-relaxed">Wertvolle Gelegenheiten werden verpasst. Konkretes Beispiel: die verpasste Chance, rechtzeitig einen Geschaeftsbereich fuer das Barrierefreiheitsstaerkungsgesetz (BFSG) aufzubauen. Manche Ideen werden zu lange verfolgt, andere gar nicht.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-blue uppercase tracking-widest mb-2">Kernproblem</p>
+          <p class="text-sm text-slate-300 leading-relaxed">Der Aufwand und die fehlende Struktur fuer die Weiterentwicklung jeder einzelnen Idee sind zu hoch. Es fehlt ein systematischer Prozess zur Evaluierung und Entwicklung, was zu Untaetigkeit und Laehmung fuehrt.</p>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-6 glow-blue">
+        <p class="text-xs font-bold text-accent-emerald uppercase tracking-widest mb-2">Die Erkenntnis: Automatisierung loest Blockaden</p>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">Die Inspiration stammt aus einem bereits funktionierenden Blog-System. Frueher war das Schreiben eines Blogbeitrags ein aufwaendiger, manueller Prozess &ndash; was dazu fuehrte, dass kaum Beitraege entstanden. Heute wird die Idee in ein Diktiergeraet gesprochen und ist in maximal zehn Minuten veroeffentlichungsbereit.</p>
+        <p class="text-base font-bold text-white">&laquo;Wir nehmen die Wette an&raquo;, dass dieses Erfolgsmodell auf den komplexeren Prozess der Geschaeftsentwicklung uebertragbar ist.</p>
+      </div>
+    </section>
+
+    <!-- Concept -->
+    <section id="concept" class="fade-in mt-20">
+      <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <span class="w-8 h-8 rounded-lg bg-accent-emerald/10 flex items-center justify-center text-accent-emerald text-sm">&#x1F331;</span>
+        Kernkonzept: Der Multi-Inkubator
+      </h3>
+      <div class="glass-card rounded-xl p-6 mb-6">
+        <p class="text-sm text-slate-300 leading-relaxed mb-4">Das System fungiert als <strong class="text-white">Multi-Inkubator</strong> fuer Geschaeftsideen. Die Pflanzenmetapher bildet den Lebenszyklus ab:</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="text-center p-4 rounded-lg bg-navy-800/50">
+            <div class="text-3xl mb-2">&#x1F331;</div>
+            <p class="text-xs font-bold text-accent-blue">Seed (Samen)</p>
+            <p class="text-xs text-slate-500 mt-1">Rohe Idee, Sprachnotiz</p>
+          </div>
+          <div class="text-center p-4 rounded-lg bg-navy-800/50">
+            <div class="text-3xl mb-2">&#x1F33F;</div>
+            <p class="text-xs font-bold text-accent-blue">Pflaenzchen</p>
+            <p class="text-xs text-slate-500 mt-1">Struktur, Perspektiven</p>
+          </div>
+          <div class="text-center p-4 rounded-lg bg-navy-800/50">
+            <div class="text-3xl mb-2">&#x1F33B;</div>
+            <p class="text-xs font-bold text-accent-emerald">Pflanze</p>
+            <p class="text-xs text-slate-500 mt-1">Analysen, Plaene</p>
+          </div>
+          <div class="text-center p-4 rounded-lg bg-navy-800/50">
+            <div class="text-3xl mb-2">&#x1F333;</div>
+            <p class="text-xs font-bold text-accent-emerald">Baum</p>
+            <p class="text-xs text-slate-500 mt-1">Realisierbares Projekt</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-5 border-l-2 border-accent-cyan">
+        <p class="text-xs font-bold text-accent-cyan uppercase tracking-widest mb-2">Abgrenzung</p>
+        <p class="text-sm text-slate-300">Das System ist der bewusste Gegenentwurf zu einem vollautonomen Agenten. Stattdessen bietet es ein <strong class="text-white">strukturiertes Prozessmodell</strong>, das den Nutzer an jeder Stelle mit spezialisierter KI unterstuetzt. <strong class="text-white">Der Mensch steuert, die KI assistiert maximal.</strong></p>
+      </div>
+    </section>
+
+    <!-- Levels -->
+    <section id="levels" class="fade-in mt-20">
+      <h3 class="text-2xl font-bold text-white mb-6">Produktstufen</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-6 glow-blue">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="px-2 py-0.5 rounded bg-accent-blue/20 text-accent-blue text-xs font-bold">LEVEL 1</span>
+            <span class="tag tag-must">Aktueller Scope</span>
+          </div>
+          <h4 class="text-lg font-bold text-white mb-2">Business-Development-Tool</h4>
+          <p class="text-sm text-slate-300 leading-relaxed mb-3">Festes Modell, speziell fuer die Entwicklung von Geschaeftsideen. Vordefinierte Stages, Steps und Fields. Proof of Concept fuer die zentrale Frage: <em>Lassen sich komplexe Entwicklungsprozesse in ein Meta-Modell pressen?</em></p>
+          <ul class="text-xs text-slate-400 space-y-1">
+            <li>&#x2713; Festes Prozessmodell</li>
+            <li>&#x2713; KI-Aktionen (Generate, Advanced, Optimize)</li>
+            <li>&#x2713; Task-Management (Self-assigned, Delegated)</li>
+            <li>&#x2713; Single-User / Kleines Team</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-6 opacity-70">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="px-2 py-0.5 rounded bg-slate-600/50 text-slate-400 text-xs font-bold">LEVEL 2</span>
+            <span class="tag tag-can">Zukunft</span>
+          </div>
+          <h4 class="text-lg font-bold text-white mb-2">Generische Workflow-Engine</h4>
+          <p class="text-sm text-slate-300 leading-relaxed mb-3">Abstraktion zu einem konfigurierbaren Workflow-System. Nutzer definieren eigene Modelle fuer beliebige Entwicklungsprozesse.</p>
+          <ul class="text-xs text-slate-400 space-y-1">
+            <li>&bull; Konfigurierbare Prozessmodelle</li>
+            <li>&bull; Blog, Softwareentwicklung, Custom</li>
+            <li>&bull; Agent-Tasks (automatisiert)</li>
+            <li>&bull; Multi-Team / Organisation</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="fade-in mt-20">
+      <h3 class="text-2xl font-bold text-white mb-6">Prozessarchitektur &amp; Terminologie</h3>
+      <img src="images/workflow-hierarchy.png" alt="Workflow-Hierarchie" class="rounded-xl mb-6 w-full glow-blue">
+      <div class="overflow-x-auto mb-6">
+        <table class="rounded-lg overflow-hidden">
+          <thead><tr><th>Element</th><th>Beschreibung</th><th>Analogie</th></tr></thead>
+          <tbody>
+            <tr><td class="font-bold text-accent-blue">Prozessmodell</td><td>Uebergeordneter Rahmen fuer einen wiederholbaren Ablauf</td><td>Das &bdquo;Rezept&ldquo;</td></tr>
+            <tr><td class="font-bold text-accent-blue">Seed</td><td>Ausgangsmaterialien, die den Prozess starten</td><td>Die &bdquo;Zutat&ldquo;</td></tr>
+            <tr><td class="font-bold text-accent-blue">Stage</td><td>Geordnete Hauptabschnitte / Evolutionsstufen</td><td>Die &bdquo;groben Kapitel&ldquo;</td></tr>
+            <tr><td class="font-bold text-accent-blue">Step</td><td>Geordnete Aufgaben innerhalb einer Stage</td><td>Die &bdquo;konkreten Aufgaben&ldquo;</td></tr>
+            <tr><td class="font-bold text-accent-blue">Field</td><td>Atomare Inhaltseinheiten mit Typen und Prompts</td><td>Die &bdquo;auszufuellenden Teile&ldquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="glass-card rounded-xl p-5">
+        <p class="text-xs font-bold text-accent-blue uppercase tracking-widest mb-3">Beispiel-Stages: &bdquo;Geschaeftsidee realisieren&ldquo;</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-3 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue text-xs font-medium">1. Der Funke</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue text-xs font-medium">2. Die Vision</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue text-xs font-medium">3. Research</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue text-xs font-medium">4. SWOT</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-emerald/10 text-accent-emerald text-xs font-medium">5. Businessplan</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-emerald/10 text-accent-emerald text-xs font-medium">6. Massnahmenplan</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-3 py-1.5 rounded-lg bg-accent-emerald/10 text-accent-emerald text-xs font-medium">7. Rollout</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- USE CASES -->
+    <!-- ============================================ -->
+
+    <div class="pt-24 mb-4">
+      <p class="text-accent-emerald font-semibold text-xs tracking-widest uppercase">02</p>
+      <h2 class="text-4xl font-black text-white mt-1">Use Cases &amp; User Journeys</h2>
+    </div>
+
+    <img src="images/user-journey.png" alt="User Journey" class="rounded-xl mb-8 w-full glow-emerald fade-in">
+
+    <!-- Actor -->
+    <section id="actor" class="fade-in mt-12">
+      <h3 class="text-2xl font-bold text-white mb-6">Akteur &amp; Rollen</h3>
+      <p class="text-sm text-slate-300 mb-4 leading-relaxed">Es gibt genau <strong class="text-white">einen Primaer-Akteur: den Ideenentwickler.</strong> Diese Person wechselt situativ zwischen verschiedenen Rollen:</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x1F4A1;</p><p class="text-xs font-bold text-white">Ideengeber</p><p class="text-[0.65rem] text-slate-500">Mehrmals taeglich</p></div>
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x1F527;</p><p class="text-xs font-bold text-white">Entwickler</p><p class="text-[0.65rem] text-slate-500">Stundenlang am Tag</p></div>
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x1F440;</p><p class="text-xs font-bold text-white">Reviewer</p><p class="text-[0.65rem] text-slate-500">Bei jeder KI-Nutzung</p></div>
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x1F3AF;</p><p class="text-xs font-bold text-white">Stratege</p><p class="text-[0.65rem] text-slate-500">Mehrmals taeglich</p></div>
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x1F4E4;</p><p class="text-xs font-bold text-white">Delegierer</p><p class="text-[0.65rem] text-slate-500">Woechentlich</p></div>
+        <div class="glass-card rounded-xl p-4 text-center"><p class="text-2xl mb-1">&#x2705;</p><p class="text-xs font-bold text-white">Abnehmer</p><p class="text-[0.65rem] text-slate-500">Woechentlich</p></div>
+      </div>
+    </section>
+
+    <!-- Core Loop -->
+    <section id="core-loop" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-2">Kern-Loop</h3>
+      <p class="text-sm text-slate-400 mb-6">80% der Nutzung. 30&ndash;100&times; pro Tag. Max. 1&ndash;2 Klicks.</p>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5 border-l-2 border-red-400">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-white text-sm">UC-01: KI-Inhalt generieren</h4>
+            <div class="flex gap-2"><span class="tag tag-freq-high">30&ndash;50&times;/Tag</span><span class="text-xs text-slate-500">1 Klick</span></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-2">Field sehen &rarr; <code class="text-accent-blue">[Generate]</code> klicken &rarr; Streaming beobachten &rarr; Ergebnis lesen</p>
+          <p class="text-xs text-accent-emerald">Generate-Button sofort sichtbar. Kein Bestaetigungsdialog bei leerem Field. Streaming inline.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-red-400">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-white text-sm">UC-02: KI-Ergebnis optimieren</h4>
+            <div class="flex gap-2"><span class="tag tag-freq-high">20&ndash;40&times;/Tag</span><span class="text-xs text-slate-500">2 Klicks</span></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-2"><code class="text-accent-blue">[Optimize]</code> &rarr; Anweisung tippen &rarr; <code class="text-accent-blue">[Optimieren]</code> &rarr; Streaming</p>
+          <p class="text-xs text-accent-emerald">Auto-Focus auf Anweisungsfeld. Cmd+Enter zum Starten. Quick-Action-Chips: &bdquo;Kuerzer&ldquo;, &bdquo;Formeller&ldquo;, &bdquo;Mit Zahlen&ldquo;.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-red-400">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-white text-sm">UC-03: Field manuell bearbeiten</h4>
+            <div class="flex gap-2"><span class="tag tag-freq-high">20&ndash;30&times;/Tag</span><span class="text-xs text-slate-500">0 Klicks</span></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-2">In Field klicken &rarr; Cursor steht &rarr; tippen &rarr; Autosave</p>
+          <p class="text-xs text-accent-emerald">Zero-Click-Editing: direkt editierbar, kein Edit-Modus, kein Doppelklick.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-amber-400">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-white text-sm">UC-04: Field abschliessen</h4>
+            <div class="flex gap-2"><span class="tag tag-freq-med">10&ndash;20&times;/Tag</span><span class="text-xs text-slate-500">1 Klick</span></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-2"><code class="text-accent-blue">[&#x2713; Abschliessen]</code> oder <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+Enter</kbd> &rarr; Rahmen wird gruen &rarr; Auto-Scroll zum naechsten Field</p>
+          <p class="text-xs text-accent-emerald">Keyboard-Shortcut. Automatischer Scroll zum naechsten offenen Field.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Journeys -->
+    <section id="journeys" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Weitere Use Cases</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-05: Ueberblick verschaffen</h4><span class="tag tag-freq-med">5&ndash;15&times;/Tag</span></div>
+          <p class="text-xs text-slate-400">App oeffnen &rarr; Dashboard zeigt alle Prozesse &rarr; zuletzt bearbeiteter hervorgehoben &rarr; Deeplink zur letzten Stage.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-06: Prozess wechseln</h4><span class="tag tag-freq-med">5&ndash;10&times;/Tag</span></div>
+          <p class="text-xs text-slate-400">Dashboard &rarr; anderen Prozess klicken &rarr; direkt in letzter Stage. Quick-Switcher: <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+K</kbd>.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-07: Stage navigieren</h4><span class="tag tag-freq-med">5&ndash;10&times;/Tag</span></div>
+          <p class="text-xs text-slate-400">Persistente Stage-Navigation immer sichtbar. 1-Klick-Wechsel zwischen Stages.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-08: Generate Advanced</h4><span class="tag tag-freq-low">3&ndash;10&times;/Tag</span></div>
+          <p class="text-xs text-slate-400">Modal &rarr; Zusatzanweisung &rarr; Generieren. Auto-Focus. Letzte Anweisungen als Vorschlaege.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-09: Version wiederherstellen</h4><span class="tag tag-freq-low">1&ndash;5&times;/Tag</span></div>
+          <p class="text-xs text-slate-400"><kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+Z</kbd> fuer sofortiges Undo des letzten KI-Aufrufs. Diff-Ansicht in Versionshistorie.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-10: Dependency pruefen</h4><span class="tag tag-freq-low">3&ndash;5&times;/Tag</span></div>
+          <p class="text-xs text-slate-400">Hover ueber Dependency-Hinweis zeigt Popover mit Inhaltsvorschau. Klick scrollt zum Field.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-11: Neue Idee einspielen</h4><span class="text-xs text-slate-500">2&ndash;5&times;/Woche</span></div>
+          <p class="text-xs text-slate-400">4 Klicks: Neuer Prozess &rarr; Name &rarr; Dateien droppen &rarr; Plant Seed. Unter 90 Sekunden.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-2"><h4 class="font-bold text-white text-sm">UC-12/13: Tasks delegieren &amp; abnehmen</h4><span class="text-xs text-slate-500">Woechentlich</span></div>
+          <p class="text-xs text-slate-400">Assignee-Autocomplete. Auto-Typ-Erkennung. Offene Abnahmen im Dashboard sichtbar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workday -->
+    <section id="workday" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Typischer Arbeitstag</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">&#x1F305;</span>
+            <div><p class="text-sm font-bold text-white">Morgens: Orientierung &amp; neue Idee</p><p class="text-xs text-slate-500">~5 Minuten</p></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">App oeffnen &rarr; Dashboard zeigt 8 laufende Prozesse &rarr; Sprachnotiz-Transkript droppen &rarr; Zurueck zum Dashboard &rarr; Idee X bei Stage 4 oeffnen.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 glow-blue">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">&#x2600;&#xFE0F;</span>
+            <div><p class="text-sm font-bold text-white">Vormittags: Fokussiertes Arbeiten</p><p class="text-xs text-slate-500">~60 Minuten &bull; 15&ndash;25 Fields bearbeitet</p></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">Generate &rarr; Lesen &rarr; Optimize &rarr; Manuell ergaenzen &rarr; Abschliessen &rarr; naechstes Field. <strong class="text-white">Kern-Loop: 2&ndash;5 Klicks, 1&ndash;3 Minuten pro Field.</strong></p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">&#x1F324;&#xFE0F;</span>
+            <div><p class="text-sm font-bold text-white">Nachmittags: Wechsel &amp; Tasks</p><p class="text-xs text-slate-500">~20 Minuten</p></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">Anderen Prozess oeffnen &rarr; Tasks delegieren &rarr; Task-Ergebnisse pruefen und abnehmen.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">&#x1F319;</span>
+            <div><p class="text-sm font-bold text-white">Abends: Kurzer Ueberblick</p><p class="text-xs text-slate-500">~2 Minuten</p></div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">Dashboard &rarr; Fortschritt aller Prozesse checken. &bdquo;Idee X: Stage 4 zu 80%, Idee Y: Stage 2 zu 50%&ldquo;</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Efficiency -->
+    <section id="efficiency" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Effizienz-Anforderungen</h3>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-01: Zero-Friction-Editing</p><p class="text-xs text-slate-400">Fields direkt editierbar. Kein Edit-Modus.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-02: One-Click-Generate</p><p class="text-xs text-slate-400">Ein Klick startet Generierung. Streaming inline.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-03: Keyboard-First</p><p class="text-xs text-slate-400">Cmd+Enter, Cmd+G, Cmd+Shift+G, Cmd+Z, Cmd+K.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-04: Smart Auto-Focus</p><p class="text-xs text-slate-400">Nach Generate/Abschliessen: Fokus springt intelligent.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-05: Deeplink &amp; Kontext-Erhalt</p><p class="text-xs text-slate-400">Letzte Position merken. URL-Routing. Browser-Back.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-06: Minimize Modal-Friction</p><p class="text-xs text-slate-400">Modals &lt;200ms. Enter-to-Submit. Quick-Action-Chips.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-07: Persistent Stage Nav</p><p class="text-xs text-slate-400">Stage-Navigation immer sichtbar.</p></div>
+        <div class="glass-card rounded-xl p-4"><p class="text-xs font-bold text-accent-blue mb-1">EA-08&ndash;10: Quick-Switcher, Preview, Undo</p><p class="text-xs text-slate-400">Cmd+K Suche, Dependency Hover-Preview, KI-Undo.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- FUNCTIONAL REQUIREMENTS -->
+    <!-- ============================================ -->
+
+    <div class="pt-24 mb-4">
+      <p class="text-accent-cyan font-semibold text-xs tracking-widest uppercase">03</p>
+      <h2 class="text-4xl font-black text-white mt-1">Functional Requirements</h2>
+    </div>
+
+    <!-- Data Model -->
+    <section id="datamodel" class="fade-in mt-12">
+      <h3 class="text-2xl font-bold text-white mb-6">Datenmodell</h3>
+      <div class="glass-card rounded-xl p-6">
+        <pre class="text-accent-blue text-xs leading-relaxed"><code>Prozessmodell (Template)
+ &boxvr;&horbar;&horbar; name: String
+ &boxvr;&horbar;&horbar; description: String
+ &boxvr;&horbar;&horbar; icon: String
+ &boxur;&horbar;&horbar; stages: Stage[] (geordnet)
+
+Prozessinstanz
+ &boxvr;&horbar;&horbar; id: UUID
+ &boxvr;&horbar;&horbar; name: String
+ &boxvr;&horbar;&horbar; seed: Seed
+ &boxvr;&horbar;&horbar; status: [seeding, active, completed, archived]
+ &boxur;&horbar;&horbar; stages: StageInstanz[] (geordnet)
+
+Seed
+ &boxvr;&horbar;&horbar; documents: SeedDocument[]
+ &boxur;&horbar;&horbar; consolidated: Markdown (optional)
+
+StageInstanz
+ &boxvr;&horbar;&horbar; name, icon, order
+ &boxvr;&horbar;&horbar; completed: Boolean (berechnet)
+ &boxur;&horbar;&horbar; steps: StepInstanz[]
+
+StepInstanz
+ &boxvr;&horbar;&horbar; name, order
+ &boxvr;&horbar;&horbar; completed: Boolean (berechnet)
+ &boxvr;&horbar;&horbar; dependencies: StepInstanz[]
+ &boxur;&horbar;&horbar; fields: FieldInstanz[]
+
+FieldInstanz
+ &boxvr;&horbar;&horbar; type: [text, long_text, file, file_list, task]
+ &boxvr;&horbar;&horbar; prompt: String
+ &boxvr;&horbar;&horbar; content: Markdown | null
+ &boxvr;&horbar;&horbar; closed: Boolean
+ &boxvr;&horbar;&horbar; dependencies: FieldInstanz[]
+ &boxur;&horbar;&horbar; task: TaskData | null
+
+TaskData
+ &boxvr;&horbar;&horbar; description: Markdown
+ &boxvr;&horbar;&horbar; assignee: String
+ &boxvr;&horbar;&horbar; type: [self_assigned, delegated, agent]
+ &boxvr;&horbar;&horbar; status: [planned, delegated, in_progress, done, accepted]
+ &boxur;&horbar;&horbar; result: Markdown | null</code></pre>
+      </div>
+    </section>
+
+    <!-- FR Process -->
+    <section id="fr-process" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB1: Prozess-Lebenszyklus</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-100: Dashboard / Prozessliste</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Kachel-/Listenansicht aller Prozessinstanzen. Zeigt: Name, Icon, Status, aktuelle Stage, Fortschritt (z.B. &bdquo;Stage 3/7&ldquo;), letzte Bearbeitung, offene Tasks (Badge). Zuletzt bearbeiteter Prozess hervorgehoben. Deeplink zur letzten Stage beim Oeffnen.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-101: Neuen Prozess starten</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Prozessmodell-Auswahl wird in Level 1 uebersprungen (nur ein Modell). Name eingeben (Pflichtfeld, spaeter aenderbar) &rarr; Instanz wird erzeugt &rarr; Weiterleitung zur Seeding-View.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-102/103: Archivieren &amp; Status-Uebergaenge</p>
+          <pre class="mt-2 text-xs"><code class="text-accent-blue">seeding &mdash;(Seed gespeichert)&rarr; active &mdash;(alle Stages completed)&rarr; completed
+                                   &boxur;&mdash;(manuell)&rarr; archived</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Seeding -->
+    <section id="fr-seeding" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB2: Seeding</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-200: Seeding-View</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Dropzone fuer Drag &amp; Drop. Akzeptiert: .md, .txt, .png, .jpg, .pdf. Mehrfach-Upload. Darunter: Liste hochgeladener Dokumente mit Vorschau, Umsortierung per Drag &amp; Drop.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-202: Seed abschliessen</p>
+          <p class="text-xs text-slate-400 leading-relaxed">&bdquo;Plant Seed&ldquo;-Button. Vorbedingung: min. 1 Dokument. Status wechselt zu <code class="text-accent-blue">active</code>. Seed ist ab jetzt immutable.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-203: Seed-Konsolidierung</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Erste Stage: KI fasst alle Seed-Dokumente zu einem strukturierten Ausgangsdokument zusammen. Nutzer kann nachbearbeiten.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Stages -->
+    <section id="fr-stages" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB3: Stage-Navigation</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-300: Stage-Uebersicht</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Visuelle Timeline oder Kartenliste. 5&ndash;15 Stages. Statusindikatoren: open, in_progress, completed. Fortschrittsbalken. Klick navigiert zur Stage-Detailansicht.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-303: Persistente Stage-Navigation</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Innerhalb eines Prozesses ist die Stage-Navigation <strong class="text-white">permanent sichtbar</strong> &ndash; als kompakte Tab-Leiste oder Sidebar. 1-Klick-Wechsel.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-304: Quick-Switcher</p>
+          <p class="text-xs text-slate-400 leading-relaxed"><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+K</kbd> oeffnet Command Palette. Suche ueber alle Prozesse, Stages, Steps. Echtzeit-Filterung.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Fields -->
+    <section id="fr-fields" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB4: Steps &amp; Fields</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-400/401: Stage-Detail &amp; Steps</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Vertikale Accordion-Liste. 1&ndash;15 Steps. Step-Header: Name, Fortschritt, Status. Bearbeitung in beliebiger Reihenfolge. Automatischer Abschluss wenn alle Fields closed.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-402: Field-Darstellung</p>
+          <div class="flex gap-4 mt-3">
+            <div class="flex-1 rounded-lg p-3 border-2 border-blue-500/40 bg-blue-500/5">
+              <p class="text-[0.65rem] font-bold text-blue-400 uppercase mb-1">Open</p>
+              <p class="text-xs text-slate-400">Blauer Rahmen. KI-Buttons sichtbar. Editierbar.</p>
+            </div>
+            <div class="flex-1 rounded-lg p-3 border-2 border-emerald-800/40 bg-emerald-800/5">
+              <p class="text-[0.65rem] font-bold text-emerald-600 uppercase mb-1">Closed</p>
+              <p class="text-xs text-slate-400">Gruener Rahmen. Read-only. Wieder-oeffnen-Button.</p>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-403: Field-Typen</p>
+          <div class="overflow-x-auto">
+            <table class="rounded-lg overflow-hidden">
+              <thead><tr><th>Typ</th><th>Editor</th><th>Verhalten</th></tr></thead>
+              <tbody>
+                <tr><td><code class="text-accent-blue">text</code></td><td>Einzeiliges Textfeld</td><td>Max. 500 Zeichen</td></tr>
+                <tr><td><code class="text-accent-blue">long_text</code></td><td>Markdown-Editor</td><td>Rich-Text, Toolbar, Vollbildmodus</td></tr>
+                <tr><td><code class="text-accent-blue">file</code></td><td>Upload-Bereich</td><td>Einzelne Datei</td></tr>
+                <tr><td><code class="text-accent-blue">file_list</code></td><td>Mehrfach-Upload</td><td>Liste mit Drag-&amp;-Drop</td></tr>
+                <tr><td><code class="text-accent-blue">task</code></td><td>Task-Karte</td><td>Beschreibung, Assignee, Status, Ergebnis</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-404/405: Schliessen, Oeffnen, Bearbeiten</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Abschliessen per Button oder <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+Enter</kbd>. Auto-Scroll zum naechsten offenen Field. Wieder-Oeffnen ohne Dialog. Zero-Click-Editing. Autosave (2s Debounce). Versionshistorie mit Diff. <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+Z</kbd> fuer KI-Undo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR AI -->
+    <section id="fr-ai" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB5: KI-Integration</h3>
+      <img src="images/ai-integration.png" alt="KI-Integration" class="rounded-xl mb-6 w-full glow-blue">
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="glass-card rounded-xl p-5 glow-blue">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-sm">&#x26A1;</span>
+            <h4 class="font-bold text-white text-sm">Generate</h4>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">1-Klick. Standard-Prompt. Streaming inline. Kein Bestaetigungsdialog bei leerem Field. <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+G</kbd></p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-sm">&#x26A1;+</span>
+            <h4 class="font-bold text-white text-sm">Generate Advanced</h4>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">Modal: Standard-Prompt (read-only) + Zusatzanweisungen. Auto-Focus. Vorschlaege aus letzten Anweisungen. <kbd class="px-1 rounded bg-navy-700 text-accent-blue text-[0.65rem]">Cmd+Shift+G</kbd></p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-accent-emerald/20 flex items-center justify-center text-accent-emerald font-bold text-sm">&#x1F527;</span>
+            <h4 class="font-bold text-white text-sm">Optimize</h4>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">Modal: Aktueller Inhalt + Verbesserungsanweisung. Quick-Action-Chips: &bdquo;Kuerzer&ldquo;, &bdquo;Formeller&ldquo;, &bdquo;Mit Zahlen&ldquo;. Vorheriger Inhalt in Versionshistorie.</p>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-5">
+        <p class="text-xs font-bold text-accent-cyan mb-2">FR-503: KI-Kontext-Assembly</p>
+        <p class="text-xs text-slate-400 leading-relaxed mb-2">Fuer jeden KI-Aufruf wird automatisch ein Kontextpaket zusammengestellt:</p>
+        <ol class="text-xs text-slate-400 list-decimal list-inside space-y-1">
+          <li><strong class="text-white">Seed:</strong> Konsolidierter Seed (falls vorhanden), sonst alle Seed-Dokumente</li>
+          <li><strong class="text-white">Explizite Dependencies:</strong> Inhalte aller referenzierten Fields (direkt + transitiv) &ndash; hoechste Prioritaet</li>
+          <li><strong class="text-white">Stage-Kontext:</strong> Zusammenfassung abgeschlossener vorheriger Stages</li>
+        </ol>
+        <p class="text-xs text-slate-500 mt-2">Kontextfenster-Strategie: Bei Ueberlauf werden aeltere Stages zusammengefasst. Neuere Ergebnisse ueberschreiben aeltere bei Widerspruechen.</p>
+      </div>
+    </section>
+
+    <!-- FR Dependencies -->
+    <section id="fr-dependencies" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB6: Dependency Management</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-600: Field-Level Dependencies</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Fields koennen andere Fields als Input referenzieren (innerhalb einer Stage). Visualisierung: &bdquo;Nutzt Input von: [Name]&ldquo;. Hover-Preview zeigt Popover. Klick scrollt zum Field.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">Beispiel: Wettbewerbsanalyse-Chain</p>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="px-3 py-1.5 rounded bg-accent-blue/10 text-accent-blue text-xs">Wettbewerberliste</span>
+            <span class="text-slate-600">&rarr;</span>
+            <span class="px-3 py-1.5 rounded bg-accent-blue/10 text-accent-blue text-xs">Detailanalyse</span>
+            <span class="text-slate-600">&rarr;</span>
+            <span class="px-3 py-1.5 rounded bg-accent-blue/10 text-accent-blue text-xs">Bewertung</span>
+            <span class="text-slate-600">&rarr;</span>
+            <span class="px-3 py-1.5 rounded bg-accent-emerald/10 text-accent-emerald text-xs">Zusammenfassung</span>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">FR-601/602: Step-Dependencies &amp; Stage-Kontext</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Steps koennen andere Steps voraussetzen (Warnhinweis, nicht blockierend). Jede Stage hat impliziten Zugriff auf alle Ergebnisse vorheriger Stages.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Tasks -->
+    <section id="fr-tasks" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB7: Aufgabenmanagement (Tasks)</h3>
+      <div class="glass-card rounded-xl p-5 mb-4">
+        <p class="text-xs font-bold text-accent-cyan mb-3">FR-702: Task-Status-Workflow</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2 py-1 rounded bg-slate-600/50 text-slate-300 text-xs font-mono">planned</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-2 py-1 rounded bg-blue-500/20 text-blue-300 text-xs font-mono">delegated</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-2 py-1 rounded bg-amber-500/20 text-amber-300 text-xs font-mono">in_progress</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-xs font-mono">done</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="px-2 py-1 rounded bg-emerald-600/30 text-emerald-200 text-xs font-mono">accepted</span>
+          <span class="text-slate-600">&rarr;</span>
+          <span class="text-xs text-slate-500">Field = closed</span>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-5">
+        <p class="text-xs text-slate-400 leading-relaxed">Task-Beschreibung per KI generierbar. Assignee mit Autocomplete. Typ-Erkennung (Delegated wenn Assignee != eigener Name). Ergebnis-Feld mit Markdown-Editor und KI-Unterstuetzung. Agent-Tasks in Level 1 deaktiviert (&bdquo;Coming soon&ldquo;).</p>
+      </div>
+    </section>
+
+    <!-- FR Status -->
+    <section id="fr-status" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">FB8: Status-Kaskade</h3>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-3">
+            <span class="w-20 text-right text-xs font-bold text-slate-500">Field</span>
+            <div class="flex-1 h-8 rounded bg-blue-500/10 border border-blue-500/20 flex items-center px-3 text-xs text-blue-300"><code>closed = true</code> &rarr; wenn manuell geschlossen oder Task accepted</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-20 text-right text-xs font-bold text-slate-500">Step</span>
+            <div class="flex-1 h-8 rounded bg-blue-500/10 border border-blue-500/20 flex items-center px-3 text-xs text-blue-300"><code>completed</code> &rarr; wenn alle Fields closed (automatisch)</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-20 text-right text-xs font-bold text-slate-500">Stage</span>
+            <div class="flex-1 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center px-3 text-xs text-emerald-300"><code>completed</code> &rarr; wenn alle Steps completed (automatisch)</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-20 text-right text-xs font-bold text-slate-500">Prozess</span>
+            <div class="flex-1 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center px-3 text-xs text-emerald-300"><code>completed</code> &rarr; wenn alle Stages completed (automatisch)</div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-4">Rueckwaerts-Propagation: Wird ein Field wieder geoeffnet, werden Step, Stage und Prozess zurueckgesetzt.</p>
+      </div>
+    </section>
+
+    <!-- FR UI -->
+    <section id="fr-ui" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">UI/UX-Spezifikation</h3>
+      <div class="glass-card rounded-xl p-5 mb-4">
+        <p class="text-xs font-bold text-accent-cyan mb-3">Screen-Hierarchie</p>
+        <pre class="text-xs"><code class="text-accent-blue">Dashboard
+ &boxur;&horbar;&horbar; Prozessinstanz
+      &boxvr;&horbar;&horbar; Seeding-View (Dropzone, Seed-Liste)
+      &boxvr;&horbar;&horbar; Stage-Uebersicht (Timeline/Karten)
+      &boxur;&horbar;&horbar; Stage-Detail (Accordion-Steps)
+           &boxur;&horbar;&horbar; Field-Bearbeitung
+                &boxvr;&horbar;&horbar; Generate-Inline
+                &boxvr;&horbar;&horbar; Generate-Advanced-Modal
+                &boxur;&horbar;&horbar; Optimize-Modal</code></pre>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-2">Designsystem</p>
+          <div class="space-y-2 text-xs text-slate-400">
+            <p><strong class="text-slate-300">Farbmodus:</strong> Dark Mode primary, Light Mode alternativ</p>
+            <p><strong class="text-slate-300">Open-Fields:</strong> <span class="inline-block w-3 h-3 rounded bg-blue-500 align-middle"></span> #3B82F6 (Blue-500)</p>
+            <p><strong class="text-slate-300">Closed-Fields:</strong> <span class="inline-block w-3 h-3 rounded bg-emerald-800 align-middle"></span> #065F46 (Emerald-800)</p>
+            <p><strong class="text-slate-300">Typografie:</strong> Inter / System-UI, Monospace fuer Code</p>
+            <p><strong class="text-slate-300">Icons:</strong> Lucide React</p>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-2">KI-Aktionsbuttons</p>
+          <div class="space-y-2 text-xs text-slate-400">
+            <p><span class="inline-flex items-center gap-1"><span class="w-5 h-5 rounded bg-accent-blue/20 flex items-center justify-center text-accent-blue text-[0.6rem]">&#x26A1;</span> Generate</span> &ndash; Immer sichtbar bei open Fields</p>
+            <p><span class="inline-flex items-center gap-1"><span class="w-5 h-5 rounded bg-accent-blue/20 flex items-center justify-center text-accent-blue text-[0.6rem]">&#x26A1;+</span> Advanced</span> &ndash; Immer sichtbar bei open Fields</p>
+            <p><span class="inline-flex items-center gap-1"><span class="w-5 h-5 rounded bg-accent-emerald/20 flex items-center justify-center text-accent-emerald text-[0.6rem]">&#x1F527;</span> Optimize</span> &ndash; Nur aktiv bei nicht-leerem Field</p>
+            <p><span class="inline-flex items-center gap-1"><span class="w-5 h-5 rounded bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-[0.6rem]">&#x2713;</span> Abschliessen</span> &ndash; Nur aktiv bei nicht-leerem Field</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Shortcuts -->
+    <section id="fr-shortcuts" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Keyboard-Shortcuts</h3>
+      <div class="overflow-x-auto">
+        <table class="rounded-lg overflow-hidden">
+          <thead><tr><th>Shortcut</th><th>Kontext</th><th>Aktion</th></tr></thead>
+          <tbody>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+Enter</kbd></td><td>Field fokussiert</td><td>Field abschliessen + Auto-Scroll</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+Enter</kbd></td><td>In Modal</td><td>Hauptaktion ausloesen</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+G</kbd></td><td>Field fokussiert</td><td>Generate</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+Shift+G</kbd></td><td>Field fokussiert</td><td>Generate Advanced Modal</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+Z</kbd></td><td>Nach KI-Aktion</td><td>Letzten KI-Aufruf rueckgaengig</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Cmd+K</kbd></td><td>Global</td><td>Quick-Switcher oeffnen</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Escape</kbd></td><td>In Modal</td><td>Modal schliessen</td></tr>
+            <tr><td><kbd class="px-1.5 py-0.5 rounded bg-navy-700 text-accent-blue text-xs">Tab</kbd></td><td>Step-Ansicht</td><td>Naechstes Field</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FR Rules -->
+    <section id="fr-rules" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Geschaeftsregeln</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Statusregeln</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li><span class="text-accent-blue font-mono">BR-01</span> Field nur schliessbar mit Inhalt</li>
+            <li><span class="text-accent-blue font-mono">BR-02</span> Task-Field nur schliessbar bei Status &bdquo;accepted&ldquo;</li>
+            <li><span class="text-accent-blue font-mono">BR-03</span> Step completed = alle Fields closed</li>
+            <li><span class="text-accent-blue font-mono">BR-04</span> Stage completed = alle Steps completed</li>
+            <li><span class="text-accent-blue font-mono">BR-05</span> Prozess completed = alle Stages completed</li>
+            <li><span class="text-accent-blue font-mono">BR-06</span> Wieder-Oeffnen setzt Kaskade zurueck</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">KI- &amp; Dependency-Regeln</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li><span class="text-accent-blue font-mono">BR-20</span> Jeder KI-Aufruf enthaelt Seed als Kontext</li>
+            <li><span class="text-accent-blue font-mono">BR-21</span> Explizite Dependencies haben Vorrang</li>
+            <li><span class="text-accent-blue font-mono">BR-22</span> Neuere Stages ueberschreiben aeltere</li>
+            <li><span class="text-accent-blue font-mono">BR-23</span> Prompt-Aenderungen in Advanced sind temporaer</li>
+            <li><span class="text-accent-blue font-mono">BR-30</span> Dependencies nur innerhalb einer Stage</li>
+            <li><span class="text-accent-blue font-mono">BR-31</span> Keine zirkulaeren Dependencies</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- FR Template -->
+    <section id="fr-template" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Prozessmodell-Template: &bdquo;Geschaeftsidee realisieren&ldquo;</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5 border-l-2 border-blue-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x2728;</span><h4 class="font-bold text-white text-sm">Stage 1: Der Funke</h4></div>
+          <p class="text-xs text-slate-400">Step: Seed konsolidieren &rarr; Field: Konsolidiertes Quelldokument (Long-Text, KI)</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-blue-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F52D;</span><h4 class="font-bold text-white text-sm">Stage 2: Die Vision</h4></div>
+          <p class="text-xs text-slate-400">Steps: Visionsbeschreibung (Vision Statement, Elevator Pitch), Namensgebung, Einordnung (Domaene, Horizont, Prioritaet)</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-blue-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F50D;</span><h4 class="font-bold text-white text-sm">Stage 3: Research &amp; Segmentierung</h4></div>
+          <p class="text-xs text-slate-400">Steps: Thematische Gliederung, Zielgruppenanalyse, Marktrecherche</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-cyan-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F4CA;</span><h4 class="font-bold text-white text-sm">Stage 4: SWOT-Analyse</h4></div>
+          <p class="text-xs text-slate-400">Steps: Staerken, Schwaechen, Chancen, Risiken, SWOT-Synthese (Dependencies auf alle 4 Analysen)</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-cyan-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F4BC;</span><h4 class="font-bold text-white text-sm">Stage 5: Businessplan</h4></div>
+          <p class="text-xs text-slate-400">Steps: Geschaeftsmodell (BMC, Wertversprechen), Wettbewerbsanalyse (4-stufige Chain), Finanzplanung (Kosten, Erloese, Pricing), Rechtliches</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-emerald-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F4CB;</span><h4 class="font-bold text-white text-sm">Stage 6: Massnahmenplan</h4></div>
+          <p class="text-xs text-slate-400">Steps: Meilensteinplanung, Aufgabenplanung (Task-Fields), Ressourcenplanung</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-l-2 border-emerald-400">
+          <div class="flex items-center gap-2 mb-2"><span class="text-lg">&#x1F680;</span><h4 class="font-bold text-white text-sm">Stage 7: Umsetzung &amp; Rollout</h4></div>
+          <p class="text-xs text-slate-400">Steps: Go/No-Go-Entscheidung, Rollout-Plan, Umsetzungsaufgaben (Task-Fields)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- NON-FUNCTIONAL REQUIREMENTS -->
+    <!-- ============================================ -->
+
+    <div class="pt-24 mb-4">
+      <p class="text-purple-400 font-semibold text-xs tracking-widest uppercase">04</p>
+      <h2 class="text-4xl font-black text-white mt-1">Non-Functional Requirements</h2>
+    </div>
+
+    <!-- Tech Stack -->
+    <section id="nfr-stack" class="fade-in mt-12">
+      <h3 class="text-2xl font-bold text-white mb-6">Technologie-Stack</h3>
+      <img src="images/tech-stack.png" alt="Tech Stack" class="rounded-xl mb-6 w-full max-w-lg mx-auto">
+      <div class="overflow-x-auto">
+        <table class="rounded-lg overflow-hidden">
+          <thead><tr><th>Schicht</th><th>Technologie</th><th>Begruendung</th></tr></thead>
+          <tbody>
+            <tr><td class="font-medium text-white">Framework</td><td class="text-accent-blue">Next.js 15+ (App Router)</td><td>Identisch zum Content-Manager</td></tr>
+            <tr><td class="font-medium text-white">Sprache</td><td class="text-accent-blue">TypeScript (strict)</td><td>Typsicherheit, bestehende Kompetenz</td></tr>
+            <tr><td class="font-medium text-white">UI</td><td class="text-accent-blue">Radix UI / shadcn/ui</td><td>Accessible by default, etabliert</td></tr>
+            <tr><td class="font-medium text-white">Styling</td><td class="text-accent-blue">Tailwind CSS</td><td>Konsistenz mit Content-Manager</td></tr>
+            <tr><td class="font-medium text-white">Editor</td><td class="text-accent-blue">TipTap 3</td><td>Markdown-Export, erweiterbar</td></tr>
+            <tr><td class="font-medium text-white">State</td><td class="text-accent-blue">Tanstack Query + Zustand</td><td>Server State + Client State</td></tr>
+            <tr><td class="font-medium text-white">Auth</td><td class="text-accent-blue">NextAuth.js (Auth.js)</td><td>OAuth/SSO (Google, GitHub)</td></tr>
+            <tr><td class="font-medium text-white">Datenbank</td><td class="text-accent-emerald">PostgreSQL</td><td>Robuste relationale DB</td></tr>
+            <tr><td class="font-medium text-white">ORM</td><td class="text-accent-emerald">Prisma / Drizzle</td><td>Type-safe, Migrations</td></tr>
+            <tr><td class="font-medium text-white">KI</td><td class="text-accent-emerald">Vercel AI SDK</td><td>Multi-Provider, Streaming</td></tr>
+            <tr><td class="font-medium text-white">Storage</td><td class="text-accent-emerald">Lokal / S3 (MinIO)</td><td>Self-Hosting-tauglich</td></tr>
+            <tr><td class="font-medium text-white">Deploy</td><td class="text-accent-emerald">Docker + Compose</td><td>Ein-Befehl-Start</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- NFR Performance -->
+    <section id="nfr-perf" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Performance</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Seitenuebergaenge</p>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Dashboard &rarr; Stage</span><span class="text-accent-emerald">&lt; 1s</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Step aufklappen</span><span class="text-accent-emerald">&lt; 200ms</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Field speichern</span><span class="text-accent-emerald">&lt; 500ms</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Bundle-Groesse (gzip)</span><span class="text-accent-emerald">&lt; 250 KB</span></div>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">KI-Latenz</p>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Erster Token</span><span class="text-accent-emerald">&lt; 3s</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Sichtbarer Streaming-Start</span><span class="text-accent-emerald">&lt; 4s</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Visuelles Feedback</span><span class="text-accent-emerald">&lt; 100ms</span></div>
+            <div class="flex justify-between text-xs"><span class="text-slate-400">Kontext-Assembly</span><span class="text-accent-emerald">&lt; 500ms</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NFR Security -->
+    <section id="nfr-security" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Sicherheit &amp; Datenschutz</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Authentifizierung</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>OAuth 2.0 / OpenID Connect (NextAuth.js)</li>
+            <li>Provider: Google, GitHub (erweiterbar)</li>
+            <li>JWT-Sessions (7 Tage, Refresh nach 1 Tag)</li>
+            <li>Fallback: E-Mail Magic Link</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Datensicherheit</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>HTTPS (TLS 1.2+), HTTP-Redirect</li>
+            <li>API-Keys nur serverseitig</li>
+            <li>Encryption at Rest (LUKS / AES-256)</li>
+            <li>Input-Validierung via Zod (Client + Server)</li>
+            <li>Markdown-Sanitization gegen XSS</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">DSGVO</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>Datenminimierung (nur Name, E-Mail, OAuth-Profil)</li>
+            <li>Vollstaendige Loeschbarkeit (Cascade Delete)</li>
+            <li>KI-Transparenz: Kennzeichnung KI-generierter Inhalte</li>
+            <li>Dokumentation welche Daten an LLM-Provider gehen</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Rate Limiting</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>KI-Endpunkte: 20 Aufrufe/Min/Nutzer</li>
+            <li>API allgemein: 100 Requests/Min/Nutzer</li>
+            <li>File Upload: 10 Uploads/Min</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- NFR Ops -->
+    <section id="nfr-ops" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">Deployment &amp; Betrieb</h3>
+      <div class="glass-card rounded-xl p-5 mb-4">
+        <p class="text-xs font-bold text-white mb-3">Self-Hosted via Docker</p>
+        <pre class="text-xs"><code class="text-accent-blue">docker compose up   # Ein-Befehl-Start: App + PostgreSQL + MinIO</code></pre>
+        <div class="grid md:grid-cols-3 gap-4 mt-4 text-xs text-slate-400">
+          <div><strong class="text-slate-300">Image-Groesse:</strong> &lt; 500 MB</div>
+          <div><strong class="text-slate-300">Health Check:</strong> GET /api/health</div>
+          <div><strong class="text-slate-300">Logging:</strong> Pino (JSON, stdout)</div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Backup &amp; Recovery</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>Taegliches DB-Backup (pg_dump), 30 Tage Aufbewahrung</li>
+            <li>RPO: max. 24 Stunden</li>
+            <li>RTO: max. 4 Stunden</li>
+            <li>Dokumentierte Restore-Prozedur</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-3">Verfuegbarkeit</p>
+          <ul class="text-xs text-slate-400 space-y-1.5">
+            <li>Ziel: 99% Uptime (~3,65 Tage Downtime/Jahr)</li>
+            <li>Geplante Wartungsfenster erlaubt</li>
+            <li>Autosave + beforeunload-Warning</li>
+            <li>Optimistic Updates mit Rollback</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- NFR UX -->
+    <section id="nfr-ux" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">UX &amp; Barrierefreiheit</h3>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-2">Responsivitaet</p>
+          <div class="space-y-1.5 text-xs text-slate-400">
+            <p><strong class="text-accent-blue">Desktop</strong> (&ge;1280px): Voll</p>
+            <p><strong class="text-accent-blue">Tablet</strong> (768px+): Vollständig nutzbar</p>
+            <p><strong class="text-accent-blue">Mobile</strong> (&lt;768px): Lesbar</p>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-2">Barrierefreiheit</p>
+          <div class="space-y-1.5 text-xs text-slate-400">
+            <p>WCAG 2.1 Level AA</p>
+            <p>Tastaturnavigation komplett</p>
+            <p>Screenreader-Labels (Aria)</p>
+            <p>Kontrast &ge; 4.5:1</p>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-white mb-2">Sprache &amp; i18n</p>
+          <div class="space-y-1.5 text-xs text-slate-400">
+            <p>Deutsch als Standard</p>
+            <p>i18n-vorbereitet (next-intl)</p>
+            <p>Keine hardcodierten Strings</p>
+            <p>KI-Ausgabe: Deutsch (anpassbar)</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NFR AI -->
+    <section id="nfr-ai" class="fade-in mt-16">
+      <h3 class="text-2xl font-bold text-white mb-6">KI-spezifische Anforderungen</h3>
+      <div class="space-y-4">
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">NFR-1100: Provider-Abstraktion</p>
+          <p class="text-xs text-slate-400">Adapter-Pattern via Vercel AI SDK. Unterstuetzte Provider: OpenAI, Anthropic. Lokale Modelle (Ollama) als Stretch-Goal. Konfigurierbar per Environment-Variable.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">NFR-1102: Prompt-Sicherheit</p>
+          <p class="text-xs text-slate-400">System-Prompt mit Leitplanken. Nutzereingaben klar getrennt (User vs. System Message). Output-Validierung auf leere/unvollstaendige Antworten.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5">
+          <p class="text-xs font-bold text-accent-cyan mb-2">NFR-1103: Streaming &amp; Abbruch</p>
+          <p class="text-xs text-slate-400">Alle Generierungen via Server-Sent Events. Abbrechen-Button jederzeit. Bis dahin generierter Text bleibt erhalten. Max. 1 aktive Anfrage pro Field.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- NFR Summary -->
+    <section id="nfr-summary" class="fade-in mt-16 mb-20">
+      <h3 class="text-2xl font-bold text-white mb-6">Prioritaets-Matrix</h3>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-5 border-t-2 border-red-400">
+          <p class="text-sm font-bold text-red-400 mb-3">MUSS (26)</p>
+          <ul class="text-xs text-slate-400 space-y-1">
+            <li>Tech-Stack-Konsistenz</li>
+            <li>TypeScript strict</li>
+            <li>Seitenuebergaenge &lt; 1s</li>
+            <li>KI-Streaming &lt; 3s</li>
+            <li>OAuth-Authentifizierung</li>
+            <li>HTTPS (TLS 1.2+)</li>
+            <li>Input-Validierung (Zod)</li>
+            <li>Autosave &amp; kein Datenverlust</li>
+            <li>Backup &amp; Recovery</li>
+            <li>Docker &amp; Docker Compose</li>
+            <li>Dark Mode / Light Mode</li>
+            <li>Keyboard-Shortcuts</li>
+            <li>LLM-Provider-Abstraktion</li>
+            <li>Streaming &amp; Abbruch</li>
+            <li>Deutsche UI + i18n-Vorbereitung</li>
+            <li class="text-slate-600">... und 11 weitere</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-t-2 border-blue-400">
+          <p class="text-sm font-bold text-blue-400 mb-3">SOLL (17)</p>
+          <ul class="text-xs text-slate-400 space-y-1">
+            <li>Kontext-Assembly &lt; 500ms</li>
+            <li>DB-Abfragen &lt; 200ms</li>
+            <li>Bundle &lt; 250 KB</li>
+            <li>Encryption at Rest</li>
+            <li>Rate Limiting</li>
+            <li>DSGVO-Grundlagen</li>
+            <li>Testabdeckung &ge; 70%</li>
+            <li>Dokumentation (JSDoc, ADRs)</li>
+            <li>Erweiterbarkeit Level 2</li>
+            <li>Health Check Endpoint</li>
+            <li>Strukturiertes Logging</li>
+            <li>WCAG 2.1 AA</li>
+            <li>Token-Budgetierung</li>
+            <li class="text-slate-600">... und 4 weitere</li>
+          </ul>
+        </div>
+        <div class="glass-card rounded-xl p-5 border-t-2 border-emerald-400">
+          <p class="text-sm font-bold text-emerald-400 mb-3">KANN (5)</p>
+          <ul class="text-xs text-slate-400 space-y-1">
+            <li>Shared Component Library</li>
+            <li>Horizontale Skalierbarkeit</li>
+            <li>Audit-Log</li>
+            <li>Monitoring / Prometheus</li>
+            <li>Token-Budget-Enforcement</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 pt-12 pb-8 text-center">
+      <p class="gradient-text text-2xl font-black mb-2">Volve</p>
+      <p class="text-sm text-slate-500">Von der Idee zur Umsetzung</p>
+      <p class="text-xs text-slate-600 mt-4">Produktkonzept v1.0 &bull; 14. Februar 2026</p>
+    </footer>
+
+  </div>
+</main>
+
+<!-- Scroll Animation Script -->
+<script>
+  // Intersection Observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Active nav link highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const activeLink = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (activeLink) activeLink.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-20% 0px -60% 0px' });
+
+  sections.forEach(section => navObserver.observe(section));
+</script>
+
+</body>
+</html>
