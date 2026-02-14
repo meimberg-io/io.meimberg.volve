@@ -94,7 +94,7 @@ export function ProcessShell({
                   key={stage.id}
                   href={`/process/${processId}/stage/${stage.id}`}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all whitespace-nowrap",
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap",
                     isActive
                       ? "bg-primary/10 text-primary border border-primary/20"
                       : isCompleted

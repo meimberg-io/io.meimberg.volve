@@ -218,8 +218,9 @@
 
   /* Process card with hover lift */
   .process-card {
-    @apply relative overflow-hidden rounded-xl bg-card border border-border/50 p-6 transition-all duration-300;
+    @apply relative overflow-hidden rounded-xl bg-card border border-border/50 p-6;
     box-shadow: var(--shadow-card);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
   }
 
   .process-card:hover {
@@ -230,7 +231,7 @@
 
   /* Field card states */
   .field-card {
-    @apply relative rounded-lg border-l-4 bg-card p-4 transition-all duration-200;
+    @apply relative rounded-lg border-l-4 bg-card p-4;
     box-shadow: var(--shadow-card);
   }
 
@@ -244,7 +245,7 @@
 
   .field-card-streaming {
     border-left-color: var(--status-open);
-    animation: pulse-border 2s ease-in-out infinite;
+    animation: pulse-border 2s ease-in-out infinite alternate;
   }
 
   .field-card-empty {
@@ -275,7 +276,8 @@
 
   /* Stage timeline */
   .stage-item {
-    @apply relative flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200;
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2;
+    transition: background-color 0.2s;
   }
 
   .stage-item:hover {

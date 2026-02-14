@@ -84,7 +84,7 @@ export function StageOverview({
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
+                      "flex h-10 w-10 items-center justify-center rounded-lg",
                       isCompleted
                         ? "bg-accent/10"
                         : isInProgress
@@ -109,12 +109,12 @@ export function StageOverview({
                         Stage {index + 1}
                       </span>
                     </div>
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">
+                    <h3 className="font-semibold group-hover:text-primary">
                       {template?.name ?? "Stage"}
                     </h3>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
               </div>
 
               <p className="text-sm text-muted-foreground line-clamp-2">

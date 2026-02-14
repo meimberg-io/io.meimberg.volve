@@ -74,7 +74,7 @@ export function AppShell({ children, user }: AppShellProps) {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container flex h-14 items-center justify-between gap-4">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Left: Logo & Nav */}
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2.5 hover-lift">
@@ -192,7 +192,7 @@ export function AppShell({ children, user }: AppShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container py-6">{children}</main>
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 
       {/* Quick Switcher */}
       <QuickSwitcher
