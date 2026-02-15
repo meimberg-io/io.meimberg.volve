@@ -5,8 +5,7 @@ This document describes the required GitHub Secrets and Variables for the CI/CD 
 ## Workflows
 
 - **`deploy.yml`** -- Builds and deploys the Volve Next.js app. Triggered on every push to `main`.
-- **`deploy-supabase.yml`** -- Deploys the self-hosted Supabase infrastructure. Triggered on push to `main` when files in `supabase/docker/` change.
-- **`deploy-migrations.yml`** -- Applies database migrations. Triggered on push to `main` when files in `supabase/migrations/` change. Tracks applied migrations in a `_migrations` table so each migration only runs once.
+- **`deploy-supabase.yml`** -- Deploys self-hosted Supabase infrastructure + applies database migrations. Triggered on push to `main` when files in `supabase/` change. Runs in order: deploy infra → health check → apply migrations.
 
 ## .env Strategy
 
