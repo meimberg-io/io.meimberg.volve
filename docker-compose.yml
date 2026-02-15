@@ -1,0 +1,55 @@
+# Unified docker-compose.yml for both local development and production deployment
+services:
+  # Base service definition
+  volve-base:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      # Core
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3000
+      # Supabase
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # AI Providers (at least one required)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # App
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development service with volume mounts
+  volve-dev:
+    profiles: ["dev"]
+    extends: volve-base
+    volumes:
+      - ./app/src:/app/src:ro
+      - ./app/public:/app/public:ro
+      - ./app/next.config.ts:/app/next.config.ts:ro
+      - ./app/tsconfig.json:/app/tsconfig.json:ro
+      - /app/node_modules
+
+  # Production service without volume mounts
+  volve-prod:
+    profiles: ["prod"]
+    extends: volve-base
+
+networks:
+  app-network:
+    driver: bridge

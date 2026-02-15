@@ -1,0 +1,70 @@
+name: Apply Database Migrations
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'supabase/migrations/**'
+
+env:
+  SERVER_PATH: /srv/projects/volve-supabase
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Copy migrations to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ vars.SERVER_HOST }}
+        username: ${{ vars.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "supabase/migrations/"
+        target: "${{ env.SERVER_PATH }}/"
+        strip_components: 1
+
+    - name: Apply migrations
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ vars.SERVER_HOST }}
+        username: ${{ vars.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        envs: SERVER_PATH
+        script: |
+          set -e
+          cd ${SERVER_PATH}
+
+          # Ensure migration tracking table exists
+          docker exec supabase-db psql -U postgres -d postgres -c "
+            CREATE TABLE IF NOT EXISTS _migrations (
+              filename TEXT PRIMARY KEY,
+              applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+          "
+
+          # Apply each migration in order (only if not already applied)
+          applied=0
+          skipped=0
+          for f in $(ls migrations/*.sql | sort); do
+            filename=$(basename "$f")
+            already=$(docker exec supabase-db psql -U postgres -d postgres -t -c \
+              "SELECT COUNT(*) FROM _migrations WHERE filename = '${filename}';" | tr -d ' ')
+
+            if [ "$already" = "0" ]; then
+              echo "Applying: ${filename}"
+              docker exec -i supabase-db psql -U postgres -d postgres < "$f"
+              docker exec supabase-db psql -U postgres -d postgres -c \
+                "INSERT INTO _migrations (filename) VALUES ('${filename}');"
+              applied=$((applied + 1))
+            else
+              echo "Skipping (already applied): ${filename}"
+              skipped=$((skipped + 1))
+            fi
+          done
+
+          echo "Migrations complete: ${applied} applied, ${skipped} skipped"
