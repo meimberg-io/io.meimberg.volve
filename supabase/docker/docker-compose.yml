@@ -60,6 +60,8 @@ services:
       - "traefik.http.routers.supabase-studio.rule=Host(`${STUDIO_DOMAIN}`)"
       - "traefik.http.routers.supabase-studio.entrypoints=websecure"
       - "traefik.http.routers.supabase-studio.tls.certresolver=le"
+      - "traefik.http.routers.supabase-studio.middlewares=studio-auth"
+      - "traefik.http.middlewares.studio-auth.basicauth.users=${STUDIO_BASIC_AUTH}"
       - "traefik.http.services.supabase-studio.loadbalancer.server.port=3000"
     networks:
       - internal
