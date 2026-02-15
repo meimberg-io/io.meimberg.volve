@@ -5,13 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChevronRight,
-  Sparkles,
-  Eye,
-  Search,
-  Target,
-  Briefcase,
-  ListChecks,
-  Rocket,
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,16 +19,6 @@ interface ProcessShellProps {
   stages: StageInstance[];
   currentStageId?: string;
 }
-
-const stageIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  sparkles: Sparkles,
-  eye: Eye,
-  search: Search,
-  target: Target,
-  briefcase: Briefcase,
-  "list-checks": ListChecks,
-  rocket: Rocket,
-};
 
 export function ProcessShell({
   children,
@@ -65,7 +48,6 @@ export function ProcessShell({
           <>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="text-foreground">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {stages.find((s) => s.id === currentStageId)?.template?.name ?? "Stage"}
             </span>
           </>

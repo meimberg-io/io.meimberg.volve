@@ -99,7 +99,7 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
   }, []);
 
   useEffect(() => {
-    if (open) loadData();
+    if (open) loadData(); // eslint-disable-line react-hooks/set-state-in-effect -- async data fetch
   }, [open, loadData]);
 
   const handleSelect = (href: string) => {

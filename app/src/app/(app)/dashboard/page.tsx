@@ -27,7 +27,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    loadProcesses();
+    loadProcesses(); // eslint-disable-line react-hooks/set-state-in-effect -- async data fetch
   }, [loadProcesses]);
 
   const handleCreateProcess = async (name: string) => {

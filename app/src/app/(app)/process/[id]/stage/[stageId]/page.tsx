@@ -94,7 +94,7 @@ export default function StageDetailPage() {
   }, [processId, stageId, router]);
 
   useEffect(() => {
-    loadData();
+    loadData(); // eslint-disable-line react-hooks/set-state-in-effect -- async data fetch
   }, [loadData]);
 
   if (loading) {

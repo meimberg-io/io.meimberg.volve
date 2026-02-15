@@ -37,7 +37,8 @@ export function MarkdownEditor({
     editable: !disabled,
     onUpdate: ({ editor }) => {
       // Get markdown output via the tiptap-markdown extension
-      const md = editor.storage.markdown.getMarkdown();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const md = (editor.storage as any).markdown.getMarkdown();
       onChange(md);
     },
     editorProps: {
@@ -52,7 +53,8 @@ export function MarkdownEditor({
   // Sync content from outside (AI streaming, version restore, etc.)
   useEffect(() => {
     if (editor) {
-      const currentMd = editor.storage.markdown.getMarkdown();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentMd = (editor.storage as any).markdown.getMarkdown();
       if (content !== currentMd) {
         editor.commands.setContent(content || "");
       }

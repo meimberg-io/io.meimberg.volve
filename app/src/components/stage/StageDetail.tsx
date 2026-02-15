@@ -75,9 +75,6 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const stepTemplate = step.template as any;
           const totalFields = step.fields.length;
-          const closedFields = step.fields.filter(
-            (f) => f.status === "closed"
-          ).length;
           const isCompleted = step.status === "completed";
           const stepLetter = String.fromCharCode(65 + index); // A, B, C, ...
 
