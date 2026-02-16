@@ -86,10 +86,7 @@ export async function getFieldInstance(
 ): Promise<FieldInstance | null> {
   const { data, error } = await supabase
     .from("field_instances")
-    .select(`
-      *,
-      template:field_templates(*)
-    `)
+    .select("*")
     .eq("id", fieldInstanceId)
     .single();
 
@@ -109,8 +106,8 @@ export async function getDependencyContents(
     .select(`
       id,
       content,
+      name,
       field_template_id,
-      template:field_templates(id, name),
       step_instance:step_instances(
         stage_instance:stage_instances(process_id)
       )
@@ -125,10 +122,8 @@ export async function getDependencyContents(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stageInstance = (fi as any).step_instance?.stage_instance;
     if (stageInstance?.process_id === processId && fi.content) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const template = fi.template as any;
       result[fi.field_template_id] = {
-        name: template?.name ?? "Unbekannt",
+        name: fi.name ?? "Unbekannt",
         content: fi.content,
       };
     }

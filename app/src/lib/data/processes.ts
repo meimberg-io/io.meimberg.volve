@@ -39,12 +39,9 @@ export async function getProcessWithStages(
 
   const { data: stages, error: stagesError } = await supabase
     .from("stage_instances")
-    .select(`
-      *,
-      template:stage_templates(*)
-    `)
+    .select("*")
     .eq("process_id", processId)
-    .order("created_at", { ascending: true });
+    .order("order_index", { ascending: true });
 
   if (stagesError) throw stagesError;
 
@@ -81,13 +78,17 @@ export async function createProcess(
 
   if (!stageTemplates) throw new Error("Keine Stage-Templates gefunden");
 
-  // 3. Instantiate all stages, steps, fields
+  // 3. Instantiate all stages, steps, fields (with snapshot data)
   for (const stageTemplate of stageTemplates) {
     const { data: stageInstance } = await supabase
       .from("stage_instances")
       .insert({
         process_id: process.id,
         stage_template_id: stageTemplate.id,
+        name: stageTemplate.name,
+        description: stageTemplate.description,
+        icon: stageTemplate.icon,
+        order_index: stageTemplate.order_index,
       })
       .select()
       .single();
@@ -108,6 +109,9 @@ export async function createProcess(
         .insert({
           stage_instance_id: stageInstance.id,
           step_template_id: stepTemplate.id,
+          name: stepTemplate.name,
+          description: stepTemplate.description,
+          order_index: stepTemplate.order_index,
         })
         .select()
         .single();
@@ -125,6 +129,12 @@ export async function createProcess(
       const fieldInserts = fieldTemplates.map((ft) => ({
         step_instance_id: stepInstance.id,
         field_template_id: ft.id,
+        name: ft.name,
+        type: ft.type,
+        description: ft.description,
+        ai_prompt: ft.ai_prompt,
+        order_index: ft.order_index,
+        dependencies: ft.dependencies,
       }));
 
       if (fieldInserts.length > 0) {
@@ -134,7 +144,6 @@ export async function createProcess(
       // Create task records for task-type fields
       const taskFields = fieldTemplates.filter((ft) => ft.type === "task");
       if (taskFields.length > 0) {
-        // Get the created field instances for task fields
         const { data: taskFieldInstances } = await supabase
           .from("field_instances")
           .select("id, field_template_id")

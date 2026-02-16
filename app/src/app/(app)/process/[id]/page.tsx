@@ -40,12 +40,9 @@ export default function ProcessPage() {
 
     const { data: stageData } = await supabase
       .from("stage_instances")
-      .select(`
-        *,
-        template:stage_templates(*)
-      `)
+      .select("*")
       .eq("process_id", processId)
-      .order("created_at", { ascending: true });
+      .order("order_index", { ascending: true });
 
     setStages(stageData ?? []);
     setLoading(false);

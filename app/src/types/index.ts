@@ -94,11 +94,16 @@ export interface StageInstance {
   id: string;
   process_id: string;
   stage_template_id: string;
+  // Snapshot columns (copied from template at creation)
+  name: string | null;
+  description: string | null;
+  icon: string | null;
+  order_index: number | null;
   status: StageStatus;
   progress: number; // 0-100
   created_at: string;
   updated_at: string;
-  // Joined data
+  // Joined data (deprecated – use snapshot columns instead)
   template?: StageTemplate;
 }
 
@@ -106,10 +111,14 @@ export interface StepInstance {
   id: string;
   stage_instance_id: string;
   step_template_id: string;
+  // Snapshot columns (copied from template at creation)
+  name: string | null;
+  description: string | null;
+  order_index: number | null;
   status: StepStatus;
   created_at: string;
   updated_at: string;
-  // Joined data
+  // Joined data (deprecated – use snapshot columns instead)
   template?: StepTemplate;
   fields?: FieldInstance[];
 }
@@ -118,11 +127,18 @@ export interface FieldInstance {
   id: string;
   step_instance_id: string;
   field_template_id: string;
+  // Snapshot columns (copied from template at creation)
+  name: string | null;
+  type: string | null;
+  description: string | null;
+  ai_prompt: string | null;
+  order_index: number | null;
+  dependencies: string[] | null;
   content: string | null;
   status: FieldStatus;
   created_at: string;
   updated_at: string;
-  // Joined data
+  // Joined data (deprecated – use snapshot columns instead)
   template?: FieldTemplate;
 }
 
@@ -169,6 +185,22 @@ export interface StageWithSteps extends StageInstance {
 
 export interface StepInstanceWithFields extends StepInstance {
   fields: FieldInstance[];
+}
+
+// --- Template Composite Types (for Template Editor) ---
+
+export interface ProcessModelWithTemplates extends ProcessModel {
+  stages: StageTemplateWithSteps[];
+}
+
+export interface StageTemplateWithSteps extends StageTemplate {
+  steps: StepTemplateWithFields[];
+  instance_count?: number;
+}
+
+export interface StepTemplateWithFields extends StepTemplate {
+  fields: FieldTemplate[];
+  instance_count?: number;
 }
 
 // --- AI Types ---

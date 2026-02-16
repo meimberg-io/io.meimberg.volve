@@ -35,19 +35,19 @@ export default function StageDetailPage() {
     }
     setProcess(proc);
 
-    // Load all stages for navigation
+    // Load all stages for navigation (snapshot columns have display data)
     const { data: stagesData } = await supabase
       .from("stage_instances")
-      .select("*, template:stage_templates(*)")
+      .select("*")
       .eq("process_id", processId)
-      .order("created_at", { ascending: true });
+      .order("order_index", { ascending: true });
 
     setAllStages(stagesData ?? []);
 
     // Load current stage with steps and fields
     const { data: stageData } = await supabase
       .from("stage_instances")
-      .select("*, template:stage_templates(*)")
+      .select("*")
       .eq("id", stageId)
       .single();
 
@@ -56,20 +56,20 @@ export default function StageDetailPage() {
       return;
     }
 
-    // Get steps with templates
+    // Get steps (snapshot columns have display data)
     const { data: steps } = await supabase
       .from("step_instances")
-      .select("*, template:step_templates(*)")
+      .select("*")
       .eq("stage_instance_id", stageId)
-      .order("created_at", { ascending: true });
+      .order("order_index", { ascending: true });
 
-    // Get all fields for these steps
+    // Get all fields for these steps (snapshot columns have display data)
     const stepIds = (steps ?? []).map((s) => s.id);
     const { data: fields } = await supabase
       .from("field_instances")
-      .select("*, template:field_templates(*)")
+      .select("*")
       .in("step_instance_id", stepIds.length > 0 ? stepIds : ["none"])
-      .order("created_at", { ascending: true });
+      .order("order_index", { ascending: true });
 
     // Group fields by step
     const fieldsByStep: Record<string, FieldInstance[]> = {};

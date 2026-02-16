@@ -63,12 +63,10 @@ export function StageOverview({
       {/* Stage Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stages.map((stage, index) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const template = stage.template as any;
-          const Icon = stageIcons[template?.icon ?? "sparkles"] ?? Sparkles;
+          const Icon = stageIcons[stage.icon ?? "sparkles"] ?? Sparkles;
           const isCompleted = stage.status === "completed";
           const isInProgress = stage.status === "in_progress";
-          const description = stageDescriptions[index] ?? template?.description ?? "";
+          const description = stageDescriptions[index] ?? stage.description ?? "";
 
           return (
             <Link
@@ -110,7 +108,7 @@ export function StageOverview({
                       </span>
                     </div>
                     <h3 className="font-semibold group-hover:text-primary">
-                      {template?.name ?? "Stage"}
+                      {stage.name ?? "Stage"}
                     </h3>
                   </div>
                 </div>

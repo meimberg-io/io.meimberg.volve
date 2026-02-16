@@ -70,9 +70,7 @@ const statusTransitions: Record<TaskStatus, { label: string; next: TaskStatus }[
 };
 
 export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const template = field.template as any;
-  const dependencies: string[] = template?.dependencies ?? [];
+  const dependencies: string[] = field.dependencies ?? [];
   const isClosed = field.status === "closed";
 
   const [task, setTask] = useState<Task | null>(null);
@@ -226,12 +224,12 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-medium">{template?.name ?? "Task"}</h4>
+          <h4 className="text-sm font-medium">{field.name ?? "Task"}</h4>
           <Badge variant="secondary" className={statusColors[taskStatus]}>
             {statusLabels[taskStatus]}
           </Badge>
         </div>
-        {!isClosed && template?.ai_prompt && (
+        {!isClosed && field.ai_prompt && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

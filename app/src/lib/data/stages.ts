@@ -6,40 +6,31 @@ const supabase = createClient();
 export async function getStageWithSteps(
   stageInstanceId: string
 ): Promise<StageWithSteps | null> {
-  // Get stage instance with template
+  // Get stage instance (snapshot columns have all display data)
   const { data: stage, error: stageError } = await supabase
     .from("stage_instances")
-    .select(`
-      *,
-      template:stage_templates(*)
-    `)
+    .select("*")
     .eq("id", stageInstanceId)
     .single();
 
   if (stageError || !stage) return null;
 
-  // Get step instances with templates
+  // Get step instances (snapshot columns have all display data)
   const { data: steps, error: stepsError } = await supabase
     .from("step_instances")
-    .select(`
-      *,
-      template:step_templates(*)
-    `)
+    .select("*")
     .eq("stage_instance_id", stageInstanceId)
-    .order("created_at", { ascending: true });
+    .order("order_index", { ascending: true });
 
   if (stepsError) throw stepsError;
 
-  // Get field instances for all steps
+  // Get field instances for all steps (snapshot columns have all display data)
   const stepIds = (steps ?? []).map((s) => s.id);
   const { data: fields, error: fieldsError } = await supabase
     .from("field_instances")
-    .select(`
-      *,
-      template:field_templates(*)
-    `)
+    .select("*")
     .in("step_instance_id", stepIds)
-    .order("created_at", { ascending: true });
+    .order("order_index", { ascending: true });
 
   if (fieldsError) throw fieldsError;
 

@@ -21,9 +21,6 @@ interface StageDetailProps {
 }
 
 export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const template = stage.template as any;
-
   // Find first step with open/empty fields for default expanded
   const firstOpenStep = stage.steps.find(
     (s) => s.status !== "completed"
@@ -34,7 +31,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
       {/* Stage Header */}
       <div className="glass-card">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-xl font-bold">{template?.name ?? "Stage"}</h1>
+          <h1 className="text-xl font-bold">{stage.name ?? "Stage"}</h1>
           <Badge
             variant="secondary"
             className={cn(
@@ -52,9 +49,9 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                 : "Offen"}
           </Badge>
         </div>
-        {template?.description && (
+        {stage.description && (
           <p className="text-sm text-muted-foreground mb-3">
-            {template.description}
+            {stage.description}
           </p>
         )}
         <div className="flex items-center gap-3">
@@ -72,8 +69,6 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
         className="space-y-3"
       >
         {stage.steps.map((step, index) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const stepTemplate = step.template as any;
           const totalFields = step.fields.length;
           const isCompleted = step.status === "completed";
           const stepLetter = String.fromCharCode(65 + index); // A, B, C, ...
@@ -110,11 +105,11 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
 
                   <div className="flex-1 text-left">
                     <span className="font-semibold">
-                      {stepTemplate?.name ?? "Step"}
+                      {step.name ?? "Step"}
                     </span>
-                    {stepTemplate?.description && (
+                    {step.description && (
                       <p className="text-xs text-muted-foreground line-clamp-1">
-                        {stepTemplate.description}
+                        {step.description}
                       </p>
                     )}
                   </div>
@@ -150,9 +145,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
               <AccordionContent className="bg-card px-5 pb-5">
                 <div className="space-y-3 pt-4">
                   {step.fields.map((field) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const fieldTemplate = field.template as any;
-                    if (fieldTemplate?.type === "task") {
+                    if (field.type === "task") {
                       return (
                         <TaskFieldCard
                           key={field.id}

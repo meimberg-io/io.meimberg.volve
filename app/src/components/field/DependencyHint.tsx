@@ -32,18 +32,12 @@ export function DependencyHint({
 
       const supabase = createClient();
 
-      // Get field instances matching these templates in this process
-      const { data: templates } = await supabase
-        .from("field_templates")
-        .select("id, name")
-        .in("id", dependencyTemplateIds);
-
-      if (!templates) return;
-
+      // Get field instances matching these templates in this process (using snapshot columns)
       const { data: instances } = await supabase
         .from("field_instances")
         .select(`
           content,
+          name,
           field_template_id,
           step_instance:step_instances(
             stage_instance:stage_instances(process_id)
@@ -51,19 +45,23 @@ export function DependencyHint({
         `)
         .in("field_template_id", dependencyTemplateIds);
 
-      const depInfos: DepInfo[] = templates.map((t) => {
-        const instance = instances?.find(
-          (i) =>
-            i.field_template_id === t.id &&
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (i as any).step_instance?.stage_instance?.process_id === processId
-        );
-        return {
-          templateId: t.id,
-          name: t.name,
-          content: instance?.content ?? null,
-        };
-      });
+      if (!instances) return;
+
+      const depInfos: DepInfo[] = dependencyTemplateIds
+        .map((templateId) => {
+          const instance = instances.find(
+            (i) =>
+              i.field_template_id === templateId &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (i as any).step_instance?.stage_instance?.process_id === processId
+          );
+          return {
+            templateId,
+            name: instance?.name ?? "Feld",
+            content: instance?.content ?? null,
+          };
+        })
+        .filter((d) => d.name !== "Feld" || d.content !== null);
 
       setDeps(depInfos);
     }

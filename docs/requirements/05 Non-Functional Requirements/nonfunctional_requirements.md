@@ -294,11 +294,12 @@ Die Architektur soll so gestaltet sein, dass eine spätere Skalierung auf mehr N
 | **Architektur-Dokumentation** | Architecture Decision Records (ADRs) für alle wesentlichen Technologieentscheidungen. |
 | **Setup-Dokumentation** | README mit vollständiger Anleitung: Docker-Setup, Environment-Variablen, erster Start. |
 
-#### NFR-804: Erweiterbarkeit für Level 2 (SOLL)
+#### NFR-804: Erweiterbarkeit und Template-Verwaltung (MUSS)
 
 | Aspekt | Spezifikation |
 |--------|--------------|
-| **Prozessmodell-Abstraktion** | Das feste Prozessmodell wird als Daten (JSON/DB) definiert, nicht als hardcodierte Logik. Auch wenn Level 1 nur ein Template hat, soll die Architektur beliebige Templates unterstützen können. |
+| **Prozessmodell-Abstraktion** | Prozessmodelle werden als Daten (DB) definiert, nicht als hardcodierte Logik. Level 1 liefert ein Default-Template und einen integrierten Template-Editor, mit dem Prozessmodelle, Stages, Steps und Fields angelegt, bearbeitet, umsortiert und gelöscht werden können. |
+| **Snapshot-Prinzip** | Bei Prozesserstellung werden alle Template-Daten (Name, Beschreibung, Typ, AI-Prompt, Dependencies, Reihenfolge) in die Instanz kopiert. Spätere Template-Änderungen wirken nur auf neue Prozesse. |
 | **KI-Provider-Abstraktion** | Die KI-Integration wird über eine einheitliche Schnittstelle (Adapter-Pattern) angesprochen. Provider-spezifischer Code ist isoliert. |
 | **Plugin-freundlich** | Field-Typen werden als registrierbare Komponenten implementiert. Neue Typen können hinzugefügt werden, ohne bestehenden Code zu ändern. |
 
@@ -487,6 +488,7 @@ Die Architektur soll so gestaltet sein, dass eine spätere Skalierung auf mehr N
 | NFR-1100 | LLM-Provider-Abstraktion |
 | NFR-1102 | Prompt-Sicherheit |
 | NFR-1103 | Streaming & Abbruch |
+| NFR-804 | Erweiterbarkeit und Template-Verwaltung |
 
 ### SOLL-Anforderungen (Solide Basis)
 
@@ -504,7 +506,6 @@ Die Architektur soll so gestaltet sein, dass eine spätere Skalierung auf mehr N
 | NFR-602 | KI-Transparenz |
 | NFR-802 | Testabdeckung ≥ 70% |
 | NFR-803 | Dokumentation (JSDoc, ADRs, README) |
-| NFR-804 | Erweiterbarkeit für Level 2 |
 | NFR-903 | Health Check Endpoint |
 | NFR-904 | Strukturiertes Logging |
 | NFR-1002 | WCAG 2.1 AA |

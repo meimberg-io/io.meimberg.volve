@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Search,
+  Blocks,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ interface AppShellProps {
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { label: "Templates", icon: Blocks, path: "/templates" },
   { label: "Einstellungen", icon: Settings, path: "/settings" },
 ];
 

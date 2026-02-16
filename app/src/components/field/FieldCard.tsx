@@ -33,13 +33,11 @@ interface FieldCardProps {
 }
 
 export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const template = field.template as any;
-  const fieldType = template?.type ?? "long_text";
+  const fieldType = field.type ?? "long_text";
   const isTask = fieldType === "task";
   const isClosed = field.status === "closed";
   const isEmpty = field.status === "empty" || !field.content?.trim();
-  const dependencies: string[] = template?.dependencies ?? [];
+  const dependencies: string[] = field.dependencies ?? [];
 
   const [content, setContent] = useState(field.content ?? "");
   const [saving, setSaving] = useState(false);
@@ -336,7 +334,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                         : "bg-status-warning"
                 )}
               />
-              <h4 className="text-sm font-medium">{template?.name ?? "Feld"}</h4>
+              <h4 className="text-sm font-medium">{field.name ?? "Feld"}</h4>
               {isTask && (
                 <span className="rounded bg-status-warning/20 px-1.5 py-0.5 text-xs text-status-warning">
                   Task
@@ -376,7 +374,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                       size="icon"
                       className="h-7 w-7"
                       onClick={handleGenerate}
-                      disabled={streaming || !template?.ai_prompt}
+                      disabled={streaming || !field.ai_prompt}
                     >
                       {streaming ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -396,7 +394,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setShowAdvanced(true)}
-                      disabled={streaming || !template?.ai_prompt}
+                      disabled={streaming || !field.ai_prompt}
                     >
                       <ZapOff className="h-3.5 w-3.5" />
                     </Button>
@@ -505,7 +503,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
           onOpenChange={setShowAdvanced}
           fieldId={field.id}
           processId={processId}
-          defaultPrompt={template?.ai_prompt ?? ""}
+          defaultPrompt={field.ai_prompt ?? ""}
           onResult={(result) => handleAIResult(result, "generate_advanced")}
         />
       )}

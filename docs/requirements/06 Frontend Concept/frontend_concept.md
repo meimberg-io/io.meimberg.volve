@@ -18,7 +18,7 @@ App-Shell (globaler Header)
 │         ├── M-02  Neuer-Prozess-Dialog (Modal)
 │         └── M-03  Archiv-Filter (Toggle)
 │
-└── M-04  Prozess-Shell (persistente Stage-Navigation + Breadcrumb)
+├── M-04  Prozess-Shell (persistente Stage-Navigation + Breadcrumb)
           ├── M-05  Seeding-View
           ├── M-06  Stage-Übersicht (Timeline)
           └── M-07  Stage-Detail (Step-Accordion)
@@ -29,6 +29,13 @@ App-Shell (globaler Header)
                     │         ├── M-12   Versionshistorie-Panel
                     │         └── M-13   Dependency-Popover
                     └── M-08T Task-Field-Karte (spezielle Variante)
+│
+└── M-16  Template-Editor (Pipeline-View)
+          ├── M-17  Stage-Spalte (pro Stage)
+          ├── M-18  Step-Karte (pro Step)
+          ├── M-19  Edit-Panel (Slide-in rechts)
+          ├── M-20  Add-Template-Dialog
+          └── M-21  Delete-Template-Dialog
 ```
 
 ### 1.2 Globale Overlays
@@ -48,6 +55,8 @@ App-Shell (globaler Header)
 /process/:id                         → M-06 Stage-Übersicht (oder Redirect → letzte Stage)
 /process/:id/stage/:stageId          → M-07 Stage-Detail
 /process/:id/stage/:stageId/:stepId  → M-07 Stage-Detail (Step aufgeklappt, Scroll-to)
+/templates                           → M-16 Template-Editor
+/templates/:modelId                  → M-16 (Model ausgewählt)
 ```
 
 Jede URL ist deeplink-fähig und unterstützt Browser-Back/Forward.
@@ -77,6 +86,7 @@ Jede URL ist deeplink-fähig und unterstützt Browser-Back/Forward.
 | **Logo** | Klick → Dashboard (M-01). Von überall erreichbar. |
 | **Breadcrumb** | Dynamisch: `Dashboard` / `Prozessname > Stage-Name` / `Prozessname > Stage > Step`. Jedes Segment klickbar. |
 | **Such-Icon** | Klick öffnet M-14 (Quick-Switcher). |
+| **Templates** | Klick → Template-Editor (M-16). Permanenter Link in der Hauptnavigation. |
 | **Settings** | Klick → Settings-Panel (M-15). |
 | **User-Avatar** | Klick → Dropdown: Nutzername, Logout. |
 
@@ -960,9 +970,238 @@ Globale Schnellsuche und Navigation. Zu jeder Zeit erreichbar. [FR-304]
 
 ---
 
-## 18. Storyboard-Flows
+## 18. M-16: Template-Editor (Pipeline-View)
 
-### 18.1 Flow A: Neue Idee einspielen (UC-11)
+### 18.1 Zweck
+
+Zentrale Verwaltungsoberfläche für Prozessmodelle, Stages, Steps und Fields. Bietet eine visuelle Pipeline-Darstellung der gesamten Prozessstruktur. [FR-900–FR-906, UC-16–UC-20]
+
+### 18.2 Layout
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ HEADER (Breadcrumb: „Templates")                                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ [Model: Geschäftsidee realisieren ▾]                      [+ Neues Model]   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Stage 1           →   Stage 2           →   Stage 3           →   Stage 4  │
+│  Der Funke              Die Vision            Research              SWOT     │
+│  ┌─────────────┐       ┌─────────────┐       ┌─────────────┐       ┌──────  │
+│  │ Seed kons.  │       │ Visions-    │       │ Thematische │       │ Stär-  │
+│  │ ├ Konsol.   │       │ beschreibung│       │ Gliederung  │       │ ken    │
+│  │ │  Quelldok. │       │ ├ Vision St.│       │ ├ Themenfel.│       │ ├ Ana- │
+│  │ └───────────│       │ └ Elev.Pitch│       │ └───────────│       │ └────  │
+│  └─────────────┘       ├─────────────┤       ├─────────────┤       ├──────  │
+│                        │ Namens-     │       │ Zielgruppen-│       │ Schwä- │
+│  [+ Step]              │ gebung      │       │ analyse     │       │ chen   │
+│                        │ ├ Projektna.│       │ ├ Primäre   │       │ ...    │
+│                        │ ├ Alternati.│       │ └ Sekundär  │       └──────  │
+│                        │ └───────────│       └─────────────┘                │
+│                        ├─────────────┤       [+ Step]            → scroll → │
+│                        │ Einordnung  │                                       │
+│                        │ ├ Domäne    │                                       │
+│                        │ ├ Horizont  │                                       │
+│                        │ └ Priorität │                                       │
+│                        └─────────────┘                                       │
+│                        [+ Step]                                              │
+│  [+ Stage]                                                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ← Horizontaler Scroll für weitere Stages                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 18.3 Pipeline-Elemente
+
+| Element | Beschreibung |
+|---------|-------------|
+| **Model-Selector** | Dropdown oben links. Zeigt alle verfügbaren Prozessmodelle. Bei nur einem Modell vorausgewählt. |
+| **"+ Neues Model"** | Button oben rechts. Erstellt ein leeres Modell. |
+| **Stage-Spalte (M-17)** | Vertikale Spalte pro Stage. Header mit Stage-Name, Zähler ("3 Steps · 8 Fields"). Enthält Step-Karten. |
+| **Stage-Pfeile** | SVG-Pfeile (→) zwischen den Stage-Spalten. Zeigen den Prozessfluss. |
+| **Step-Karte (M-18)** | Karte pro Step innerhalb einer Stage-Spalte. Zeigt Step-Name und Field-Liste. |
+| **Field-Zeile** | Zeile pro Field innerhalb einer Step-Karte. Zeigt Name + Typ-Badge (z. B. `text`, `long_text`, `task`). |
+| **"+"-Buttons** | Am Ende jeder Stage-Spalte (neuer Step), am Ende jeder Field-Liste (neues Field), am rechten Rand (neue Stage). |
+| **Drag-Handles** | Grip-Icon links an jedem Element für Drag & Drop Reordering. |
+
+### 18.4 Interaktionen
+
+| Aktion | Ergebnis |
+|--------|---------|
+| **Klick auf Stage-Header** | Edit-Panel (M-19) öffnet rechts mit Stage-Formular |
+| **Klick auf Step-Karte** | Edit-Panel (M-19) öffnet rechts mit Step-Formular |
+| **Klick auf Field-Zeile** | Edit-Panel (M-19) öffnet rechts mit Field-Formular |
+| **Drag & Drop** | Element wird innerhalb seiner Ebene umsortiert. order_index wird sofort aktualisiert. |
+| **"+ Step" klicken** | Dialog: Name eingeben → neuer Step erscheint in der Spalte |
+| **"+ Stage" klicken** | Neue leere Spalte erscheint rechts in der Pipeline |
+| **Horizontaler Scroll** | Bei mehr als 6 Stages wird horizontal gescrollt |
+
+### 18.5 Visuelle Zustände
+
+```
+Nicht ausgewählt:   │ Seed konsolidieren  │    → Standard-Karte
+Ausgewählt:         │● Seed konsolidieren │    → Primary-Border, hervorgehoben
+Hover:              │  Seed konsolidieren  │    → Dezenter Hover-Effekt
+
+Field-Typ-Badges:
+  [long_text] Konsolidiertes Quelldokument
+  [text]      Projektname
+  [task]      Gründungsaufgaben
+```
+
+---
+
+## 19. M-19: Edit-Panel (Slide-in)
+
+### 19.1 Zweck
+
+Kontextuelles Bearbeitungsformular für das in der Pipeline ausgewählte Element. Öffnet als Sheet/Drawer von rechts. [FR-901]
+
+### 19.2 Layout – Stage-Formular
+
+```
+┌──────────────────────────────────────┐
+│ Stage bearbeiten                  ✕  │
+├──────────────────────────────────────┤
+│                                      │
+│  Name *                              │
+│  ┌──────────────────────────────────┐│
+│  │ Die Vision                       ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  Beschreibung                        │
+│  ┌──────────────────────────────────┐│
+│  │ Die Idee wird aus verschiedenen  ││
+│  │ Perspektiven betrachtet...       ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  Icon                                │
+│  ┌──────────────────────────────────┐│
+│  │ 💡 (Icon-Auswahl)               ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  ──────────────────────────────────  │
+│  Verwendet von 3 Prozessen           │
+│  [ Löschen ]                         │
+│                                      │
+└──────────────────────────────────────┘
+```
+
+### 19.3 Layout – Field-Formular
+
+```
+┌──────────────────────────────────────┐
+│ Field bearbeiten                  ✕  │
+├──────────────────────────────────────┤
+│                                      │
+│  Name *                              │
+│  ┌──────────────────────────────────┐│
+│  │ Schwächen-Analyse                ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  Beschreibung                        │
+│  ┌──────────────────────────────────┐│
+│  │ Identifiziert interne Schwächen  ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  Typ                                 │
+│  [ Long Text                     ▾ ] │
+│                                      │
+│  AI-Prompt                           │
+│  ┌──────────────────────────────────┐│
+│  │ Analysiere die internen          ││
+│  │ Schwächen des Vorhabens          ││
+│  │ basierend auf der Vision und     ││
+│  │ den Research-Ergebnissen...      ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  Dependencies                        │
+│  ┌──────────────────────────────────┐│
+│  │ [Vision Statement          ✕]   ││
+│  │ [Marktrecherche            ✕]   ││
+│  │ [+ Dependency hinzufügen]       ││
+│  └──────────────────────────────────┘│
+│                                      │
+│  ──────────────────────────────────  │
+│  Verwendet von 3 Prozessen           │
+│  [ Löschen ]                         │
+│                                      │
+└──────────────────────────────────────┘
+```
+
+### 19.4 Verhalten
+
+| Element | Verhalten |
+|---------|-----------|
+| **Auto-Persistierung** | Änderungen werden nach 500ms Debounce automatisch gespeichert. Statusanzeige: "Gespeichert" / "Speichert...". |
+| **Typ-Dropdown** | Nur bei Fields. Ändert den Field-Typ. Bei Typ-Wechsel von/zu "task" wird auf Datenkompatibilität hingewiesen. |
+| **AI-Prompt Textarea** | Nur bei Fields. Mehrzeiliges Textfeld für den Standard-Prompt. |
+| **Dependencies Multi-Select** | Nur bei Fields. Zeigt alle Fields des Modells gruppiert nach Stage > Step. Ausgewählte Dependencies als Tags mit Remove-Button. |
+| **Instanz-Zähler** | Zeigt an, wie viele Prozesse dieses Template verwenden. Informativ. |
+| **Löschen-Button** | Nur aktiv wenn Instanz-Zähler = 0. Bei Klick: Bestätigungsdialog (M-21). |
+
+---
+
+## 20. M-20: Add-Template-Dialog
+
+### 20.1 Layout
+
+```
+┌────────────────────────────────────────────────┐
+│ Neues Element anlegen                       ✕  │
+├────────────────────────────────────────────────┤
+│                                                │
+│  Name *                                        │
+│  ┌────────────────────────────────────────────┐│
+│  │ z. B. „Marktanalyse"                      ││
+│  └────────────────────────────────────────────┘│
+│                                                │
+│  Typ (nur bei Fields)                          │
+│  [ Long Text                               ▾ ]│
+│                                                │
+│              [ Abbrechen ]  [ Anlegen ]         │
+│                                                │
+└────────────────────────────────────────────────┘
+```
+
+### 20.2 Verhalten
+
+- Auto-Focus auf Name-Feld. Enter bestätigt.
+- Bei Fields: Typ-Default ist "long_text".
+- Nach dem Anlegen schließt der Dialog und das Edit-Panel öffnet sich für das neue Element.
+
+---
+
+## 21. M-21: Delete-Template-Dialog
+
+### 21.1 Layout
+
+```
+┌────────────────────────────────────────────────┐
+│ Element löschen                             ✕  │
+├────────────────────────────────────────────────┤
+│                                                │
+│  ⚠️ Stage „Die Vision" und alle zugehörigen   │
+│  3 Steps und 8 Fields werden gelöscht.         │
+│                                                │
+│  Diese Aktion kann nicht rückgängig gemacht     │
+│  werden.                                       │
+│                                                │
+│              [ Abbrechen ]  [ Löschen ]         │
+│                                                │
+└────────────────────────────────────────────────┘
+```
+
+### 21.2 Verhalten
+
+- "Löschen"-Button ist rot/destruktiv gestylt.
+- Bei Elementen mit Instanzen: Dialog zeigt stattdessen: "Dieses Element wird von X Prozessen verwendet und kann nicht gelöscht werden." Nur "Schließen"-Button.
+
+---
+
+## 22. Storyboard-Flows
+
+### 22.1 Flow A: Neue Idee einspielen (UC-11)
 
 ```
 M-01 Dashboard              M-02 Neuer Prozess           M-05 Seeding
@@ -986,7 +1225,7 @@ M-01 Dashboard              M-02 Neuer Prozess           M-05 Seeding
 Gesamtzeit: ~60–90 Sekunden · 4 Klicks + Datei-Drop
 ```
 
-### 18.2 Flow B: Kern-Loop – Ein Field bearbeiten (UC-01 → UC-04)
+### 22.2 Flow B: Kern-Loop – Ein Field bearbeiten (UC-01 → UC-04)
 
 ```
 M-07 Stage-Detail (Field ist leer)
@@ -1025,7 +1264,7 @@ M-07 Stage-Detail (Field ist leer)
 Gesamtzeit: 1–3 Minuten · 2–5 Klicks pro Field
 ```
 
-### 18.3 Flow C: Prozess wechseln (UC-06)
+### 22.3 Flow C: Prozess wechseln (UC-06)
 
 ```
 Option A: Via Dashboard                     Option B: Via Quick-Switcher
@@ -1049,7 +1288,7 @@ Option A: Via Dashboard                     Option B: Via Quick-Switcher
 Option A: 2 Klicks                          Option B: Suche + Enter
 ```
 
-### 18.4 Flow D: Task delegieren und abnehmen (UC-12 → UC-13)
+### 22.4 Flow D: Task delegieren und abnehmen (UC-12 → UC-13)
 
 ```
 M-07 Stage-Detail (Task-Field)
@@ -1080,11 +1319,32 @@ M-07 Stage-Detail (Task-Field, Status: done)
 └──────────────────────────────┘
 ```
 
+### 22.5 Flow E: Template AI-Prompt verbessern (UC-16)
+
+```
+M-01 Dashboard                    M-16 Template-Editor
+┌──────────────────┐               ┌─────────────────────────────────────────┐
+│                  │  [Templates]  │ Pipeline-View                           │
+│  Header Nav      ├──────────────>│ Stage 4 > Stärken > Stärken-Analyse    │
+│                  │               │ [Klick]                                  │
+└──────────────────┘               └──────────────┬──────────────────────────┘
+                                                 │
+                                                 ▼
+                                  ┌─────────────────────────────┐
+                                  │ M-19 Edit-Panel              │
+                                  │ AI-Prompt anpassen:          │
+                                  │ "Berücksichtige konkrete..." │
+                                  │ → Autosave                   │
+                                  └─────────────────────────────┘
+
+Gesamtzeit: ~30 Sekunden · 3 Klicks
+```
+
 ---
 
-## 19. Fehlerzustände & Edge Cases
+## 23. Fehlerzustände & Edge Cases
 
-### 19.1 Fehler-Darstellung pro Kontext
+### 23.1 Fehler-Darstellung pro Kontext
 
 | Kontext | Fehlermeldung | Wo angezeigt |
 |---------|---------------|-------------|
@@ -1095,7 +1355,7 @@ M-07 Stage-Detail (Task-Field, Status: done)
 | **Upload-Fehler** | „Dateityp nicht unterstützt" / „Datei zu groß (max. 10 MB)." | Inline in der Dropzone. |
 | **Validierungsfehler** | „Bitte gib einen Namen ein." | Inline am Formularfeld. |
 
-### 19.2 Leerzustände
+### 23.2 Leerzustände
 
 | Maske | Leerzustand |
 |-------|-------------|
@@ -1105,7 +1365,7 @@ M-07 Stage-Detail (Task-Field, Status: done)
 | **Quick-Switcher (keine Treffer)** | „Keine Ergebnisse für ‚xyz'." |
 | **Versionshistorie (v1)** | Nur aktuelle Version. Hinweis: „Noch keine früheren Versionen." |
 
-### 19.3 Ladezustände
+### 23.3 Ladezustände
 
 | Maske / Komponente | Ladezustand |
 |--------------------|-------------|
@@ -1117,7 +1377,7 @@ M-07 Stage-Detail (Task-Field, Status: done)
 
 ---
 
-## 20. Referenzmatrix: Masken → Requirements
+## 24. Referenzmatrix: Masken → Requirements
 
 | Maske | Adressierte FRs | Adressierte UCs |
 |-------|----------------|-----------------|
@@ -1136,3 +1396,9 @@ M-07 Stage-Detail (Task-Field, Status: done)
 | M-13 Dependency-Popover | FR-600 | UC-10 |
 | M-14 Quick-Switcher | FR-304 | UC-06 |
 | M-15 Settings | NFR-1001, NFR-1100 | — |
+| M-16 Template-Editor | FR-900 | UC-16–UC-20 |
+| M-17 Stage-Spalte | FR-900 | UC-16, UC-19 |
+| M-18 Step-Karte | FR-900 | UC-16, UC-19 |
+| M-19 Edit-Panel | FR-901 | UC-16 |
+| M-20 Add-Template-Dialog | FR-902 | UC-17 |
+| M-21 Delete-Template-Dialog | FR-903 | UC-18 |

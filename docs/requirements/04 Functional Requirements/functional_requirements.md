@@ -25,11 +25,12 @@ Unternehmer, Gründer und Innovationsverantwortliche, die eine Vielzahl an Gesch
 
 | In Scope (Level 1) | Out of Scope (Level 2 – Zukunft) |
 |---------------------|----------------------------------|
-| Festes, vordefiniertes Prozessmodell für Geschäftsideen-Entwicklung | Nutzerkonfigurierbare Prozessmodelle |
-| Vordefinierte Stages, Steps und Fields mit Standard-Prompts | Generische Workflow-Engine / Meta-Modell |
-| KI-Aktionen: Generate, Generate Advanced, Optimize | Eigene Modell-Editoren für Endnutzer |
-| Task-Management (Self-assigned, Delegated) | Agent-Tasks (automatisierte Ausführung) |
-| Single-User-Betrieb | Multi-User / Team-Kollaboration |
+| Vordefiniertes Default-Prozessmodell für Geschäftsideen-Entwicklung | Self-Service-Modell-Editor für Endnutzer (Marketplace) |
+| Template-Editor: Stages, Steps, Fields anlegen, bearbeiten, umsortieren, löschen | Generische Workflow-Engine / Meta-Modell mit visueller Programmierung |
+| Mehrere Prozessmodelle verwaltbar (Power-User/Betreiber) | Öffentliches Template-Sharing zwischen Nutzern |
+| KI-Aktionen: Generate, Generate Advanced, Optimize | Agent-Tasks (automatisierte Ausführung) |
+| Task-Management (Self-assigned, Delegated) | Multi-User / Team-Kollaboration |
+| Snapshot-Prinzip: Template-Änderungen wirken nur auf neue Prozesse | Live-Propagation von Template-Änderungen auf bestehende Instanzen |
 
 ### 1.5 Referenzdokumente
 
@@ -102,32 +103,36 @@ SeedDocument
 
 StageInstanz
  ├── id: UUID
- ├── stage_template: Stage (Referenz)
- ├── name: String
- ├── icon: String
- ├── order: Integer
- ├── completed: Boolean (berechnet)
+ ├── stage_template: Stage (Referenz, Traceability)
+ ├── name: String (Snapshot aus Template)
+ ├── description: String (Snapshot aus Template)
+ ├── icon: String (Snapshot aus Template)
+ ├── order_index: Integer (Snapshot aus Template)
+ ├── status: Enum [locked, open, in_progress, completed]
+ ├── progress: Real (berechnet)
  └── steps: StepInstanz[] (geordnet)
 
 StepInstanz
  ├── id: UUID
- ├── step_template: Step (Referenz)
- ├── name: String
- ├── order: Integer
+ ├── step_template: Step (Referenz, Traceability)
+ ├── name: String (Snapshot aus Template)
+ ├── description: String (Snapshot aus Template)
+ ├── order_index: Integer (Snapshot aus Template)
  ├── completed: Boolean (berechnet)
  ├── dependencies: StepInstanz[] (optional)
  └── fields: FieldInstanz[] (geordnet)
 
 FieldInstanz
  ├── id: UUID
- ├── field_template: Field (Referenz)
- ├── name: String
- ├── type: Enum [text, long_text, file, file_list, task]
- ├── order: Integer
- ├── prompt: String (Standard-Prompt aus Template)
+ ├── field_template: Field (Referenz, Traceability)
+ ├── name: String (Snapshot aus Template)
+ ├── type: Enum [text, long_text, file, file_list, task] (Snapshot aus Template)
+ ├── description: String (Snapshot aus Template)
+ ├── ai_prompt: String (Snapshot aus Template)
+ ├── order_index: Integer (Snapshot aus Template)
+ ├── dependencies: FieldInstanz[] (Snapshot aus Template)
  ├── content: Text | Markdown | null
  ├── closed: Boolean
- ├── dependencies: FieldInstanz[] (optional)
  └── task: TaskData | null (nur bei type=task)
 
 TaskData
@@ -140,7 +145,7 @@ TaskData
 
 ### 3.2 Template vs. Instanz
 
-Das System unterscheidet zwischen **Templates** (Prozessmodell-Definition – was soll passieren) und **Instanzen** (konkrete Durchführungen – was passiert gerade). In Level 1 ist das Template fest eingebaut. Bei Prozessstart wird aus dem Template eine vollständige Instanz-Hierarchie erzeugt.
+Das System unterscheidet zwischen **Templates** (Prozessmodell-Definition – was soll passieren) und **Instanzen** (konkrete Durchführungen – was passiert gerade). Bei Prozessstart wird aus dem Template eine vollständige Instanz-Hierarchie erzeugt. **Dabei werden alle Template-Daten (Name, Beschreibung, Typ, AI-Prompt, Dependencies, Reihenfolge) in die Instanz kopiert (Snapshot).** Spätere Änderungen an Templates wirken nur auf neue Prozesse – bestehende Instanzen bleiben unverändert. Die Template-FK bleiben für Traceability erhalten, werden aber nicht mehr für die Darstellung verwendet.
 
 ### 3.3 Zusammengesetzte Beziehungen
 
@@ -178,7 +183,7 @@ Der Nutzer sieht beim Öffnen der Anwendung eine Übersicht aller seiner Prozess
 | Aspekt | Spezifikation |
 |--------|--------------|
 | **Auslöser** | Nutzer klickt „Neuen Prozess starten" |
-| **Schritt 1** | Auswahl eines Prozessmodells (in Level 1: nur ein Modell → Auswahl wird übersprungen, direkt Namenseingabe) [UC-11] |
+| **Schritt 1** | Auswahl eines Prozessmodells. Wenn nur ein Modell existiert, wird die Auswahl übersprungen (direkt Namenseingabe). Bei mehreren Modellen wird das zuletzt verwendete vorselektiert. [UC-11] |
 | **Schritt 2** | Vergabe eines Namens für die Prozessinstanz (Pflichtfeld, später änderbar) |
 | **Ergebnis** | Neue Prozessinstanz wird erzeugt (Status: `seeding`). Alle Stages, Steps und Fields werden aus dem Template instanziiert. Weiterleitung zur Seeding-View. |
 
@@ -519,6 +524,74 @@ planned ──> delegated ──> in_progress ──> done ──> accepted
 
 ---
 
+### 4.9 FB9 – Template-Verwaltung
+
+#### FR-900: Template-Editor-Übersicht (Pipeline-View)
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Darstellung** | Alle Prozessmodelle mit ihren Stages, Steps und Fields werden als horizontale Pipeline (Flowchart) dargestellt. Stages als Spalten (links → rechts), verbunden durch Pfeile. Steps als Karten innerhalb jeder Spalte. Fields als Zeilen innerhalb der Step-Karten. |
+| **Model-Auswahl** | Dropdown zur Auswahl des zu bearbeitenden Prozessmodells. Bei nur einem Modell ist dieses vorausgewählt. |
+| **Zugang** | Über einen permanenten "Templates"-Link in der Hauptnavigation (neben Dashboard und Settings). |
+| **Skalierung** | Horizontaler Scroll bei vielen Stages (>6). Die Pipeline-View muss bis zu 15 Stages übersichtlich darstellen. |
+
+#### FR-901: Template bearbeiten (Update)
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Auslöser** | Klick auf ein Element (Stage-Header, Step-Karte oder Field-Zeile) in der Pipeline-View |
+| **Edit-Panel** | Ein Slide-in-Panel öffnet sich von rechts. Inhalt abhängig vom Element-Typ: |
+| | **Stage:** Name, Beschreibung, Icon |
+| | **Step:** Name, Beschreibung |
+| | **Field:** Name, Beschreibung, Typ (Dropdown: text, long_text, file, file_list, task), AI-Prompt (Textarea), Dependencies (Multi-Select aus allen Fields des Models) |
+| **Persistierung** | Änderungen werden sofort persistiert (Debounce: 500ms nach letzter Eingabe). Kein "Speichern"-Button. |
+| **Visuelles Feedback** | Das ausgewählte Element wird in der Pipeline visuell hervorgehoben. |
+| **Snapshot-Hinweis** | Änderungen wirken nur auf neue Prozesse. Im Edit-Panel wird angezeigt, wie viele bestehende Prozesse dieses Template verwenden. |
+
+#### FR-902: Template-Element anlegen (Create)
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Auslöser** | Klick auf einen "+"-Button in der Pipeline-View |
+| **Platzierung der Buttons** | "+"-Button am Ende jeder Stage-Spalte (neuer Step), am Ende jeder Field-Liste (neues Field), am rechten Rand der Pipeline (neue Stage) |
+| **Dialog** | Minimaler Dialog: Name (Pflichtfeld) + bei Fields: Typ-Auswahl. |
+| **Ergebnis** | Neues Element wird mit dem nächsten `order_index` angelegt und erscheint sofort in der Pipeline. |
+
+#### FR-903: Template-Element löschen (Delete)
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Auslöser** | "Löschen"-Button im Edit-Panel |
+| **Schutz** | Löschung nur möglich, wenn keine Prozessinstanzen auf dieses Element verweisen. Andernfalls wird die Aktion mit einer Fehlermeldung abgelehnt: "Dieses Element wird von X Prozessen verwendet und kann nicht gelöscht werden." |
+| **Kaskadierung** | Löschen einer Stage löscht alle zugehörigen Steps und Fields (im Template). Löschen eines Steps löscht alle zugehörigen Fields. |
+| **Bestätigung** | Bestätigungsdialog mit Warnung: "Stage 'Die Vision' und alle zugehörigen 3 Steps und 8 Fields werden gelöscht. Fortfahren?" |
+
+#### FR-904: Template-Elemente umsortieren (Reorder)
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Mechanismus** | Drag & Drop innerhalb der jeweiligen Ebene: Stages innerhalb eines Models, Steps innerhalb einer Stage, Fields innerhalb eines Steps. |
+| **Visuelles Feedback** | Drag-Handle (Grip-Icon) an jedem Element. Während des Ziehens wird die Zielposition visuell markiert. |
+| **Persistierung** | Nach dem Drop werden die `order_index`-Werte aller betroffenen Elemente aktualisiert. |
+| **Einschränkung** | Elemente können nicht zwischen Ebenen verschoben werden (z. B. kein Verschieben eines Steps von einer Stage in eine andere). |
+
+#### FR-905: Prozessmodell anlegen/löschen
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Neues Modell** | "Neues Model"-Button in der Template-Editor-Übersicht. Erstellt ein leeres Modell mit Default-Name "Neues Prozessmodell". Der Nutzer kann sofort Stages hinzufügen. |
+| **Modell löschen** | Löschung nur möglich, wenn keine Prozessinstanzen auf dieses Modell verweisen. Bestätigungsdialog mit Warnung. |
+
+#### FR-906: Dependency-Validierung
+
+| Aspekt | Spezifikation |
+|--------|--------------|
+| **Zirkuläre Referenzen** | Beim Setzen von Dependencies wird geprüft, ob die neue Dependency eine zirkuläre Referenz erzeugen würde. Falls ja, wird die Aktion mit einer Fehlermeldung abgelehnt. |
+| **Gültige Ziele** | Nur Fields innerhalb desselben Prozessmodells können als Dependency-Ziele ausgewählt werden. Der Multi-Select im Edit-Panel zeigt die verfügbaren Fields gruppiert nach Stage > Step. |
+| **Validierung bei Löschung** | Wird ein Field gelöscht, das als Dependency von anderen Fields referenziert wird, werden die betroffenen Dependencies automatisch entfernt (mit Hinweis im Bestätigungsdialog). |
+
+---
+
 ## 5. UI/UX-Spezifikation
 
 ### 5.1 Screens und Navigationsstruktur
@@ -651,6 +724,15 @@ planned ──> delegated ──> in_progress ──> done ──> accepted
 | BR-30 | Field-Dependencies können nur innerhalb derselben Stage definiert werden (Field → Field, Step → Step). |
 | BR-31 | Zirkuläre Dependencies sind nicht erlaubt und müssen bei der Template-Definition validiert werden. |
 | BR-32 | Das Bearbeiten eines Fields, dessen Dependencies noch nicht `closed` sind, erzeugt einen Warnhinweis, blockiert die Bearbeitung aber nicht (Level 1). |
+
+### 6.5 Template-Regeln
+
+| ID | Regel |
+|----|-------|
+| BR-40 | Template-Änderungen wirken nur auf neue Prozesse (Snapshot-Prinzip). Bestehende Instanzen behalten die bei Erstellung kopierten Template-Daten. |
+| BR-41 | Ein Template-Element (Stage, Step, Field) kann nicht gelöscht werden, solange Prozessinstanzen darauf verweisen. |
+| BR-42 | Zirkuläre Dependencies in Templates sind verboten. Die Anwendung prüft bei jeder Dependency-Änderung auf Zyklen. |
+| BR-43 | Der `order_index` muss innerhalb der jeweiligen Elternebene eindeutig sein (Stages innerhalb eines Models, Steps innerhalb einer Stage, Fields innerhalb eines Steps). |
 
 ---
 

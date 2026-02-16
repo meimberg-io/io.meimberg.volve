@@ -64,15 +64,14 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
       .order("updated_at", { ascending: false })
       .limit(10);
 
-    // Get stages with their templates
+    // Get stages with snapshot columns
     const { data: stages } = await supabase
       .from("stage_instances")
       .select(`
         *,
-        template:stage_templates(*),
         process:processes(id, name, status)
       `)
-      .order("created_at", { ascending: true })
+      .order("order_index", { ascending: true })
       .limit(50);
 
     const processResults: SearchResult[] = (processes ?? []).map((p) => ({
@@ -89,10 +88,10 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((s: any) => ({
         id: s.id,
-        label: s.template?.name ?? "Stage",
+        label: s.name ?? "Stage",
         description: s.process?.name ?? "",
         href: `/process/${s.process_id}/stage/${s.id}`,
-        icon: stageIcons[s.template?.icon ?? "sparkles"] ?? Sparkles,
+        icon: stageIcons[s.icon ?? "sparkles"] ?? Sparkles,
       }));
 
     setResults({ processes: processResults, stages: stageResults });

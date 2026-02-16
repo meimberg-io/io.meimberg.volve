@@ -48,7 +48,7 @@ export function ProcessShell({
           <>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="text-foreground">
-              {stages.find((s) => s.id === currentStageId)?.template?.name ?? "Stage"}
+              {stages.find((s) => s.id === currentStageId)?.name ?? "Stage"}
             </span>
           </>
         )}
@@ -67,8 +67,6 @@ export function ProcessShell({
           <ScrollArea className="w-full md:hidden">
             <div className="flex items-center gap-1.5 pb-2">
               {stages.map((stage, index) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const template = stage.template as any;
                 const isActive = stage.id === currentStageId;
                 const isCompleted = stage.status === "completed";
                 const stageNumber = index + 1;
@@ -102,7 +100,7 @@ export function ProcessShell({
                         stageNumber
                       )}
                     </span>
-                    <span>{template?.name ?? "Stage"}</span>
+                    <span>{stage.name ?? "Stage"}</span>
                   </Link>
                 );
               })}
@@ -115,8 +113,6 @@ export function ProcessShell({
             {/* Stage Sidebar (desktop only) */}
             <nav className="hidden md:flex w-56 shrink-0 flex-col gap-1.5 sticky top-20">
               {stages.map((stage, index) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const template = stage.template as any;
                 const isActive = stage.id === currentStageId;
                 const isCompleted = stage.status === "completed";
                 const stageNumber = index + 1;
@@ -152,7 +148,7 @@ export function ProcessShell({
                       )}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className="block truncate">{template?.name ?? "Stage"}</span>
+                      <span className="block truncate">{stage.name ?? "Stage"}</span>
                       {stage.progress > 0 && stage.progress < 100 && (
                         <Progress value={stage.progress} className="h-1 mt-1" />
                       )}

@@ -43,19 +43,21 @@ Das System ist der bewusste Gegenentwurf zu einem vollautonomen Agenten, der ein
 
 ## 3. Produktstufen
 
-### Level 1: Das Business-Development-Tool (Proof of Concept)
+### Level 1: Das Business-Development-Tool mit Template-Editor
 
-Die erste Produktstufe basiert auf einem **festen Modell**, das speziell für die Entwicklung von Geschäftsideen konzipiert ist. Der Workflow, die Stages und die zugehörigen Steps sind vordefiniert. Der Nutzer arbeitet sich durch einen festgelegten Prozess, der seine Idee systematisch reifen lässt.
+Die erste Produktstufe liefert ein **vordefiniertes Default-Modell** für die Entwicklung von Geschäftsideen sowie einen **integrierten Template-Editor**, mit dem Power-User und Betreiber dieses Modell anpassen, erweitern und neue Prozessmodelle anlegen können. Der Workflow, die Stages und die zugehörigen Steps sind initial vordefiniert, aber vollständig editierbar – inklusive Stages, Steps, Fields, AI-Prompts, Dependencies und Reihenfolge.
 
-Dieses Tool dient als Proof of Concept und soll die zentrale Frage beantworten: **Lassen sich komplexe Entwicklungsprozesse in ein festes Meta-Modell pressen?**
+Dieses Tool dient als Proof of Concept und soll die zentrale Frage beantworten: **Lassen sich komplexe Entwicklungsprozesse in ein konfigurierbares Meta-Modell pressen?**
+
+**Snapshot-Prinzip:** Wenn ein neuer Prozess gestartet wird, werden alle Template-Daten (Name, Beschreibung, Typ, AI-Prompt, Dependencies, Reihenfolge) in die Prozessinstanz **kopiert (Snapshot)**. Spätere Änderungen an Templates wirken nur auf neue Prozesse – bestehende bleiben unverändert.
 
 ### Level 2: Die generische Workflow-Engine (Zielvision)
 
-Die ultimative Vision ist die **Abstraktion** des Prinzips zu einem generischen, konfigurierbaren Workflow-System. In diesem Meta-Modell können Nutzer selbst Modelle für verschiedene Entwicklungsprozesse konfigurieren und eigene Workflow-Chains definieren.
+Die ultimative Vision ist die **Abstraktion** des Prinzips zu einem generischen, konfigurierbaren Workflow-System als **Self-Service für Endnutzer**. Während Level 1 einen Template-Editor für Power-User/Betreiber bereitstellt, ermöglicht Level 2 jedem Nutzer, eigene Modelle für verschiedene Entwicklungsprozesse zu konfigurieren und eigene Workflow-Chains zu definieren.
 
 **Beispiele für konfigurierbare Modelle:**
 
-- **Geschäftsideen-Entwicklung:** Das in Level 1 beschriebene Modell.
+- **Geschäftsideen-Entwicklung:** Das in Level 1 beschriebene Default-Modell.
 - **Blogbeitrag-Erstellung:** Ein einfaches Modell zur Content-Erstellung (wie im bestehenden Blog-Tool).
 - **Softwareentwicklung:** Ein Modell, das den Prozess von der Anforderungsspezifikation (PRD) bis zur Umsetzung strukturiert und KI-gesteuert begleitet.
 - **Beliebige weitere Entwicklungsprozesse:** Jeder Prozess, der sich in Phasen und Schritte gliedern lässt.
@@ -75,6 +77,11 @@ Der entscheidende Unterschied zwischen Blog-Workflow und Geschäftsideen-Workflo
 | **Stage** | Geordnete Hauptabschnitte / Evolutionsstufen | Die „groben Kapitel" |
 | **Step** | Geordnete Aufgaben innerhalb einer Stage | Die „konkreten Aufgaben" |
 | **Field** | Atomare Inhaltseinheiten mit Typen und Prompts | Die „auszufüllenden Teile" |
+| **Snapshot** | Kopie der Template-Daten in einer Prozessinstanz bei Erstellung | Die „gedruckte Kopie des Rezepts" |
+
+### Template vs. Instanz und Snapshot-Prinzip
+
+Das System unterscheidet zwischen **Templates** (Prozessmodell-Definition – was soll passieren) und **Instanzen** (konkrete Durchführungen – was passiert gerade). Bei Prozessstart wird aus dem Template eine vollständige Instanz-Hierarchie erzeugt. Dabei werden alle Template-Daten (Name, Beschreibung, Typ, AI-Prompt, Dependencies, Reihenfolge) in die Instanz **kopiert (Snapshot)**. Spätere Änderungen an Templates wirken nur auf neue Prozesse – bestehende Instanzen bleiben unverändert.
 
 ### Prozessfluss
 
@@ -348,6 +355,10 @@ Detailliertes Beispiel mit Wettbewerbsanalyse-Chain:
 
 ### Kontextfenster-Management
 - Bei vielen Dependencies: Zusammenfassungen, Chunking, Referenzlinks zur Steuerung der Kontextgröße.
+
+### Template-Snapshot vs. Live-Propagation (ENTSCHIEDEN)
+- ~~**Option A:** Template-Änderungen wirken sofort auf alle bestehenden Instanzen (live via JOIN).~~
+- **Option B (gewählt): Snapshot-Ansatz.** Template-Daten werden bei Prozesserstellung in die Instanz kopiert. Spätere Template-Änderungen wirken nur auf neue Prozesse. Begründung: Bestehende Prozesse sollen stabil bleiben, auch wenn Templates weiterentwickelt werden.
 
 ---
 

@@ -396,6 +396,75 @@ Benachrichtigung / Dashboard-Hinweis → Task öffnen → Ergebnis lesen → [Ab
 
 ---
 
+### 3.6 Selten: Template-Verwaltung
+
+---
+
+#### UC-16: Template bearbeiten
+
+| Aspekt | Beschreibung |
+|--------|-------------|
+| **Frequenz** | **Selten** – wenige Male pro Monat |
+| **Auslöser** | Nutzer will den AI-Prompt, die Beschreibung oder den Namen eines Templates (Stage/Step/Field) anpassen – z. B. nach einem unbefriedigenden Generate-Ergebnis |
+| **Klick-Budget** | **3–4 Klicks** (Templates öffnen, Element in Pipeline wählen, bearbeiten) |
+| **Zeitbudget** | < 1 Minute |
+
+Journey:
+```
+Header → [Templates] → Pipeline-View → Element klicken → Edit-Panel → Feld ändern → Autosave
+   0s        0,5s            0,5s            0,5s            0,3s         5-30s      automatisch
+```
+
+Effizienz-Anforderung:
+- Pipeline-View gibt sofortigen Überblick über die gesamte Prozessstruktur.
+- Änderungen werden sofort persistiert (kein "Speichern"-Button).
+- Das Edit-Panel öffnet als Slide-in von rechts, ohne die Pipeline-Ansicht zu verlassen.
+
+#### UC-17: Neues Template-Element anlegen
+
+| Aspekt | Beschreibung |
+|--------|-------------|
+| **Frequenz** | **Selten** – wenige Male pro Monat |
+| **Auslöser** | Nutzer will eine neue Stage, einen neuen Step oder ein neues Field zum Prozessmodell hinzufügen |
+| **Klick-Budget** | **3 Klicks** (Templates öffnen, "+"-Button, Name/Typ eingeben) |
+| **Zeitbudget** | < 30 Sekunden |
+
+Journey:
+```
+Pipeline-View → [+ Step] am Ende einer Stage-Spalte → Dialog: Name eingeben → Element erscheint
+     0s             0,5s                                    3-10s                automatisch
+```
+
+#### UC-18: Template-Element löschen
+
+| Aspekt | Beschreibung |
+|--------|-------------|
+| **Frequenz** | **Selten** – wenige Male pro Quartal |
+| **Auslöser** | Nutzer will ein nicht mehr benötigtes Element (Stage/Step/Field) entfernen |
+| **Klick-Budget** | **3 Klicks** (Element wählen, Löschen, Bestätigen) |
+
+Effizienz-Anforderung:
+- Bestätigungsdialog mit Warnung bei existierenden Instanzen.
+- Löschung nur möglich, wenn keine Prozessinstanzen auf dieses Element verweisen.
+
+#### UC-19: Template-Elemente umsortieren
+
+| Aspekt | Beschreibung |
+|--------|-------------|
+| **Frequenz** | **Selten** – wenige Male pro Monat |
+| **Auslöser** | Nutzer will die Reihenfolge von Stages, Steps oder Fields ändern |
+| **Klick-Budget** | **1 Aktion** (Drag & Drop) |
+
+#### UC-20: Neues Prozessmodell anlegen
+
+| Aspekt | Beschreibung |
+|--------|-------------|
+| **Frequenz** | **Sehr selten** – wenige Male pro Jahr |
+| **Auslöser** | Nutzer will ein komplett neues Prozessmodell für einen anderen Anwendungsfall erstellen |
+| **Klick-Budget** | **2 Klicks** (Templates öffnen, "+ Neues Model") |
+
+---
+
 ## 4. Der typische Arbeitstag (Composite Journey)
 
 So sieht ein typischer Arbeitstag mit Volve aus:
@@ -446,6 +515,15 @@ So sieht ein typischer Arbeitstag mit Volve aus:
 ```
 16. Dashboard → Fortschritt aller Prozesse checken           [UC-05, 0 Klicks]
     „Idee X: Stage 4 zu 80%, Idee Y: Stage 2 zu 50%"
+```
+
+### Gelegentlich: Template-Tuning (5 Minuten)
+
+```
+17. Nach unbefriedigender KI-Generierung → [Templates]               [UC-16, 1 Klick]
+18. In Pipeline-View: Field "Schwächen-Analyse" klicken                [UC-16, 1 Klick]
+19. AI-Prompt anpassen: "Berücksichtige konkrete Zahlen und Quellen"   [UC-16, direkt tippen]
+20. Zurück zum Prozess → [Generate] → besseres Ergebnis               [UC-01, 2 Klicks]
 ```
 
 ---
@@ -532,6 +610,14 @@ Aus den Journeys ergeben sich folgende übergreifende Effizienz-Anforderungen:
 | **Sofort-Undo** | `Cmd+Z` nach einem Generate/Optimize stellt den vorherigen Feldinhalt wieder her, ohne die Versionshistorie öffnen zu müssen. |
 | **Referenz-FRs** | FR-405, FR-500, FR-502 |
 
+### EA-11: Pipeline-Überblick für Templates
+
+| Anforderung | Beschreibung |
+|-------------|-------------|
+| **Sofortiger Strukturüberblick** | Die Pipeline-View zeigt alle Stages als horizontale Spalten mit Steps und Fields. Der Nutzer erfasst die gesamte Prozessstruktur auf einen Blick. |
+| **1-Klick-Editing** | Klick auf ein Element öffnet das Edit-Panel. Keine Navigation durch Unterseiten nötig. |
+| **Referenz-FRs** | FR-900, FR-901 |
+
 ---
 
 ## 6. Use-Case-Diagramm (vereinfacht)
@@ -552,6 +638,13 @@ Aus den Journeys ergeben sich folgende übergreifende Effizienz-Anforderungen:
     │ UC-03 Manuell bearbeiten│   │ UC-07 Stage navigieren  │   │ UC-13 Task abnehmen    │
     │ UC-04 Field abschließen │   │ UC-10 Dependency prüfen │   │ UC-14 Field öffnen     │
     └─────────────────────────┘   └─────────────────────────┘   │ UC-15 Archivieren      │
+                                                                ├────────────────────────┤
+                                                                │ TEMPLATE               │
+                                                                │ UC-16 Template bearbeiten
+                                                                │ UC-17 Template anlegen │
+                                                                │ UC-18 Template löschen │
+                                                                │ UC-19 Template umsortieren
+                                                                │ UC-20 Prozessmodell anlegen
                                                                 └────────────────────────┘
                  │
     ┌────────────┴────────────┐
@@ -585,6 +678,11 @@ Diese Matrix stellt sicher, dass jeder Use Case durch mindestens eine Functional
 | UC-13 Task abnehmen | FR-702, FR-703 | ⚠️ Teilweise | **Neu:** Sichtbarkeit von „wartet auf Abnahme"-Tasks im Dashboard/Stage-Übersicht. |
 | UC-14 Field wieder öffnen | FR-404 | ✅ Ja | OK -- kein Bestätigungsdialog nötig (Versionshistorie als Safety-Net). |
 | UC-15 Prozess archivieren | FR-102 | ✅ Ja | OK |
+| UC-16 Template bearbeiten | FR-900, FR-901 | ✅ Ja | Pipeline-View + Edit-Panel für sofortige Bearbeitung. |
+| UC-17 Template anlegen | FR-902 | ✅ Ja | "+"-Buttons in Pipeline-View. |
+| UC-18 Template löschen | FR-903 | ✅ Ja | Bestätigungsdialog mit Instanz-Warnung. |
+| UC-19 Template umsortieren | FR-904 | ✅ Ja | Drag & Drop in Pipeline-View. |
+| UC-20 Prozessmodell anlegen | FR-905 | ✅ Ja | Model-Selector + "Neues Model"-Button. |
 
 ### Identifizierte Lücken (Zusammenfassung)
 

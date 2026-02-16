@@ -23,19 +23,16 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Get field instance with template
+  // Get field instance (snapshot columns contain all needed data)
   const { data: fieldInstance } = await supabase
     .from("field_instances")
-    .select("*, template:field_templates(*)")
+    .select("*")
     .eq("id", field_instance_id)
     .single();
 
   if (!fieldInstance) {
     return new Response("Field not found", { status: 404 });
   }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const template = fieldInstance.template as any;
 
   // Assemble context
   const contextParts: string[] = [];
@@ -89,15 +86,15 @@ export async function POST(request: Request) {
     }
   }
 
-  // 2. Get dependency contents
-  const dependencies: string[] = template?.dependencies ?? [];
+  // 2. Get dependency contents (using snapshot columns)
+  const dependencies: string[] = fieldInstance.dependencies ?? [];
   if (dependencies.length > 0) {
     const { data: depFields } = await supabase
       .from("field_instances")
       .select(`
         content,
+        name,
         field_template_id,
-        template:field_templates(name),
         step_instance:step_instances(
           stage_instance:stage_instances(process_id)
         )
@@ -108,26 +105,23 @@ export async function POST(request: Request) {
       for (const df of depFields) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((df as any).step_instance?.stage_instance?.process_id === process_id && df.content) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const depName = (df.template as any)?.name ?? "Referenz";
+          const depName = df.name ?? "Referenz";
           contextParts.push(`## ${depName}\n${df.content}`);
         }
       }
     }
   }
 
-  // 3. Get completed fields from previous stages
+  // 3. Get completed fields from previous stages (using snapshot columns)
   const { data: allStageFields } = await supabase
     .from("field_instances")
     .select(`
       content,
+      name,
       status,
-      template:field_templates(name),
       step_instance:step_instances(
         stage_instance:stage_instances(
-          process_id,
-          stage_template_id,
-          template:stage_templates(name, order_index)
+          process_id
         )
       )
     `)
@@ -142,9 +136,9 @@ export async function POST(request: Request) {
 
     if (prevStageFields.length > 0) {
       const summary = prevStageFields
-        .slice(0, 10) // Limit context size
+        .slice(0, 10)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((f: any) => `### ${f.template?.name}\n${f.content?.slice(0, 500)}`)
+        .map((f: any) => `### ${f.name}\n${f.content?.slice(0, 500)}`)
         .join("\n\n");
       contextParts.push(`## Bisherige Ergebnisse\n${summary}`);
     }
@@ -165,7 +159,7 @@ export async function POST(request: Request) {
       userPrompt += `\n\n## Kontext\n${context}`;
     }
   } else {
-    const basePrompt = custom_prompt ?? template?.ai_prompt ?? "Generiere passenden Inhalt für dieses Feld.";
+    const basePrompt = custom_prompt ?? fieldInstance.ai_prompt ?? "Generiere passenden Inhalt für dieses Feld.";
     userPrompt = basePrompt;
 
     if (additional_instructions) {
