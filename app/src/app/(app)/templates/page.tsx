@@ -160,12 +160,12 @@ export default function TemplatesPage() {
       ) : model ? (
         <PipelineView
           model={model}
+          setModel={setModel}
           onSelect={handleSelect}
           selectedId={editItem?.item.id ?? null}
           onAddStage={handleAddStage}
           onAddStep={handleAddStep}
           onAddField={handleAddField}
-          onRefresh={refreshModel}
         />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">

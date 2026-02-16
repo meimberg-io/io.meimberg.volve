@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type Dispatch, type SetStateAction } from "react";
 import {
   DndContext,
   closestCenter,
@@ -18,12 +18,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StepCard } from "./StepCard";
 import { reorderStepTemplates } from "@/lib/data/templates";
 import type {
+  ProcessModelWithTemplates,
   StageTemplateWithSteps,
   StageTemplate,
   StepTemplate,
@@ -32,6 +32,8 @@ import type {
 
 interface StageColumnProps {
   stage: StageTemplateWithSteps;
+  stageNumber: number;
+  setModel: Dispatch<SetStateAction<ProcessModelWithTemplates | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
     item: StageTemplate | StepTemplate | FieldTemplate
@@ -39,16 +41,16 @@ interface StageColumnProps {
   selectedId: string | null;
   onAddStep: (stageId: string) => void;
   onAddField: (stepId: string) => void;
-  onRefresh: () => void;
 }
 
 export function StageColumn({
   stage,
+  stageNumber,
+  setModel,
   onSelect,
   selectedId,
   onAddStep,
   onAddField,
-  onRefresh,
 }: StageColumnProps) {
   const {
     attributes,
@@ -70,27 +72,25 @@ export function StageColumn({
   );
 
   const handleStepDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-
-      const oldIndex = stage.steps.findIndex((s) => s.id === active.id);
-      const newIndex = stage.steps.findIndex((s) => s.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const newOrder = arrayMove(stage.steps, oldIndex, newIndex).map(
-        (s) => s.id
-      );
-      await reorderStepTemplates(stage.id, newOrder);
-      onRefresh();
+      const oldIdx = stage.steps.findIndex((s) => s.id === active.id);
+      const newIdx = stage.steps.findIndex((s) => s.id === over.id);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = arrayMove(stage.steps, oldIdx, newIdx);
+      setModel((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stages: prev.stages.map((s) =>
+            s.id === stage.id ? { ...s, steps: reordered } : s
+          ),
+        };
+      });
+      reorderStepTemplates(stage.id, reordered.map((s) => s.id));
     },
-    [stage, onRefresh]
-  );
-
-  const stepCount = stage.steps.length;
-  const fieldCount = stage.steps.reduce(
-    (acc, step) => acc + step.fields.length,
-    0
+    [stage, setModel]
   );
 
   return (
@@ -115,21 +115,16 @@ export function StageColumn({
         >
           <GripVertical className="h-4 w-4" />
         </button>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+          {stageNumber}
+        </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold">{stage.name}</h3>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">
-            {stepCount} Steps
-          </Badge>
-          <Badge variant="outline" className="text-[10px]">
-            {fieldCount} Fields
-          </Badge>
         </div>
       </div>
 
       {/* Steps */}
-      <div className="max-h-[500px] space-y-2 overflow-y-auto p-3">
+      <div className="space-y-2 p-3">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -139,14 +134,16 @@ export function StageColumn({
             items={stage.steps.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            {stage.steps.map((step) => (
+            {stage.steps.map((step, idx) => (
               <StepCard
                 key={step.id}
                 step={step}
+                stepLetter={String.fromCharCode(65 + idx)}
+                stageId={stage.id}
+                setModel={setModel}
                 onSelect={onSelect}
                 selectedId={selectedId}
                 onAddField={onAddField}
-                onRefresh={onRefresh}
               />
             ))}
           </SortableContext>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type Dispatch, type SetStateAction } from "react";
 import {
   DndContext,
   closestCenter,
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { FieldItem } from "./FieldItem";
 import { reorderFieldTemplates } from "@/lib/data/templates";
 import type {
+  ProcessModelWithTemplates,
   StepTemplateWithFields,
   StageTemplate,
   StepTemplate,
@@ -31,21 +32,25 @@ import type {
 
 interface StepCardProps {
   step: StepTemplateWithFields;
+  stepLetter: string;
+  stageId: string;
+  setModel: Dispatch<SetStateAction<ProcessModelWithTemplates | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
     item: StageTemplate | StepTemplate | FieldTemplate
   ) => void;
   selectedId: string | null;
   onAddField: (stepId: string) => void;
-  onRefresh: () => void;
 }
 
 export function StepCard({
   step,
+  stepLetter,
+  stageId,
+  setModel,
   onSelect,
   selectedId,
   onAddField,
-  onRefresh,
 }: StepCardProps) {
   const {
     attributes,
@@ -67,21 +72,32 @@ export function StepCard({
   );
 
   const handleFieldDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-
-      const oldIndex = step.fields.findIndex((f) => f.id === active.id);
-      const newIndex = step.fields.findIndex((f) => f.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const newOrder = arrayMove(step.fields, oldIndex, newIndex).map(
-        (f) => f.id
-      );
-      await reorderFieldTemplates(step.id, newOrder);
-      onRefresh();
+      const oldIdx = step.fields.findIndex((f) => f.id === active.id);
+      const newIdx = step.fields.findIndex((f) => f.id === over.id);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = arrayMove(step.fields, oldIdx, newIdx);
+      setModel((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stages: prev.stages.map((s) =>
+            s.id === stageId
+              ? {
+                  ...s,
+                  steps: s.steps.map((st) =>
+                    st.id === step.id ? { ...st, fields: reordered } : st
+                  ),
+                }
+              : s
+          ),
+        };
+      });
+      reorderFieldTemplates(step.id, reordered.map((f) => f.id));
     },
-    [step, onRefresh]
+    [step, stageId, setModel]
   );
 
   return (
@@ -106,11 +122,11 @@ export function StepCard({
         >
           <GripVertical className="h-3.5 w-3.5" />
         </button>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-500">
+          {stepLetter}
+        </span>
         <span className="min-w-0 flex-1 truncate text-xs font-medium">
           {step.name}
-        </span>
-        <span className="shrink-0 text-[10px] text-muted-foreground">
-          {step.fields.length} Fields
         </span>
       </div>
 
