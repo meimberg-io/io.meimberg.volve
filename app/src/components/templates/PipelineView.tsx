@@ -201,12 +201,6 @@ export function PipelineView({
             )}
             {generatingDeps ? "Generiere..." : "Dependencies generieren"}
           </Button>
-          {model.description && (
-            <span className="text-xs text-muted-foreground/50 truncate max-w-[400px]">
-              {model.description.slice(0, 100)}
-              {model.description.length > 100 ? "..." : ""}
-            </span>
-          )}
         </div>
       </div>
 
@@ -227,7 +221,7 @@ export function PipelineView({
         onScroll={() => syncScroll("content")}
         className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <div className="inline-flex items-start gap-0 pb-4">
+        <div className="inline-flex items-start gap-0 p-1 pb-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -299,6 +293,10 @@ export function PipelineView({
         context={{ process_description: model.description ?? "" }}
         parentId={model.id}
         hasExisting={model.stages.length > 0}
+        existingItems={model.stages.map((s) => ({
+          name: s.name,
+          description: s.description ?? "",
+        }))}
         onComplete={onRefresh}
       />
     </div>

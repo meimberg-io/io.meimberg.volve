@@ -137,6 +137,19 @@ export async function POST(request: Request) {
       return Response.json(result.object);
     }
 
+    if (mode === "extend_stages") {
+      const template = await getTemplate("tpl_extend_stages");
+      const extendContext = { ...context, user_prompt: userPrompt || "" };
+      const prompt = fillTemplate(template, extendContext);
+      const result = await generateObject({
+        model: openai("gpt-4o-mini"),
+        system: SYSTEM_BASE,
+        prompt,
+        schema: stagesSchema,
+      });
+      return Response.json(result.object);
+    }
+
     if (mode === "generate_steps") {
       const template = await getTemplate("tpl_generate_steps");
       const prompt = fillTemplate(template, context);
@@ -144,6 +157,19 @@ export async function POST(request: Request) {
         model: openai("gpt-4o-mini"),
         system: SYSTEM_BASE,
         prompt: userPrompt ? `${prompt}\n\nZusatzhinweis: ${userPrompt}` : prompt,
+        schema: stepsSchema,
+      });
+      return Response.json(result.object);
+    }
+
+    if (mode === "extend_steps") {
+      const template = await getTemplate("tpl_extend_steps");
+      const extendContext = { ...context, user_prompt: userPrompt || "" };
+      const prompt = fillTemplate(template, extendContext);
+      const result = await generateObject({
+        model: openai("gpt-4o-mini"),
+        system: SYSTEM_BASE,
+        prompt,
         schema: stepsSchema,
       });
       return Response.json(result.object);

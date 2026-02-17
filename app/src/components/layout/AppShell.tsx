@@ -101,7 +101,7 @@ export function AppShell({ children, user }: AppShellProps) {
                     variant={pathname.startsWith(item.path) ? "secondary" : "ghost"}
                     size="sm"
                     className={cn(
-                      "gap-2",
+                      "gap-2 cursor-pointer",
                       pathname.startsWith(item.path) && "bg-secondary"
                     )}
                   >
@@ -129,7 +129,7 @@ export function AppShell({ children, user }: AppShellProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full cursor-pointer">
                   <Avatar className="h-8 w-8 border-2 border-primary/20">
                     <AvatarImage src={avatarUrl ?? undefined} alt={userName} />
                     <AvatarFallback className="bg-primary text-xs text-primary-foreground">
@@ -166,7 +166,7 @@ export function AppShell({ children, user }: AppShellProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden cursor-pointer"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -186,7 +186,7 @@ export function AppShell({ children, user }: AppShellProps) {
                 >
                   <Button
                     variant={pathname.startsWith(item.path) ? "secondary" : "ghost"}
-                    className="w-full justify-start gap-3"
+                    className="w-full justify-start gap-3 cursor-pointer"
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}

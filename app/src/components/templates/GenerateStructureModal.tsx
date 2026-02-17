@@ -6,16 +6,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { AiButton } from "@/components/ui/ai-button";
+import { PromptField } from "@/components/field/PromptField";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   bulkCreateStages,
   bulkCreateStepsWithFields,
@@ -41,6 +40,11 @@ interface GeneratedStep {
   fields: GeneratedField[];
 }
 
+interface ExistingItem {
+  name: string;
+  description: string;
+}
+
 interface GenerateStructureModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,6 +52,7 @@ interface GenerateStructureModalProps {
   context: Record<string, string>;
   parentId: string;
   hasExisting: boolean;
+  existingItems?: ExistingItem[];
   onComplete: () => void;
 }
 
@@ -58,31 +63,47 @@ export function GenerateStructureModal({
   context,
   parentId,
   hasExisting,
+  existingItems = [],
   onComplete,
 }: GenerateStructureModalProps) {
   const [userPrompt, setUserPrompt] = useState("");
   const [stages, setStages] = useState<GeneratedStage[] | null>(null);
   const [steps, setSteps] = useState<GeneratedStep[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [activeAi, setActiveAi] = useState<"generate" | "extend" | null>(null);
   const [applying, setApplying] = useState(false);
-  const [replaceExisting, setReplaceExisting] = useState(false);
+  const [applyMode, setApplyMode] = useState<"replace" | "append">("replace");
   const [error, setError] = useState<string | null>(null);
 
   const hasResults = mode === "generate_stages" ? stages !== null : steps !== null;
+  const itemLabel = mode === "generate_stages" ? "Stages" : "Steps";
 
-  const handleGenerate = useCallback(async () => {
-    setLoading(true);
+  const handleGenerate = useCallback(async (aiMode: "generate" | "extend") => {
+    setActiveAi(aiMode);
     setError(null);
     setStages(null);
     setSteps(null);
+    setApplyMode(aiMode === "generate" ? "replace" : "append");
+
+    const apiMode = aiMode === "extend"
+      ? (mode === "generate_stages" ? "extend_stages" : "extend_steps")
+      : mode;
+
+    const extendContext = aiMode === "extend"
+      ? {
+          ...context,
+          existing_items: existingItems
+            .map((item) => `- "${item.name}": ${item.description || "(keine Beschreibung)"}`)
+            .join("\n"),
+        }
+      : context;
 
     try {
       const response = await fetch("/api/ai/template-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode,
-          context,
+          mode: apiMode,
+          context: extendContext,
           userPrompt: userPrompt || undefined,
         }),
       });
@@ -101,16 +122,16 @@ export function GenerateStructureModal({
     } catch {
       setError("Fehler bei der Generierung. Bitte versuche es erneut.");
     } finally {
-      setLoading(false);
+      setActiveAi(null);
     }
-  }, [mode, context, userPrompt]);
+  }, [mode, context, existingItems, userPrompt]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
     setStages(null);
     setSteps(null);
     setUserPrompt("");
-    setReplaceExisting(false);
+    setApplyMode("replace");
     setError(null);
   }, [onOpenChange]);
 
@@ -118,11 +139,10 @@ export function GenerateStructureModal({
     setApplying(true);
     try {
       if (mode === "generate_stages" && stages) {
-        if (replaceExisting) {
+        if (applyMode === "replace") {
           await clearStages(parentId);
-        }
-        const startIndex = replaceExisting ? 0 : undefined;
-        if (!replaceExisting) {
+          await bulkCreateStages(parentId, stages, 0);
+        } else {
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
           const { data: existing } = await supabase
@@ -133,14 +153,12 @@ export function GenerateStructureModal({
             .limit(1);
           const offset = existing && existing.length > 0 ? existing[0].order_index + 1 : 0;
           await bulkCreateStages(parentId, stages, offset);
-        } else {
-          await bulkCreateStages(parentId, stages, startIndex ?? 0);
         }
       } else if (mode === "generate_steps" && steps) {
-        if (replaceExisting) {
+        if (applyMode === "replace") {
           await clearSteps(parentId);
-        }
-        if (!replaceExisting) {
+          await bulkCreateStepsWithFields(parentId, steps, 0);
+        } else {
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
           const { data: existing } = await supabase
@@ -151,8 +169,6 @@ export function GenerateStructureModal({
             .limit(1);
           const offset = existing && existing.length > 0 ? existing[0].order_index + 1 : 0;
           await bulkCreateStepsWithFields(parentId, steps, offset);
-        } else {
-          await bulkCreateStepsWithFields(parentId, steps, 0);
         }
       }
       onComplete();
@@ -162,7 +178,7 @@ export function GenerateStructureModal({
     } finally {
       setApplying(false);
     }
-  }, [mode, stages, steps, parentId, replaceExisting, onComplete, handleClose]);
+  }, [mode, stages, steps, parentId, applyMode, onComplete, handleClose]);
 
   const title =
     mode === "generate_stages"
@@ -175,20 +191,17 @@ export function GenerateStructureModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            {title}
-          </DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-sm">{title}</DialogTitle>
+          <DialogDescription className="text-xs">
             {mode === "generate_stages"
               ? "KI generiert Stages basierend auf der Prozessbeschreibung"
               : "KI generiert Steps mit Fields basierend auf der Stage-Beschreibung"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 min-h-0 overflow-y-auto">
+        <div className="space-y-4 py-2 min-h-0 flex-1 overflow-y-auto">
           {context.process_description && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Prozessbeschreibung</Label>
               <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-16 overflow-y-auto">
                 {context.process_description}
@@ -197,7 +210,7 @@ export function GenerateStructureModal({
           )}
 
           {context.stage_description && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Stage-Beschreibung</Label>
               <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-16 overflow-y-auto">
                 {context.stage_description}
@@ -205,37 +218,43 @@ export function GenerateStructureModal({
             </div>
           )}
 
-          {!hasResults && (
-            <div className="space-y-2">
-              <Label>Zusatzhinweis (optional)</Label>
-              <Textarea
-                value={userPrompt}
-                onChange={(e) => setUserPrompt(e.target.value)}
-                rows={2}
-                placeholder="Optionale Ergänzungen für die Generierung..."
-              />
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label className="text-xs">
+              Prompt {!hasResults && hasExisting ? "(für Ergänzen erforderlich)" : "(optional)"}
+            </Label>
+            <PromptField
+              value={userPrompt}
+              onChange={(e) => setUserPrompt(e.target.value)}
+              rows={2}
+              placeholder={hasExisting
+                ? `z.B. Ergänze ${itemLabel} für ...`
+                : "Optionale Ergänzungen für die Generierung..."
+              }
+            />
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-2.5 text-xs text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle className="h-3 w-3 shrink-0" />
               {error}
             </div>
           )}
 
-          {loading && (
+          {!!activeAi && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Generiere...</span>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-xs text-muted-foreground">Generiere...</span>
             </div>
           )}
 
           {/* Stages preview */}
           {stages && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
                 Vorschau: {stages.length} Stages
+                {applyMode === "append" && (
+                  <span className="text-amber-400 ml-1">(werden ergänzt)</span>
+                )}
               </Label>
               <ScrollArea className="max-h-[280px]">
                 <div className="space-y-2">
@@ -248,8 +267,8 @@ export function GenerateStructureModal({
                         {i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{stage.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs font-medium">{stage.name}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
                           {stage.description}
                         </p>
                       </div>
@@ -262,12 +281,15 @@ export function GenerateStructureModal({
 
           {/* Steps + Fields preview */}
           {steps && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
                 Vorschau: {steps.length} Steps, {totalFields} Fields
+                {applyMode === "append" && (
+                  <span className="text-amber-400 ml-1">(werden ergänzt)</span>
+                )}
               </Label>
               <ScrollArea className="max-h-[280px]">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {steps.map((step, i) => (
                     <div
                       key={i}
@@ -277,9 +299,9 @@ export function GenerateStructureModal({
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-500">
                           {String.fromCharCode(65 + i)}
                         </span>
-                        <p className="text-sm font-medium">{step.name}</p>
+                        <p className="text-xs font-medium">{step.name}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 ml-7">
+                      <p className="text-[11px] text-muted-foreground mt-1 ml-7">
                         {step.description}
                       </p>
                       {step.fields.length > 0 && (
@@ -287,7 +309,7 @@ export function GenerateStructureModal({
                           {step.fields.map((field, j) => (
                             <div
                               key={j}
-                              className="flex items-center gap-2 text-xs"
+                              className="flex items-center gap-2 text-[11px]"
                             >
                               <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
                               <span className="text-foreground/80">{field.name}</span>
@@ -307,64 +329,64 @@ export function GenerateStructureModal({
               </ScrollArea>
             </div>
           )}
-
-          {hasResults && hasExisting && (
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="replace"
-                checked={replaceExisting}
-                onCheckedChange={(checked) =>
-                  setReplaceExisting(checked === true)
-                }
-              />
-              <label
-                htmlFor="replace"
-                className="text-xs text-muted-foreground cursor-pointer"
-              >
-                Bestehende{" "}
-                {mode === "generate_stages" ? "Stages" : "Steps"}{" "}
-                ersetzen (sonst werden neue angehängt)
-              </label>
-            </div>
-          )}
         </div>
 
-        <DialogFooter className="gap-2 shrink-0">
-          <Button variant="outline" onClick={handleClose}>
-            <X className="mr-1.5 h-4 w-4" />
-            Abbrechen
-          </Button>
-          {hasResults ? (
-            <>
+        {/* Footer */}
+        <div className="flex items-center justify-between shrink-0 pt-2">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
+              onClick={handleClose}
+            >
+              <X className="h-3 w-3" />
+              Abbrechen
+            </Button>
+            {hasResults && (
               <Button
-                variant="outline"
-                onClick={() => {
-                  setStages(null);
-                  setSteps(null);
-                }}
+                size="sm"
+                className="gap-1.5 text-xs cursor-pointer bg-green-500/80 text-white hover:bg-green-500"
+                onClick={handleApply}
+                disabled={applying}
               >
-                Neu generieren
-              </Button>
-              <Button onClick={handleApply} disabled={applying}>
                 {applying ? (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <Check className="mr-1.5 h-4 w-4" />
+                  <Check className="h-3 w-3" />
                 )}
                 {applying ? "Speichere..." : "Übernehmen"}
               </Button>
-            </>
-          ) : (
-            <Button onClick={handleGenerate} disabled={loading}>
-              {loading ? (
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-1.5 h-4 w-4" />
+            )}
+          </div>
+          {!hasResults && (
+            <div className="flex gap-2">
+              <AiButton
+                loading={activeAi === "generate"}
+                disabled={!!activeAi}
+                onClick={() => handleGenerate("generate")}
+              >
+                Neu generieren
+              </AiButton>
+              {hasExisting && (
+                <AiButton
+                  loading={activeAi === "extend"}
+                  disabled={!!activeAi || !userPrompt.trim()}
+                  onClick={() => handleGenerate("extend")}
+                  title={!userPrompt.trim() ? "Prompt erforderlich zum Ergänzen" : undefined}
+                >
+                  Ergänzen
+                </AiButton>
               )}
-              {loading ? "Generiere..." : "Generieren"}
-            </Button>
+            </div>
           )}
-        </DialogFooter>
+          {hasResults && (
+            <AiButton
+              onClick={() => handleGenerate(applyMode === "append" ? "extend" : "generate")}
+            >
+              Nochmal
+            </AiButton>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

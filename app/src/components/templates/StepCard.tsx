@@ -105,14 +105,15 @@ export function StepCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "rounded-lg border border-border bg-background",
+        "rounded-lg border border-border bg-background transition-colors [&:has([data-header]:hover)]:border-primary/40",
         isDragging && "opacity-50",
         selectedId === step.id && "ring-2 ring-primary"
       )}
     >
       {/* Step Header */}
       <div
-        className="flex cursor-pointer items-center gap-2 p-2.5"
+        data-header
+        className="flex cursor-pointer items-center gap-2 p-2.5 rounded-t-lg transition-colors hover:bg-muted"
         onClick={() => onSelect("step", step)}
       >
         <button
@@ -160,7 +161,7 @@ export function StepCard({
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 w-full justify-start text-[10px] text-muted-foreground"
+          className="h-6 w-full justify-start text-[10px] text-muted-foreground cursor-pointer"
           onClick={() => onAddField(step.id)}
         >
           <Plus className="mr-1 h-3 w-3" />

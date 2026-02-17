@@ -17,8 +17,9 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Sparkles } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AiButton } from "@/components/ui/ai-button";
 import { cn } from "@/lib/utils";
 import { StepCard } from "./StepCard";
 import { GenerateStructureModal } from "./GenerateStructureModal";
@@ -105,14 +106,15 @@ export function StageColumn({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "w-[280px] shrink-0 rounded-xl border border-border bg-card",
+        "w-[280px] shrink-0 rounded-xl border border-border bg-card transition-colors [&:has(>[data-header]:hover)]:border-primary/40",
         isDragging && "opacity-50",
         selectedId === stage.id && "ring-2 ring-primary"
       )}
     >
       {/* Stage Header */}
       <div
-        className="flex cursor-pointer items-center gap-2 border-b border-border p-3"
+        data-header
+        className="flex cursor-pointer items-center gap-2 border-b border-border p-3 rounded-t-xl transition-colors hover:bg-muted"
         onClick={() => onSelect("stage", stage)}
       >
         <button
@@ -164,26 +166,23 @@ export function StageColumn({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border p-2 space-y-1">
+      <div className="border-t border-border px-3 py-3 space-y-1.5">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="w-full justify-start text-xs text-muted-foreground"
+          className="w-full justify-start gap-1.5 text-xs cursor-pointer text-blue-400 border-blue-400/30 hover:bg-blue-400! hover:text-black! hover:border-blue-400!"
           onClick={() => onAddStep(stage.id)}
         >
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          <Plus className="h-3 w-3" />
           Step hinzufügen
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-xs text-amber-400 hover:text-amber-300"
+        <AiButton
+          className="w-full justify-start"
           onClick={() => setShowGenSteps(true)}
           disabled={!processDescription && !stage.description}
         >
-          <Sparkles className="mr-1.5 h-3.5 w-3.5" />
           Steps generieren
-        </Button>
+        </AiButton>
       </div>
 
       <GenerateStructureModal
@@ -197,6 +196,10 @@ export function StageColumn({
         }}
         parentId={stage.id}
         hasExisting={stage.steps.length > 0}
+        existingItems={stage.steps.map((s) => ({
+          name: s.name,
+          description: s.description ?? "",
+        }))}
         onComplete={onRefresh}
       />
     </div>

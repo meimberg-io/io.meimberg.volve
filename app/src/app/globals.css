@@ -99,8 +99,8 @@
   --muted: oklch(0.20 0.02 260);
   --muted-foreground: oklch(0.55 0.03 260);
 
-  /* Accent: Emerald #10B981 */
-  --accent: oklch(0.70 0.17 168);
+  /* Accent: Blue (same as primary) */
+  --accent: oklch(0.62 0.21 260);
   --accent-foreground: oklch(0.98 0.005 260);
 
   /* Destructive: Red */
@@ -169,8 +169,8 @@
   --muted: oklch(0.93 0.005 255);
   --muted-foreground: oklch(0.45 0.03 260);
 
-  --accent: oklch(0.62 0.18 168);
-  --accent-foreground: oklch(1.0 0 0);
+  --accent: oklch(0.95 0.02 260);
+  --accent-foreground: oklch(0.15 0.04 260);
 
   --destructive: oklch(0.58 0.22 25);
 

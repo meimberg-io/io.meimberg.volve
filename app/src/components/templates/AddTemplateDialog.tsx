@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -106,17 +106,17 @@ export function AddTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-sm">
             {context ? typeLabels[context.type] : "Element"} erstellen
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Gib einen Namen für das neue Template ein.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="add-name">Name</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="add-name" className="text-xs">Name</Label>
             <Input
               ref={inputRef}
               id="add-name"
@@ -124,17 +124,18 @@ export function AddTemplateDialog({
               onChange={(e) => setName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`Name des ${context ? typeLabels[context.type] : "Elements"}...`}
+              className="text-xs!"
             />
           </div>
 
           {context?.type === "field" && (
-            <div className="space-y-2">
-              <Label>Typ</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Typ</Label>
               <Select
                 value={fieldType}
                 onValueChange={(v: FieldType) => setFieldType(v)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,17 +150,25 @@ export function AddTemplateDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-3 w-3" />
             Abbrechen
           </Button>
           <Button
+            size="sm"
+            className="gap-1.5 text-xs cursor-pointer bg-green-500/80 text-white hover:bg-green-500"
             onClick={handleSubmit}
             disabled={!name.trim() || submitting}
           >
+            <Check className="h-3 w-3" />
             {submitting ? "Erstelle..." : "Erstellen"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
