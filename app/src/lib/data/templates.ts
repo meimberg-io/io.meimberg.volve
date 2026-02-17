@@ -46,29 +46,38 @@ export async function getProcessModelWithTemplates(
 
   const stageIds = (stages ?? []).map((s) => s.id);
 
-  const { data: steps, error: stepsError } = await supabase
-    .from("step_templates")
-    .select("*")
-    .in("stage_template_id", stageIds.length > 0 ? stageIds : ["__none__"])
-    .order("order_index", { ascending: true });
+  let steps: StepTemplate[] = [];
+  if (stageIds.length > 0) {
+    const { data, error: stepsError } = await supabase
+      .from("step_templates")
+      .select("*")
+      .in("stage_template_id", stageIds)
+      .order("order_index", { ascending: true });
+    if (stepsError) throw stepsError;
+    steps = data ?? [];
+  }
 
-  if (stepsError) throw stepsError;
+  const stepIds = steps.map((s) => s.id);
 
-  const stepIds = (steps ?? []).map((s) => s.id);
-
-  const { data: fields, error: fieldsError } = await supabase
-    .from("field_templates")
-    .select("*")
-    .in("step_template_id", stepIds.length > 0 ? stepIds : ["__none__"])
-    .order("order_index", { ascending: true });
-
-  if (fieldsError) throw fieldsError;
+  let fields: FieldTemplate[] = [];
+  if (stepIds.length > 0) {
+    const { data, error: fieldsError } = await supabase
+      .from("field_templates")
+      .select("*")
+      .in("step_template_id", stepIds)
+      .order("order_index", { ascending: true });
+    if (fieldsError) throw fieldsError;
+    fields = data ?? [];
+  }
 
   // Get instance counts per stage template
-  const { data: stageInstanceCounts } = await supabase
-    .from("stage_instances")
-    .select("stage_template_id")
-    .in("stage_template_id", stageIds.length > 0 ? stageIds : ["__none__"]);
+  const stageInstanceCounts = stageIds.length > 0
+    ? (await supabase
+        .from("stage_instances")
+        .select("stage_template_id")
+        .in("stage_template_id", stageIds)
+      ).data
+    : [];
 
   const stageCounts: Record<string, number> = {};
   for (const row of stageInstanceCounts ?? []) {
@@ -311,6 +320,146 @@ export async function deleteFieldTemplate(id: string): Promise<void> {
     .eq("id", id);
 
   if (error) throw error;
+}
+
+// =============================================
+// BULK CREATE (for AI generation)
+// =============================================
+
+export async function bulkCreateStages(
+  modelId: string,
+  stages: { name: string; description: string }[],
+  startIndex?: number
+): Promise<void> {
+  const offset = startIndex ?? 0;
+  for (let i = 0; i < stages.length; i++) {
+    const { error } = await supabase
+      .from("stage_templates")
+      .insert({
+        model_id: modelId,
+        name: stages[i].name,
+        description: stages[i].description,
+        order_index: offset + i,
+      });
+    if (error) throw error;
+  }
+}
+
+export async function bulkCreateStepsWithFields(
+  stageId: string,
+  steps: {
+    name: string;
+    description: string;
+    fields: {
+      name: string;
+      type: string;
+      description: string;
+      ai_prompt: string;
+    }[];
+  }[],
+  startIndex?: number
+): Promise<void> {
+  const offset = startIndex ?? 0;
+  for (let i = 0; i < steps.length; i++) {
+    const { data: step, error: stepError } = await supabase
+      .from("step_templates")
+      .insert({
+        stage_template_id: stageId,
+        name: steps[i].name,
+        description: steps[i].description,
+        order_index: offset + i,
+      })
+      .select("id")
+      .single();
+
+    if (stepError) throw stepError;
+
+    for (let j = 0; j < steps[i].fields.length; j++) {
+      const f = steps[i].fields[j];
+      const { error: fieldError } = await supabase
+        .from("field_templates")
+        .insert({
+          step_template_id: step.id,
+          name: f.name,
+          type: f.type,
+          description: f.description,
+          ai_prompt: f.ai_prompt,
+          order_index: j,
+        });
+      if (fieldError) throw fieldError;
+    }
+  }
+}
+
+export async function clearStages(modelId: string): Promise<void> {
+  const { data: stages } = await supabase
+    .from("stage_templates")
+    .select("id")
+    .eq("model_id", modelId);
+
+  if (stages && stages.length > 0) {
+    const stageIds = stages.map((s) => s.id);
+
+    const { data: steps } = await supabase
+      .from("step_templates")
+      .select("id")
+      .in("stage_template_id", stageIds);
+
+    if (steps && steps.length > 0) {
+      const stepIds = steps.map((s) => s.id);
+      await supabase
+        .from("field_templates")
+        .delete()
+        .in("step_template_id", stepIds);
+
+      await supabase
+        .from("step_templates")
+        .delete()
+        .in("stage_template_id", stageIds);
+    }
+
+    await supabase
+      .from("stage_templates")
+      .delete()
+      .eq("model_id", modelId);
+  }
+}
+
+export async function clearSteps(stageId: string): Promise<void> {
+  const { data: steps } = await supabase
+    .from("step_templates")
+    .select("id")
+    .eq("stage_template_id", stageId);
+
+  if (steps && steps.length > 0) {
+    const stepIds = steps.map((s) => s.id);
+    await supabase
+      .from("field_templates")
+      .delete()
+      .in("step_template_id", stepIds);
+
+    await supabase
+      .from("step_templates")
+      .delete()
+      .eq("stage_template_id", stageId);
+  }
+}
+
+// =============================================
+// BULK UPDATE DEPENDENCIES
+// =============================================
+
+export async function bulkUpdateDependencies(
+  updates: { id: string; dependencies: string[] }[]
+): Promise<void> {
+  for (const update of updates) {
+    const { error } = await supabase
+      .from("field_templates")
+      .update({ dependencies: update.dependencies.length > 0 ? update.dependencies : null })
+      .eq("id", update.id);
+
+    if (error) throw error;
+  }
 }
 
 // =============================================

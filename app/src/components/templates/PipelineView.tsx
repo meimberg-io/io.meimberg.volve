@@ -15,10 +15,14 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, ChevronDown, ChevronUp, Pencil, Eye, Loader2, Link2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { StageColumn } from "./StageColumn";
-import { reorderStageTemplates } from "@/lib/data/templates";
+import { GenerateDescriptionModal } from "./GenerateDescriptionModal";
+import { GenerateStructureModal } from "./GenerateStructureModal";
+import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies } from "@/lib/data/templates";
 import type {
   ProcessModelWithTemplates,
   StageTemplate,
@@ -37,6 +41,7 @@ interface PipelineViewProps {
   onAddStage: () => void;
   onAddStep: (stageId: string) => void;
   onAddField: (stepId: string) => void;
+  onRefresh: () => void;
 }
 
 export function PipelineView({
@@ -47,6 +52,7 @@ export function PipelineView({
   onAddStage,
   onAddStep,
   onAddField,
+  onRefresh,
 }: PipelineViewProps) {
   const topBarRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -91,8 +97,201 @@ export function PipelineView({
     [model, setModel]
   );
 
+  const [showGenDesc, setShowGenDesc] = useState(false);
+  const [showOptimizeDesc, setShowOptimizeDesc] = useState(false);
+  const [showGenStages, setShowGenStages] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descEditing, setDescEditing] = useState(false);
+  const [generatingDeps, setGeneratingDeps] = useState(false);
+  const [localDesc, setLocalDesc] = useState(model.description ?? "");
+  const descDebounce = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    setLocalDesc(model.description ?? "");
+  }, [model.description]);
+
+  const allFields = model.stages.flatMap((s) =>
+    s.steps.flatMap((st) =>
+      st.fields.map((f) => ({
+        id: f.id,
+        name: f.name,
+        description: f.description ?? "",
+        stepName: st.name,
+        stageName: s.name,
+      }))
+    )
+  );
+
+  const handleGenerateDependencies = useCallback(async () => {
+    if (allFields.length === 0) return;
+    setGeneratingDeps(true);
+    try {
+      const fieldsList = allFields
+        .map((f) => `- ID: ${f.id} | Name: "${f.name}" | Stage: "${f.stageName}" | Step: "${f.stepName}" | Beschreibung: ${f.description}`)
+        .join("\n");
+
+      const response = await fetch("/api/ai/template-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "generate_dependencies",
+          context: { fields_list: fieldsList },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Generation failed");
+      const data = await response.json();
+
+      const validFieldIds = new Set(allFields.map((f) => f.id));
+      const updates = (data.dependencies ?? [])
+        .filter((d: { field_id: string; depends_on: string[] }) =>
+          validFieldIds.has(d.field_id) && d.depends_on.length > 0
+        )
+        .map((d: { field_id: string; depends_on: string[] }) => ({
+          id: d.field_id,
+          dependencies: d.depends_on.filter((id: string) => validFieldIds.has(id)),
+        }))
+        .filter((d: { id: string; dependencies: string[] }) => d.dependencies.length > 0);
+
+      if (updates.length > 0) {
+        await bulkUpdateDependencies(updates);
+        onRefresh();
+      }
+    } catch (err) {
+      console.error("Dependency generation failed:", err);
+    } finally {
+      setGeneratingDeps(false);
+    }
+  }, [allFields, onRefresh]);
+
+  const saveDescription = useCallback(
+    (value: string) => {
+      clearTimeout(descDebounce.current);
+      descDebounce.current = setTimeout(async () => {
+        await updateProcessModel(model.id, { description: value || null });
+        setModel((prev) => prev ? { ...prev, description: value || null } : prev);
+      }, 500);
+    },
+    [model.id, setModel]
+  );
+
   return (
     <div className="w-full">
+      {/* Process description + AI buttons */}
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-xs text-muted-foreground px-2 h-7"
+            onClick={() => setDescExpanded(!descExpanded)}
+          >
+            {descExpanded ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+            Prozessbeschreibung
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            onClick={() => setShowGenDesc(true)}
+          >
+            <Sparkles className="h-3 w-3" />
+            Generieren
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            onClick={() => setShowOptimizeDesc(true)}
+            disabled={!model.description}
+            title={!model.description ? "Erst Beschreibung generieren" : undefined}
+          >
+            <Pencil className="h-3 w-3" />
+            Optimieren
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            onClick={() => setShowGenStages(true)}
+            disabled={!model.description}
+            title={!model.description ? "Prozessbeschreibung wird zuerst benötigt" : undefined}
+          >
+            <Sparkles className="h-3 w-3" />
+            Stages generieren
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            onClick={handleGenerateDependencies}
+            disabled={allFields.length === 0 || generatingDeps}
+            title={allFields.length === 0 ? "Keine Fields vorhanden" : undefined}
+          >
+            {generatingDeps ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Link2 className="h-3 w-3" />
+            )}
+            {generatingDeps ? "Generiere..." : "Dependencies generieren"}
+          </Button>
+          {!descExpanded && model.description && (
+            <span className="text-xs text-muted-foreground/50 truncate max-w-[400px]">
+              {model.description.slice(0, 100)}
+              {model.description.length > 100 ? "..." : ""}
+            </span>
+          )}
+        </div>
+        {descExpanded && (
+          <div className="rounded-md border border-border bg-card">
+            <div className="flex items-center justify-end gap-1 border-b border-border px-2 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 gap-1 px-2 text-[10px] ${!descEditing ? "text-foreground" : "text-muted-foreground"}`}
+                onClick={() => setDescEditing(false)}
+              >
+                <Eye className="h-3 w-3" />
+                Vorschau
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 gap-1 px-2 text-[10px] ${descEditing ? "text-foreground" : "text-muted-foreground"}`}
+                onClick={() => setDescEditing(true)}
+              >
+                <Pencil className="h-3 w-3" />
+                Bearbeiten
+              </Button>
+            </div>
+            {descEditing ? (
+              <Textarea
+                value={localDesc}
+                rows={8}
+                className="border-0 text-sm focus-visible:ring-0 font-mono"
+                placeholder="Beschreibung des Prozessmodells (Markdown)..."
+                onChange={(e) => {
+                  setLocalDesc(e.target.value);
+                  saveDescription(e.target.value);
+                }}
+              />
+            ) : localDesc ? (
+              <div className="prose prose-sm prose-invert max-w-none p-3 text-sm">
+                <ReactMarkdown>{localDesc}</ReactMarkdown>
+              </div>
+            ) : (
+              <p className="p-3 text-xs text-muted-foreground italic">
+                Keine Beschreibung vorhanden. Klicke &quot;Bearbeiten&quot; oder &quot;Generieren&quot;.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Top scrollbar */}
       <div
         ref={topBarRef}
@@ -135,6 +334,8 @@ export function PipelineView({
                     selectedId={selectedId}
                     onAddStep={onAddStep}
                     onAddField={onAddField}
+                    processDescription={model.description ?? ""}
+                    onRefresh={onRefresh}
                   />
                 </div>
               ))}
@@ -160,6 +361,45 @@ export function PipelineView({
           </div>
         </div>
       </div>
+
+      {/* Generate Process Description Modal */}
+      <GenerateDescriptionModal
+        open={showGenDesc}
+        onOpenChange={setShowGenDesc}
+        mode="process_description"
+        context={{}}
+        title="Prozessbeschreibung generieren"
+        onApply={async (desc) => {
+          await updateProcessModel(model.id, { description: desc });
+          setModel((prev) => prev ? { ...prev, description: desc } : prev);
+          setLocalDesc(desc);
+        }}
+      />
+
+      {/* Optimize Process Description Modal */}
+      <GenerateDescriptionModal
+        open={showOptimizeDesc}
+        onOpenChange={setShowOptimizeDesc}
+        mode="optimize_description"
+        context={{ current_description: localDesc || model.description || "" }}
+        title="Prozessbeschreibung optimieren"
+        onApply={async (desc) => {
+          await updateProcessModel(model.id, { description: desc });
+          setModel((prev) => prev ? { ...prev, description: desc } : prev);
+          setLocalDesc(desc);
+        }}
+      />
+
+      {/* Generate Stages Modal */}
+      <GenerateStructureModal
+        open={showGenStages}
+        onOpenChange={setShowGenStages}
+        mode="generate_stages"
+        context={{ process_description: model.description ?? "" }}
+        parentId={model.id}
+        hasExisting={model.stages.length > 0}
+        onComplete={onRefresh}
+      />
     </div>
   );
 }

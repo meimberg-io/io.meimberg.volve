@@ -31,8 +31,8 @@ export default function DashboardPage() {
     loadProcesses(); // eslint-disable-line react-hooks/set-state-in-effect -- async data fetch
   }, [loadProcesses]);
 
-  const handleCreateProcess = async (name: string) => {
-    const process = await createProcess(name);
+  const handleCreateProcess = async (name: string, modelId: string) => {
+    const process = await createProcess(name, modelId);
     router.push(`/process/${process.id}/seed`);
   };
 

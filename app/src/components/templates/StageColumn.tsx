@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import {
   DndContext,
   closestCenter,
@@ -17,10 +17,11 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StepCard } from "./StepCard";
+import { GenerateStructureModal } from "./GenerateStructureModal";
 import { reorderStepTemplates } from "@/lib/data/templates";
 import type {
   ProcessModelWithTemplates,
@@ -41,6 +42,8 @@ interface StageColumnProps {
   selectedId: string | null;
   onAddStep: (stageId: string) => void;
   onAddField: (stepId: string) => void;
+  processDescription: string;
+  onRefresh: () => void;
 }
 
 export function StageColumn({
@@ -51,7 +54,11 @@ export function StageColumn({
   selectedId,
   onAddStep,
   onAddField,
+  processDescription,
+  onRefresh,
 }: StageColumnProps) {
+  const [showGenSteps, setShowGenSteps] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -157,7 +164,7 @@ export function StageColumn({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border p-2">
+      <div className="border-t border-border p-2 space-y-1">
         <Button
           variant="ghost"
           size="sm"
@@ -167,7 +174,31 @@ export function StageColumn({
           <Plus className="mr-1.5 h-3.5 w-3.5" />
           Step hinzufügen
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-xs text-amber-400 hover:text-amber-300"
+          onClick={() => setShowGenSteps(true)}
+          disabled={!processDescription && !stage.description}
+        >
+          <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+          Steps generieren
+        </Button>
       </div>
+
+      <GenerateStructureModal
+        open={showGenSteps}
+        onOpenChange={setShowGenSteps}
+        mode="generate_steps"
+        context={{
+          stage_name: stage.name,
+          stage_description: stage.description ?? "",
+          process_description: processDescription,
+        }}
+        parentId={stage.id}
+        hasExisting={stage.steps.length > 0}
+        onComplete={onRefresh}
+      />
     </div>
   );
 }

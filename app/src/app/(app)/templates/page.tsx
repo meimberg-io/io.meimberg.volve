@@ -166,6 +166,7 @@ export default function TemplatesPage() {
           onAddStage={handleAddStage}
           onAddStep={handleAddStep}
           onAddField={handleAddField}
+          onRefresh={refreshModel}
         />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
@@ -181,6 +182,7 @@ export default function TemplatesPage() {
         open={editPanelOpen}
         onOpenChange={setEditPanelOpen}
         editItem={editItem}
+        model={model}
         onRefresh={async () => {
           await refreshModel();
           await loadModels();

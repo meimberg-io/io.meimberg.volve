@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, Sparkles } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -41,7 +41,9 @@ import {
   deleteFieldTemplate,
   getTemplateInstanceCount,
 } from "@/lib/data/templates";
+import { GenerateDescriptionModal } from "./GenerateDescriptionModal";
 import type {
+  ProcessModelWithTemplates,
   StageTemplate,
   StepTemplate,
   FieldTemplate,
@@ -63,6 +65,7 @@ interface EditPanelProps {
     type: "stage" | "step" | "field";
     item: StageTemplate | StepTemplate | FieldTemplate;
   } | null;
+  model: ProcessModelWithTemplates | null;
   onRefresh: () => void;
   allFields: FieldTemplate[];
 }
@@ -71,6 +74,7 @@ export function EditPanel({
   open,
   onOpenChange,
   editItem,
+  model,
   onRefresh,
   allFields,
 }: EditPanelProps) {
@@ -129,12 +133,14 @@ export function EditPanel({
               {editItem.type === "stage" && (
                 <StageForm
                   stage={editItem.item as StageTemplate}
+                  processDescription={model?.description ?? ""}
                   onRefresh={onRefresh}
                 />
               )}
               {editItem.type === "step" && (
                 <StepForm
                   step={editItem.item as StepTemplate}
+                  model={model}
                   onRefresh={onRefresh}
                 />
               )}
@@ -219,14 +225,17 @@ export function EditPanel({
 
 function StageForm({
   stage,
+  processDescription,
   onRefresh,
 }: {
   stage: StageTemplate;
+  processDescription: string;
   onRefresh: () => void;
 }) {
   const [name, setName] = useState(stage.name);
   const [description, setDescription] = useState(stage.description ?? "");
   const [icon, setIcon] = useState(stage.icon ?? "");
+  const [showGenerate, setShowGenerate] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -260,7 +269,20 @@ function StageForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="stage-description">Beschreibung</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="stage-description">Beschreibung</Label>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 text-xs text-amber-400 hover:text-amber-300"
+            onClick={() => setShowGenerate(true)}
+            disabled={!processDescription}
+            title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+          >
+            <Sparkles className="h-3 w-3" />
+            Generieren
+          </Button>
+        </div>
         <Textarea
           id="stage-description"
           value={description}
@@ -283,6 +305,21 @@ function StageForm({
           }}
         />
       </div>
+
+      <GenerateDescriptionModal
+        open={showGenerate}
+        onOpenChange={setShowGenerate}
+        mode="describe_stage"
+        context={{
+          stage_name: name,
+          process_description: processDescription,
+        }}
+        title="Stage-Beschreibung generieren"
+        onApply={(desc) => {
+          setDescription(desc);
+          save({ description: desc });
+        }}
+      />
     </div>
   );
 }
@@ -293,13 +330,16 @@ function StageForm({
 
 function StepForm({
   step,
+  model,
   onRefresh,
 }: {
   step: StepTemplate;
+  model: ProcessModelWithTemplates | null;
   onRefresh: () => void;
 }) {
   const [name, setName] = useState(step.name);
   const [description, setDescription] = useState(step.description ?? "");
+  const [showGenerate, setShowGenerate] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -318,6 +358,12 @@ function StepForm({
     [step.id, onRefresh]
   );
 
+  const parentStage = model?.stages.find((s) =>
+    s.steps.some((st) => st.id === step.id)
+  );
+  const processDescription = model?.description ?? "";
+  const hasContext = !!processDescription;
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -332,7 +378,20 @@ function StepForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="step-description">Beschreibung</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="step-description">Beschreibung</Label>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 text-xs text-amber-400 hover:text-amber-300"
+            onClick={() => setShowGenerate(true)}
+            disabled={!hasContext}
+            title={!hasContext ? "Prozessbeschreibung erforderlich" : undefined}
+          >
+            <Sparkles className="h-3 w-3" />
+            Generieren
+          </Button>
+        </div>
         <Textarea
           id="step-description"
           value={description}
@@ -343,6 +402,23 @@ function StepForm({
           }}
         />
       </div>
+
+      <GenerateDescriptionModal
+        open={showGenerate}
+        onOpenChange={setShowGenerate}
+        mode="describe_step"
+        context={{
+          step_name: name,
+          stage_name: parentStage?.name ?? "",
+          stage_description: parentStage?.description ?? "",
+          process_description: processDescription,
+        }}
+        title="Step-Beschreibung generieren"
+        onApply={(desc) => {
+          setDescription(desc);
+          save({ description: desc });
+        }}
+      />
     </div>
   );
 }

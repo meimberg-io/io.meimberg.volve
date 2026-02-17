@@ -76,7 +76,7 @@ export async function createProcess(
     .eq("model_id", modelId)
     .order("order_index");
 
-  if (!stageTemplates) throw new Error("Keine Stage-Templates gefunden");
+  if (!stageTemplates || stageTemplates.length === 0) return process;
 
   // 3. Instantiate all stages, steps, fields (with snapshot data)
   for (const stageTemplate of stageTemplates) {

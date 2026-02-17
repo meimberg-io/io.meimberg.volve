@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -14,24 +14,50 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getProcessModels } from "@/lib/data/templates";
+import type { ProcessModel } from "@/types";
 
 interface NewProcessDialogProps {
-  onSubmit: (name: string) => Promise<void>;
+  onSubmit: (name: string, modelId: string) => Promise<void>;
 }
 
 export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState("");
+  const [models, setModels] = useState<ProcessModel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setModelsLoading(true);
+      getProcessModels().then((data) => {
+        setModels(data);
+        if (data.length === 1) {
+          setSelectedModelId(data[0].id);
+        }
+        setModelsLoading(false);
+      });
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !selectedModelId) return;
 
     setLoading(true);
     try {
-      await onSubmit(name.trim());
+      await onSubmit(name.trim(), selectedModelId);
       setName("");
+      setSelectedModelId("");
       setOpen(false);
     } finally {
       setLoading(false);
@@ -55,26 +81,57 @@ export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
           <DialogHeader>
             <DialogTitle>Neuen Prozess starten</DialogTitle>
             <DialogDescription>
-              Gib deiner neuen Geschäftsidee einen Namen. Du kannst ihn später ändern.
+              Wähle ein Template und gib deinem neuen Prozess einen Namen.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="process-name">Prozessname</Label>
-            <Input
-              id="process-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. Meine SaaS-Idee"
-              className="mt-2"
-              autoFocus
-              disabled={loading}
-            />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="process-template">Template</Label>
+              {modelsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Templates laden...
+                </div>
+              ) : models.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">
+                  Keine Templates vorhanden. Erstelle zuerst ein Template.
+                </p>
+              ) : (
+                <Select
+                  value={selectedModelId}
+                  onValueChange={setSelectedModelId}
+                  disabled={loading}
+                >
+                  <SelectTrigger id="process-template">
+                    <SelectValue placeholder="Template auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="process-name">Prozessname</Label>
+              <Input
+                id="process-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="z. B. Meine SaaS-Idee"
+                autoFocus
+                disabled={loading}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={!name.trim() || loading}>
+            <Button type="submit" disabled={!name.trim() || !selectedModelId || loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Erstellen
             </Button>
