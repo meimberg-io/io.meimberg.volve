@@ -69,6 +69,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           className={cn(
             "w-full justify-start gap-2 text-xs cursor-pointer h-9",
             !value && "text-muted-foreground",
+            open && "border-ring!",
             className
           )}
         >

@@ -36,7 +36,7 @@ export function MarkdownField({
       ref={containerRef}
       className={cn(
         "rounded-md border border-border p-3 overflow-y-auto overflow-x-hidden transition-colors [scrollbar-color:var(--color-border)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
-        !disabled && "focus-within:border-foreground/25",
+        !disabled && "focus-within:border-ring",
         className
       )}
       style={{ maxHeight }}
