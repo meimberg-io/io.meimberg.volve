@@ -236,7 +236,7 @@ function StageForm({
   const [description, setDescription] = useState(stage.description ?? "");
   const [icon, setIcon] = useState(stage.icon ?? "");
   const [showGenerate, setShowGenerate] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setName(stage.name);
@@ -340,7 +340,7 @@ function StepForm({
   const [name, setName] = useState(step.name);
   const [description, setDescription] = useState(step.description ?? "");
   const [showGenerate, setShowGenerate] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setName(step.name);
@@ -443,7 +443,7 @@ function FieldForm({
   const [dependencies, setDependencies] = useState<string[]>(
     field.dependencies ?? []
   );
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setName(field.name);

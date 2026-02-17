@@ -104,7 +104,7 @@ export function PipelineView({
   const [descEditing, setDescEditing] = useState(false);
   const [generatingDeps, setGeneratingDeps] = useState(false);
   const [localDesc, setLocalDesc] = useState(model.description ?? "");
-  const descDebounce = useRef<ReturnType<typeof setTimeout>>();
+  const descDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setLocalDesc(model.description ?? "");
