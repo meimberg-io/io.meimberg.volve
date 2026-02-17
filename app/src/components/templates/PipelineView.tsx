@@ -15,12 +15,10 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, ChevronDown, ChevronUp, Pencil, Eye, Loader2, Link2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { Plus, ChevronRight, Sparkles, Pencil, Loader2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { StageColumn } from "./StageColumn";
-import { GenerateDescriptionModal } from "./GenerateDescriptionModal";
+import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
 import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies } from "@/lib/data/templates";
 import type {
@@ -97,18 +95,9 @@ export function PipelineView({
     [model, setModel]
   );
 
-  const [showGenDesc, setShowGenDesc] = useState(false);
-  const [showOptimizeDesc, setShowOptimizeDesc] = useState(false);
+  const [showDescModal, setShowDescModal] = useState(false);
   const [showGenStages, setShowGenStages] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
-  const [descEditing, setDescEditing] = useState(false);
   const [generatingDeps, setGeneratingDeps] = useState(false);
-  const [localDesc, setLocalDesc] = useState(model.description ?? "");
-  const descDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    setLocalDesc(model.description ?? "");
-  }, [model.description]);
 
   const allFields = model.stages.flatMap((s) =>
     s.steps.flatMap((st) =>
@@ -164,54 +153,19 @@ export function PipelineView({
     }
   }, [allFields, onRefresh]);
 
-  const saveDescription = useCallback(
-    (value: string) => {
-      clearTimeout(descDebounce.current);
-      descDebounce.current = setTimeout(async () => {
-        await updateProcessModel(model.id, { description: value || null });
-        setModel((prev) => prev ? { ...prev, description: value || null } : prev);
-      }, 500);
-    },
-    [model.id, setModel]
-  );
-
   return (
     <div className="w-full">
       {/* Process description + AI buttons */}
       <div className="mb-4 space-y-2">
         <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-xs text-muted-foreground px-2 h-7"
-            onClick={() => setDescExpanded(!descExpanded)}
-          >
-            {descExpanded ? (
-              <ChevronUp className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5" />
-            )}
-            Prozessbeschreibung
-          </Button>
-          <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
-            onClick={() => setShowGenDesc(true)}
-          >
-            <Sparkles className="h-3 w-3" />
-            Generieren
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
-            onClick={() => setShowOptimizeDesc(true)}
-            disabled={!model.description}
-            title={!model.description ? "Erst Beschreibung generieren" : undefined}
+            className="gap-1.5 h-7 text-xs"
+            onClick={() => setShowDescModal(true)}
           >
             <Pencil className="h-3 w-3" />
-            Optimieren
+            Prozessbeschreibung
           </Button>
           <Button
             variant="outline"
@@ -239,57 +193,13 @@ export function PipelineView({
             )}
             {generatingDeps ? "Generiere..." : "Dependencies generieren"}
           </Button>
-          {!descExpanded && model.description && (
+          {model.description && (
             <span className="text-xs text-muted-foreground/50 truncate max-w-[400px]">
               {model.description.slice(0, 100)}
               {model.description.length > 100 ? "..." : ""}
             </span>
           )}
         </div>
-        {descExpanded && (
-          <div className="rounded-md border border-border bg-card">
-            <div className="flex items-center justify-end gap-1 border-b border-border px-2 py-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 gap-1 px-2 text-[10px] ${!descEditing ? "text-foreground" : "text-muted-foreground"}`}
-                onClick={() => setDescEditing(false)}
-              >
-                <Eye className="h-3 w-3" />
-                Vorschau
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 gap-1 px-2 text-[10px] ${descEditing ? "text-foreground" : "text-muted-foreground"}`}
-                onClick={() => setDescEditing(true)}
-              >
-                <Pencil className="h-3 w-3" />
-                Bearbeiten
-              </Button>
-            </div>
-            {descEditing ? (
-              <Textarea
-                value={localDesc}
-                rows={8}
-                className="border-0 text-sm focus-visible:ring-0 font-mono"
-                placeholder="Beschreibung des Prozessmodells (Markdown)..."
-                onChange={(e) => {
-                  setLocalDesc(e.target.value);
-                  saveDescription(e.target.value);
-                }}
-              />
-            ) : localDesc ? (
-              <div className="prose prose-sm prose-invert max-w-none p-3 text-sm">
-                <ReactMarkdown>{localDesc}</ReactMarkdown>
-              </div>
-            ) : (
-              <p className="p-3 text-xs text-muted-foreground italic">
-                Keine Beschreibung vorhanden. Klicke &quot;Bearbeiten&quot; oder &quot;Generieren&quot;.
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Top scrollbar */}
@@ -362,31 +272,14 @@ export function PipelineView({
         </div>
       </div>
 
-      {/* Generate Process Description Modal */}
-      <GenerateDescriptionModal
-        open={showGenDesc}
-        onOpenChange={setShowGenDesc}
-        mode="process_description"
-        context={{}}
-        title="Prozessbeschreibung generieren"
-        onApply={async (desc) => {
-          await updateProcessModel(model.id, { description: desc });
-          setModel((prev) => prev ? { ...prev, description: desc } : prev);
-          setLocalDesc(desc);
-        }}
-      />
-
-      {/* Optimize Process Description Modal */}
-      <GenerateDescriptionModal
-        open={showOptimizeDesc}
-        onOpenChange={setShowOptimizeDesc}
-        mode="optimize_description"
-        context={{ current_description: localDesc || model.description || "" }}
-        title="Prozessbeschreibung optimieren"
-        onApply={async (desc) => {
-          await updateProcessModel(model.id, { description: desc });
-          setModel((prev) => prev ? { ...prev, description: desc } : prev);
-          setLocalDesc(desc);
+      {/* Process Description Modal */}
+      <ProcessDescriptionModal
+        open={showDescModal}
+        onOpenChange={setShowDescModal}
+        description={model.description ?? ""}
+        onSave={async (desc) => {
+          await updateProcessModel(model.id, { description: desc || null });
+          setModel((prev) => prev ? { ...prev, description: desc || null } : prev);
         }}
       />
 
