@@ -31,6 +31,7 @@ export interface ProcessModel {
   id: string;
   name: string;
   description: string | null;
+  header_image: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
 }

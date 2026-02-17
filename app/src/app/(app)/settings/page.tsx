@@ -54,6 +54,12 @@ const PROMPT_KEYS = [
     description: "Prompt-Template zum Generieren von Abhängigkeiten zwischen Fields.",
     variables: ["fields_list"],
   },
+  {
+    key: "tpl_header_image",
+    label: "Headerbild generieren",
+    description: "DALL-E Prompt zum Generieren eines Header-Bildes für ein Prozessmodell.",
+    variables: ["process_description", "model_name", "user_prompt"],
+  },
 ] as const;
 
 export default function SettingsPage() {

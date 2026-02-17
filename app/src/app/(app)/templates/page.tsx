@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddTemplateDialog } from "@/components/templates/AddTemplateDialog";
 import { getProcessModels } from "@/lib/data/templates";
+import { storageUrl } from "@/lib/utils";
 import type { ProcessModel } from "@/types";
 
 export default function TemplatesPage() {
@@ -62,19 +63,29 @@ export default function TemplatesPage() {
             <button
               key={model.id}
               onClick={() => router.push(`/templates/${model.id}`)}
-              className="group cursor-pointer rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/40 hover:bg-card/80 flex flex-col items-start"
+              className="group cursor-pointer rounded-xl border border-border bg-card text-left transition-colors hover:border-primary/40 hover:bg-card/80 flex flex-col items-start overflow-hidden"
             >
-              <h3 className="text-sm font-semibold group-hover:text-primary">
-                {model.name}
-              </h3>
-              {model.description && (
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-3">
-                  {model.description}
-                </p>
+              {storageUrl(model.header_image) && (
+                <img
+                  src={storageUrl(model.header_image)!}
+                  alt=""
+                  className="w-full object-cover"
+                  style={{ aspectRatio: "4 / 1" }}
+                />
               )}
-              <p className="mt-3 text-[10px] text-muted-foreground/50">
-                Erstellt: {new Date(model.created_at).toLocaleDateString("de-DE")}
-              </p>
+              <div className="p-5 flex flex-col items-start w-full">
+                <h3 className="text-sm font-semibold group-hover:text-primary">
+                  {model.name}
+                </h3>
+                {model.description && (
+                  <p className="mt-2 text-xs text-muted-foreground line-clamp-3">
+                    {model.description}
+                  </p>
+                )}
+                <p className="mt-3 text-[10px] text-muted-foreground/50">
+                  Erstellt: {new Date(model.created_at).toLocaleDateString("de-DE")}
+                </p>
+              </div>
             </button>
           ))}
         </div>

@@ -231,7 +231,7 @@ export async function createFieldTemplate(
 
 export async function updateProcessModel(
   id: string,
-  data: Partial<Pick<ProcessModel, "name" | "description">>
+  data: Partial<Pick<ProcessModel, "name" | "description" | "header_image">>
 ): Promise<void> {
   const { error } = await supabase
     .from("process_models")

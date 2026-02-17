@@ -19,10 +19,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { storageUrl } from "@/lib/utils";
 import type { Process } from "@/types";
 
+type ProcessWithImage = Process & {
+  process_models?: { header_image: string | null } | null;
+};
+
 interface ProcessCardProps {
-  process: Process;
+  process: ProcessWithImage;
   onArchive?: (id: string) => void;
   onUnarchive?: (id: string) => void;
 }
@@ -52,8 +57,20 @@ export function ProcessCard({ process, onArchive, onUnarchive }: ProcessCardProp
     locale: de,
   });
 
+  const headerImage = storageUrl(process.process_models?.header_image);
+
   return (
     <div className="process-card group">
+      {headerImage && (
+        <Link href={href} className="-mx-6 -mt-6 mb-6 block overflow-hidden rounded-t-xl">
+          <img
+            src={headerImage}
+            alt=""
+            className="w-full object-cover"
+            style={{ aspectRatio: "4 / 1" }}
+          />
+        </Link>
+      )}
       <div className="flex items-start justify-between">
         <Link href={href} className="flex-1">
           <div className="flex items-center gap-3 mb-3">

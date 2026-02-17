@@ -1,5 +1,6 @@
 import { streamText, generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
+import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -198,6 +199,64 @@ export async function POST(request: Request) {
         schema: dependenciesSchema,
       });
       return Response.json(result.object);
+    }
+
+    if (mode === "generate_header_image") {
+      const modelId = context.model_id;
+      if (!modelId) {
+        return new Response("model_id required", { status: 400 });
+      }
+
+      const template = await getTemplate("tpl_header_image");
+      const promptText = userPrompt?.trim() ?? "";
+      const modelName = context.model_name ?? "";
+      const userInstruction = promptText
+        ? `\n\nWICHTIG – Zusätzliche Anweisung des Nutzers (hat höchste Priorität):\n${promptText}`
+        : "";
+      const imagePrompt = template
+        ? fillTemplate(template, {
+            process_description: context.process_description ?? "",
+            model_name: modelName,
+            user_prompt: userInstruction,
+          })
+        : `Erstelle ein abstraktes, modernes Header-Bild für den Geschäftsprozess "${modelName}". Kontext: ${context.process_description ?? ""}${userInstruction}. Stil: dunkel, professionell, technisch, abstrakt. Keine Texte, keine Logos.`;
+
+      console.log("DALL-E prompt:", imagePrompt);
+
+      const openaiClient = new OpenAI();
+      const imageResponse = await openaiClient.images.generate({
+        model: "dall-e-3",
+        prompt: imagePrompt,
+        size: "1792x1024",
+        quality: "standard",
+        n: 1,
+      });
+
+      const imageUrl = imageResponse.data[0]?.url;
+      if (!imageUrl) {
+        return new Response("Image generation failed", { status: 500 });
+      }
+
+      const imgFetch = await fetch(imageUrl);
+      const imgBuffer = await imgFetch.arrayBuffer();
+
+      const timestamp = Date.now();
+      const storagePath = `${modelId}_${timestamp}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from("header-images")
+        .upload(storagePath, imgBuffer, {
+          contentType: "image/png",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        return new Response("Image upload failed", { status: 500 });
+      }
+
+      const headerImageValue = `header-images/${storagePath}`;
+
+      return Response.json({ header_image: headerImageValue });
     }
 
     return new Response(`Unknown mode: ${mode}`, { status: 400 });

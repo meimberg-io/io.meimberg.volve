@@ -15,11 +15,12 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2 } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
+import { HeaderImageModal } from "./HeaderImageModal";
 import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies } from "@/lib/data/templates";
 import type {
   ProcessModelWithTemplates,
@@ -97,6 +98,7 @@ export function PipelineView({
 
   const [showDescModal, setShowDescModal] = useState(false);
   const [showGenStages, setShowGenStages] = useState(false);
+  const [showHeaderImage, setShowHeaderImage] = useState(false);
   const [generatingDeps, setGeneratingDeps] = useState(false);
 
   const allFields = model.stages.flatMap((s) =>
@@ -174,6 +176,21 @@ export function PipelineView({
               <FileX className="h-3 w-3" />
             )}
             Prozessbeschreibung
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`gap-1.5 h-7 text-xs cursor-pointer ${
+              model.header_image
+                ? "text-blue-400 border-blue-400/30 hover:!bg-blue-400 hover:!text-black hover:!border-blue-400"
+                : "text-red-400 border-red-400/30 hover:!bg-red-400 hover:!text-black hover:!border-red-400"
+            }`}
+            disabled={!model.description}
+            onClick={() => setShowHeaderImage(true)}
+            title={!model.description ? "Prozessbeschreibung wird zuerst benötigt" : undefined}
+          >
+            <ImageIcon className="h-3 w-3" />
+            Headerbild
           </Button>
           <Button
             variant="outline"
@@ -282,6 +299,19 @@ export function PipelineView({
         onSave={async (desc) => {
           await updateProcessModel(model.id, { description: desc || null });
           setModel((prev) => prev ? { ...prev, description: desc || null } : prev);
+        }}
+      />
+
+      {/* Header Image Modal */}
+      <HeaderImageModal
+        open={showHeaderImage}
+        onOpenChange={setShowHeaderImage}
+        modelId={model.id}
+        modelName={model.name}
+        processDescription={model.description ?? ""}
+        currentImage={model.header_image ?? null}
+        onImageGenerated={(headerImage) => {
+          setModel((prev) => prev ? { ...prev, header_image: headerImage } : prev);
         }}
       />
 
