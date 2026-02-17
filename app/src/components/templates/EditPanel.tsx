@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Trash2, AlertTriangle, Sparkles } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { AiButton } from "@/components/ui/ai-button";
+import { MarkdownField } from "@/components/field/MarkdownField";
+import { PromptField } from "@/components/field/PromptField";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -120,16 +123,16 @@ export function EditPanel({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-[420px] overflow-y-auto sm:max-w-[420px]">
           <SheetHeader>
-            <SheetTitle>
+            <SheetTitle className="text-sm">
               {typeLabel} bearbeiten
             </SheetTitle>
-            <SheetDescription>
+            <SheetDescription className="text-xs">
               Eigenschaften des Templates anpassen
             </SheetDescription>
           </SheetHeader>
 
           {editItem && (
-            <div className="mt-6 space-y-6 px-1">
+            <div className="mt-4 space-y-5 px-4">
               {editItem.type === "stage" && (
                 <StageForm
                   key={editItem.item.id}
@@ -159,14 +162,14 @@ export function EditPanel({
 
               {/* Instance count & delete */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Instanzen:</span>
-                  <Badge variant="secondary">{instanceCount}</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{instanceCount}</Badge>
                 </div>
 
                 {instanceCount > 0 && (
-                  <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-400">
-                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-400">
+                    <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                     <span>
                       Dieses Template wird von {instanceCount} Instanz
                       {instanceCount !== 1 && "en"} verwendet und kann nicht
@@ -176,13 +179,12 @@ export function EditPanel({
                 )}
 
                 <Button
-                  variant="destructive"
                   size="sm"
-                  className="w-full"
+                  className="w-full gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
                   disabled={instanceCount > 0}
                   onClick={() => setShowDeleteDialog(true)}
                 >
-                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                   {typeLabel} löschen
                 </Button>
               </div>
@@ -204,12 +206,15 @@ export function EditPanel({
           <DialogFooter>
             <Button
               variant="outline"
+              size="sm"
+              className="text-xs cursor-pointer"
               onClick={() => setShowDeleteDialog(false)}
             >
               Abbrechen
             </Button>
             <Button
-              variant="destructive"
+              size="sm"
+              className="gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
               onClick={handleDelete}
               disabled={deleting}
             >
@@ -238,7 +243,7 @@ function StageForm({
   const [name, setName] = useState(stage.name);
   const [description, setDescription] = useState(stage.description ?? "");
   const [icon, setIcon] = useState(stage.icon ?? "");
-  const [showGenerate, setShowGenerate] = useState(false);
+  const [modalMode, setModalMode] = useState<"describe_stage" | "optimize_description" | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
@@ -252,50 +257,59 @@ function StageForm({
     [stage.id, onRefresh]
   );
 
+  const hasDescription = description.trim().length > 0;
+
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="stage-name">Name</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="stage-name" className="text-xs">Name</Label>
         <Input
           id="stage-name"
           value={name}
+          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="stage-description">Beschreibung</Label>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 gap-1 text-xs text-amber-400 hover:text-amber-300"
-            onClick={() => setShowGenerate(true)}
-            disabled={!processDescription}
-            title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
-          >
-            <Sparkles className="h-3 w-3" />
-            Generieren
-          </Button>
+          <Label htmlFor="stage-description" className="text-xs">Beschreibung</Label>
+          <div className="flex gap-1.5">
+            <AiButton
+              onClick={() => setModalMode("describe_stage")}
+              disabled={!processDescription}
+              title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Generieren
+            </AiButton>
+            <AiButton
+              onClick={() => setModalMode("optimize_description")}
+              disabled={!processDescription || !hasDescription}
+              title={!hasDescription ? "Erst eine Beschreibung erstellen" : !processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Optimieren
+            </AiButton>
+          </div>
         </div>
-        <Textarea
-          id="stage-description"
-          value={description}
-          rows={3}
-          onChange={(e) => {
-            setDescription(e.target.value);
-            save({ description: e.target.value || null });
+        <MarkdownField
+          content={description}
+          onChange={(val) => {
+            setDescription(val);
+            save({ description: val || null });
           }}
+          placeholder="Beschreibung der Stage..."
+          maxHeight="250px"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="stage-icon">Icon</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="stage-icon" className="text-xs">Icon</Label>
         <Input
           id="stage-icon"
           value={icon}
           placeholder="z.B. file-text"
+          className="text-xs!"
           onChange={(e) => {
             setIcon(e.target.value);
             save({ icon: e.target.value || null });
@@ -303,20 +317,23 @@ function StageForm({
         />
       </div>
 
-      <GenerateDescriptionModal
-        open={showGenerate}
-        onOpenChange={setShowGenerate}
-        mode="describe_stage"
-        context={{
-          stage_name: name,
-          process_description: processDescription,
-        }}
-        title="Stage-Beschreibung generieren"
-        onApply={(desc) => {
-          setDescription(desc);
-          save({ description: desc });
-        }}
-      />
+      {modalMode && (
+        <GenerateDescriptionModal
+          open={!!modalMode}
+          onOpenChange={(open) => { if (!open) setModalMode(null); }}
+          mode={modalMode}
+          context={
+            modalMode === "optimize_description"
+              ? { current_description: description, stage_name: name, process_description: processDescription }
+              : { stage_name: name, process_description: processDescription }
+          }
+          title={modalMode === "optimize_description" ? "Stage-Beschreibung optimieren" : "Stage-Beschreibung generieren"}
+          onApply={(desc) => {
+            setDescription(desc);
+            save({ description: desc });
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -336,7 +353,7 @@ function StepForm({
 }) {
   const [name, setName] = useState(step.name);
   const [description, setDescription] = useState(step.description ?? "");
-  const [showGenerate, setShowGenerate] = useState(false);
+  const [modalMode, setModalMode] = useState<"describe_step" | "optimize_description" | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
@@ -355,62 +372,70 @@ function StepForm({
   );
   const processDescription = model?.description ?? "";
   const hasContext = !!processDescription;
+  const hasDescription = description.trim().length > 0;
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="step-name">Name</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="step-name" className="text-xs">Name</Label>
         <Input
           id="step-name"
           value={name}
+          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="step-description">Beschreibung</Label>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 gap-1 text-xs text-amber-400 hover:text-amber-300"
-            onClick={() => setShowGenerate(true)}
-            disabled={!hasContext}
-            title={!hasContext ? "Prozessbeschreibung erforderlich" : undefined}
-          >
-            <Sparkles className="h-3 w-3" />
-            Generieren
-          </Button>
+          <Label htmlFor="step-description" className="text-xs">Beschreibung</Label>
+          <div className="flex gap-1.5">
+            <AiButton
+              onClick={() => setModalMode("describe_step")}
+              disabled={!hasContext}
+              title={!hasContext ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Generieren
+            </AiButton>
+            <AiButton
+              onClick={() => setModalMode("optimize_description")}
+              disabled={!hasContext || !hasDescription}
+              title={!hasDescription ? "Erst eine Beschreibung erstellen" : !hasContext ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Optimieren
+            </AiButton>
+          </div>
         </div>
-        <Textarea
-          id="step-description"
-          value={description}
-          rows={3}
-          onChange={(e) => {
-            setDescription(e.target.value);
-            save({ description: e.target.value || null });
+        <MarkdownField
+          content={description}
+          onChange={(val) => {
+            setDescription(val);
+            save({ description: val || null });
           }}
+          placeholder="Beschreibung des Steps..."
+          maxHeight="250px"
         />
       </div>
 
-      <GenerateDescriptionModal
-        open={showGenerate}
-        onOpenChange={setShowGenerate}
-        mode="describe_step"
-        context={{
-          step_name: name,
-          stage_name: parentStage?.name ?? "",
-          stage_description: parentStage?.description ?? "",
-          process_description: processDescription,
-        }}
-        title="Step-Beschreibung generieren"
-        onApply={(desc) => {
-          setDescription(desc);
-          save({ description: desc });
-        }}
-      />
+      {modalMode && (
+        <GenerateDescriptionModal
+          open={!!modalMode}
+          onOpenChange={(open) => { if (!open) setModalMode(null); }}
+          mode={modalMode}
+          context={
+            modalMode === "optimize_description"
+              ? { current_description: description, step_name: name, stage_name: parentStage?.name ?? "", stage_description: parentStage?.description ?? "", process_description: processDescription }
+              : { step_name: name, stage_name: parentStage?.name ?? "", stage_description: parentStage?.description ?? "", process_description: processDescription }
+          }
+          title={modalMode === "optimize_description" ? "Step-Beschreibung optimieren" : "Step-Beschreibung generieren"}
+          onApply={(desc) => {
+            setDescription(desc);
+            save({ description: desc });
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -473,31 +498,33 @@ function FieldForm({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="field-name">Name</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="field-name" className="text-xs">Name</Label>
         <Input
           id="field-name"
           value={name}
+          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="field-description">Beschreibung</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="field-description" className="text-xs">Beschreibung</Label>
         <Textarea
           id="field-description"
           value={description}
           rows={2}
+          className="text-xs!"
           onChange={(e) => {
             setDescription(e.target.value);
             save({ description: e.target.value || null });
           }}
         />
       </div>
-      <div className="space-y-2">
-        <Label>Typ</Label>
+      <div className="space-y-1.5">
+        <Label className="text-xs">Typ</Label>
         <Select
           value={type}
           onValueChange={(value: FieldType) => {
@@ -505,7 +532,7 @@ function FieldForm({
             save({ type: value });
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -517,9 +544,9 @@ function FieldForm({
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="field-ai-prompt">AI Prompt</Label>
-        <Textarea
+      <div className="space-y-1.5">
+        <Label htmlFor="field-ai-prompt" className="text-xs">AI Prompt</Label>
+        <PromptField
           id="field-ai-prompt"
           value={aiPrompt}
           rows={4}
@@ -532,8 +559,8 @@ function FieldForm({
       </div>
 
       {/* Dependencies */}
-      <div className="space-y-2">
-        <Label>Abhängigkeiten</Label>
+      <div className="space-y-1.5">
+        <Label className="text-xs">Abhängigkeiten</Label>
 
         {/* Selected dependencies */}
         {dependencies.length > 0 && (
@@ -544,7 +571,7 @@ function FieldForm({
                 <Badge
                   key={depId}
                   variant="secondary"
-                  className="cursor-pointer gap-1 pr-1.5"
+                  className="cursor-pointer gap-1 pr-1.5 text-[10px]"
                   onClick={() => removeDependency(depId)}
                 >
                   {depField?.name ?? depId}
@@ -563,7 +590,7 @@ function FieldForm({
               if (value) toggleDependency(value);
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="text-xs">
               <SelectValue placeholder="Abhängigkeit hinzufügen..." />
             </SelectTrigger>
             <SelectContent>

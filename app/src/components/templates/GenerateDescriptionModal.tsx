@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Sparkles, Loader2, Check, X } from "lucide-react";
+import { Check, X, Sparkles, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { PromptField } from "@/components/field/PromptField";
 import { Label } from "@/components/ui/label";
 
 interface GenerateDescriptionModalProps {
@@ -91,20 +90,17 @@ export function GenerateDescriptionModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[560px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            {title}
-          </DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-sm">{title}</DialogTitle>
+          <DialogDescription className="text-xs">
             KI-gestützte Beschreibung generieren
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 min-h-0 overflow-y-auto">
+        <div className="space-y-4 py-2 min-h-0 flex-1 overflow-y-auto">
           {mode === "process_description" ? (
-            <div className="space-y-2">
-              <Label>Beschreibe den Prozess</Label>
-              <Textarea
+            <div className="space-y-1.5">
+              <Label className="text-xs">Beschreibe den Prozess</Label>
+              <PromptField
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
                 rows={3}
@@ -115,7 +111,7 @@ export function GenerateDescriptionModal({
           ) : mode === "optimize_description" ? (
             <>
               {context.current_description && (
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Aktuelle Beschreibung</Label>
                   <div className="max-h-[150px] overflow-y-auto rounded-md bg-muted/50 p-2.5">
                     <div className="prose prose-sm prose-invert max-w-none text-xs">
@@ -124,9 +120,9 @@ export function GenerateDescriptionModal({
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label>Was soll geändert werden?</Label>
-                <Textarea
+              <div className="space-y-1.5">
+                <Label className="text-xs">Was soll geändert werden?</Label>
+                <PromptField
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
                   rows={2}
@@ -138,16 +134,16 @@ export function GenerateDescriptionModal({
           ) : (
             <>
               {context.process_description && (
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Prozessbeschreibung (Kontext)</Label>
                   <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-20 overflow-y-auto">
                     {context.process_description}
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label>Zusatzhinweis (optional)</Label>
-                <Textarea
+              <div className="space-y-1.5">
+                <Label className="text-xs">Zusatzhinweis (optional)</Label>
+                <PromptField
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
                   rows={2}
@@ -158,10 +154,10 @@ export function GenerateDescriptionModal({
           )}
 
           {result && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Ergebnis</Label>
               <div className="max-h-[250px] overflow-y-auto rounded-md border border-border bg-background p-3">
-                <div className="prose prose-sm prose-invert max-w-none text-sm">
+                <div className="prose prose-sm prose-invert max-w-none text-xs">
                   <ReactMarkdown>{result}</ReactMarkdown>
                 </div>
               </div>
@@ -169,30 +165,42 @@ export function GenerateDescriptionModal({
           )}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose}>
-            <X className="mr-1.5 h-4 w-4" />
-            Abbrechen
-          </Button>
-          {result && !loading ? (
-            <Button onClick={handleApply}>
-              <Check className="mr-1.5 h-4 w-4" />
-              Übernehmen
-            </Button>
-          ) : (
+        {/* Footer: actions left, AI button right */}
+        <div className="flex items-center justify-between shrink-0 pt-2">
+          <div className="flex gap-2">
             <Button
-              onClick={handleGenerate}
-              disabled={loading || ((mode === "process_description" || mode === "optimize_description") && !userPrompt.trim())}
+              size="sm"
+              className="gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
+              onClick={handleClose}
             >
-              {loading ? (
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-1.5 h-4 w-4" />
-              )}
-              {loading ? "Generiere..." : "Generieren"}
+              <X className="h-3 w-3" />
+              Abbrechen
             </Button>
-          )}
-        </DialogFooter>
+            {result && !loading && (
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs cursor-pointer bg-green-500/80 text-white hover:bg-green-500"
+                onClick={handleApply}
+              >
+                <Check className="h-3 w-3" />
+                Übernehmen
+              </Button>
+            )}
+          </div>
+          <Button
+            size="sm"
+            disabled={loading || ((mode === "process_description" || mode === "optimize_description") && !userPrompt.trim())}
+            onClick={handleGenerate}
+            className="gap-1.5 text-xs cursor-pointer bg-amber-400 text-black border-amber-400 hover:bg-amber-500 hover:border-amber-500"
+          >
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            Generieren
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

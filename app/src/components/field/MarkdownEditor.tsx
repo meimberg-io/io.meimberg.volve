@@ -84,7 +84,7 @@ export function MarkdownEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm prose-invert max-w-none min-h-[80px] focus:outline-none text-xs leading-relaxed",
+          "prose prose-sm prose-invert max-w-none min-h-[40px] focus:outline-none text-xs leading-relaxed",
       },
     },
     immediatelyRender: false,
