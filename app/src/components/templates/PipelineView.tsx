@@ -15,7 +15,7 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, Pencil, Loader2, Link2 } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
@@ -161,10 +161,18 @@ export function PipelineView({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 h-7 text-xs"
+            className={`gap-1.5 h-7 text-xs cursor-pointer ${
+              model.description
+                ? "text-blue-400 border-blue-400/30 hover:!bg-blue-400 hover:!text-black hover:!border-blue-400"
+                : "text-red-400 border-red-400/30 hover:!bg-red-400 hover:!text-black hover:!border-red-400"
+            }`}
             onClick={() => setShowDescModal(true)}
           >
-            <Pencil className="h-3 w-3" />
+            {model.description ? (
+              <FileCheck className="h-3 w-3" />
+            ) : (
+              <FileX className="h-3 w-3" />
+            )}
             Prozessbeschreibung
           </Button>
           <Button
