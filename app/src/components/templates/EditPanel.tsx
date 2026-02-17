@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AiButton } from "@/components/ui/ai-button";
 import { MarkdownField } from "@/components/field/MarkdownField";
+import { IconPicker } from "@/components/field/IconPicker";
 import { PromptField } from "@/components/field/PromptField";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -244,6 +245,7 @@ function StageForm({
   const [description, setDescription] = useState(stage.description ?? "");
   const [icon, setIcon] = useState(stage.icon ?? "");
   const [modalMode, setModalMode] = useState<"describe_stage" | "optimize_description" | null>(null);
+  const [suggestingIcon, setSuggestingIcon] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
@@ -258,6 +260,30 @@ function StageForm({
   );
 
   const hasDescription = description.trim().length > 0;
+
+  const suggestIcon = useCallback(async () => {
+    setSuggestingIcon(true);
+    try {
+      const response = await fetch("/api/ai/template-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "suggest_icon",
+          context: { stage_name: name, stage_description: description },
+        }),
+      });
+      if (!response.ok) throw new Error("Failed");
+      const data = await response.json();
+      if (data.icon) {
+        setIcon(data.icon);
+        save({ icon: data.icon });
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSuggestingIcon(false);
+    }
+  }, [name, description, save]);
 
   return (
     <div className="space-y-4">
@@ -304,15 +330,22 @@ function StageForm({
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="stage-icon" className="text-xs">Icon</Label>
-        <Input
-          id="stage-icon"
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Icon</Label>
+          <AiButton
+            loading={suggestingIcon}
+            disabled={suggestingIcon || !name.trim()}
+            onClick={suggestIcon}
+            title={!name.trim() ? "Stage-Name erforderlich" : undefined}
+          >
+            Vorschlagen
+          </AiButton>
+        </div>
+        <IconPicker
           value={icon}
-          placeholder="z.B. file-text"
-          className="text-xs!"
-          onChange={(e) => {
-            setIcon(e.target.value);
-            save({ icon: e.target.value || null });
+          onChange={(val) => {
+            setIcon(val);
+            save({ icon: val || null });
           }}
         />
       </div>

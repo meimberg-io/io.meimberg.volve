@@ -149,6 +149,19 @@ export async function POST(request: Request) {
       return Response.json(result.object);
     }
 
+    if (mode === "suggest_icon") {
+      const iconSchema = z.object({
+        icon: z.string().describe("Lucide icon name in kebab-case, e.g. 'sparkles', 'file-text', 'rocket'"),
+      });
+      const result = await generateObject({
+        model: openai("gpt-4o-mini"),
+        system: `${SYSTEM_BASE}\n\nDu wählst ein passendes Lucide-React Icon (lucide.dev) für eine Stage eines Geschäftsprozesses aus. Verwende den kebab-case Icon-Namen (z.B. "sparkles", "lightbulb", "target", "search", "bar-chart", "file-text", "rocket", "shield-check", "users", "settings", "zap", "brain", "clipboard-list", "check-circle", "trending-up"). Wähle ein Icon das den Inhalt und Zweck der Stage visuell gut repräsentiert.`,
+        prompt: `Stage: "${context.stage_name}"\nBeschreibung: ${context.stage_description || "(keine)"}`,
+        schema: iconSchema,
+      });
+      return Response.json(result.object);
+    }
+
     if (mode === "generate_dependencies") {
       const template = await getTemplate("tpl_generate_dependencies");
       const prompt = fillTemplate(template, context);
