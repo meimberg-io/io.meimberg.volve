@@ -6,18 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="cd021569-7cd0-468c-899a-e90d0f2afd6b" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/app/api/ai/generate/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/app/api/ai/generate/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/components/field/FieldCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/components/field/FieldCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/components/layout/ProcessShell.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/components/layout/ProcessShell.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/components/layout/QuickSwitcher.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/components/layout/QuickSwitcher.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/lib/data/fields.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/lib/data/fields.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/lib/data/processes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/lib/data/processes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/lib/data/stages.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/lib/data/stages.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/types/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/requirements/02 Vision/vision.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/requirements/02 Vision/vision.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/requirements/03 Use Cases/use_cases.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/requirements/03 Use Cases/use_cases.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/requirements/04 Functional Requirements/functional_requirements.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/requirements/04 Functional Requirements/functional_requirements.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/requirements/05 Non-Functional Requirements/nonfunctional_requirements.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/requirements/05 Non-Functional Requirements/nonfunctional_requirements.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/app/(app)/templates/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/app/(app)/templates/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/components/templates/EditPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/components/templates/EditPanel.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/requirements/06 Frontend Concept/frontend_concept.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/requirements/06 Frontend Concept/frontend_concept.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -55,23 +45,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/OliverMeimberg/workspace/serviceatlas.strapi_off",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.remoteExternalTools",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/OliverMeimberg/workspace/serviceatlas.strapi_off&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.remoteExternalTools&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -88,11 +78,24 @@
       <updated>1771265505391</updated>
       <workItem from="1771265505793" duration="122000" />
       <workItem from="1771265643158" duration="2595000" />
+      <workItem from="1771353194353" duration="374000" />
+      <workItem from="1771354615830" duration="1473000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

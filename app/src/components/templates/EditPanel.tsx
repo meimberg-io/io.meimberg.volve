@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect */
-
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Trash2, AlertTriangle, Sparkles } from "lucide-react";
 import {
@@ -134,6 +132,7 @@ export function EditPanel({
             <div className="mt-6 space-y-6 px-1">
               {editItem.type === "stage" && (
                 <StageForm
+                  key={editItem.item.id}
                   stage={editItem.item as StageTemplate}
                   processDescription={model?.description ?? ""}
                   onRefresh={onRefresh}
@@ -141,6 +140,7 @@ export function EditPanel({
               )}
               {editItem.type === "step" && (
                 <StepForm
+                  key={editItem.item.id}
                   step={editItem.item as StepTemplate}
                   model={model}
                   onRefresh={onRefresh}
@@ -148,6 +148,7 @@ export function EditPanel({
               )}
               {editItem.type === "field" && (
                 <FieldForm
+                  key={editItem.item.id}
                   field={editItem.item as FieldTemplate}
                   allFields={allFields}
                   onRefresh={onRefresh}
@@ -239,12 +240,6 @@ function StageForm({
   const [icon, setIcon] = useState(stage.icon ?? "");
   const [showGenerate, setShowGenerate] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    setName(stage.name);
-    setDescription(stage.description ?? "");
-    setIcon(stage.icon ?? "");
-  }, [stage.id, stage.name, stage.description, stage.icon]);
 
   const save = useCallback(
     (data: Partial<Pick<StageTemplate, "name" | "description" | "icon">>) => {
@@ -344,11 +339,6 @@ function StepForm({
   const [showGenerate, setShowGenerate] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    setName(step.name);
-    setDescription(step.description ?? "");
-  }, [step.id, step.name, step.description]);
-
   const save = useCallback(
     (data: Partial<Pick<StepTemplate, "name" | "description">>) => {
       clearTimeout(debounceRef.current);
@@ -446,21 +436,6 @@ function FieldForm({
     field.dependencies ?? []
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    setName(field.name);
-    setDescription(field.description ?? "");
-    setType(field.type);
-    setAiPrompt(field.ai_prompt ?? "");
-    setDependencies(field.dependencies ?? []);
-  }, [
-    field.id,
-    field.name,
-    field.description,
-    field.type,
-    field.ai_prompt,
-    field.dependencies,
-  ]);
 
   const save = useCallback(
     (

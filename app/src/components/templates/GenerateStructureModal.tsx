@@ -105,6 +105,15 @@ export function GenerateStructureModal({
     }
   }, [mode, context, userPrompt]);
 
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+    setStages(null);
+    setSteps(null);
+    setUserPrompt("");
+    setReplaceExisting(false);
+    setError(null);
+  }, [onOpenChange]);
+
   const handleApply = useCallback(async () => {
     setApplying(true);
     try {
@@ -153,16 +162,7 @@ export function GenerateStructureModal({
     } finally {
       setApplying(false);
     }
-  }, [mode, stages, steps, parentId, replaceExisting, onComplete]);
-
-  const handleClose = () => {
-    onOpenChange(false);
-    setStages(null);
-    setSteps(null);
-    setUserPrompt("");
-    setReplaceExisting(false);
-    setError(null);
-  };
+  }, [mode, stages, steps, parentId, replaceExisting, onComplete, handleClose]);
 
   const title =
     mode === "generate_stages"

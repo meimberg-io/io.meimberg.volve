@@ -1,8 +1,7 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect */
-
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, type SetStateAction } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,39 +38,53 @@ type AddContext = {
 } | null;
 
 export default function TemplatesPage() {
-  const [models, setModels] = useState<ProcessModel[]>([]);
+  const queryClient = useQueryClient();
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
-  const [model, setModel] = useState<ProcessModelWithTemplates | null>(null);
-  const [loading, setLoading] = useState(true);
   const [editItem, setEditItem] = useState<EditItem | null>(null);
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addContext, setAddContext] = useState<AddContext>(null);
 
-  const loadModels = useCallback(async () => {
-    const data = await getProcessModels();
-    setModels(data);
-    if (data.length > 0 && !selectedModelId) {
-      setSelectedModelId(data[0].id);
-    }
-    setLoading(false);
-  }, [selectedModelId]);
+  const { data: models = [], isLoading: modelsLoading } = useQuery({
+    queryKey: ["process-models"],
+    queryFn: getProcessModels,
+  });
 
-  const refreshModel = useCallback(async () => {
-    if (!selectedModelId) return;
-    const data = await getProcessModelWithTemplates(selectedModelId);
-    setModel(data);
-  }, [selectedModelId]);
+  // Auto-select first model when models load and nothing is selected
+  if (models.length > 0 && !selectedModelId) {
+    setSelectedModelId(models[0].id);
+  }
 
-  useEffect(() => {
-    loadModels();
-  }, [loadModels]);
+  const { data: model = null } = useQuery({
+    queryKey: ["process-model", selectedModelId],
+    queryFn: () => getProcessModelWithTemplates(selectedModelId!),
+    enabled: !!selectedModelId,
+  });
 
-  useEffect(() => {
+  // Wrapper for PipelineView: updates the query cache like a setState
+  const setModel = useCallback(
+    (updater: SetStateAction<ProcessModelWithTemplates | null>) => {
+      queryClient.setQueryData<ProcessModelWithTemplates | null>(
+        ["process-model", selectedModelId],
+        (prev) =>
+          typeof updater === "function" ? updater(prev ?? null) : updater
+      );
+    },
+    [selectedModelId, queryClient]
+  );
+
+  const refreshModel = useCallback(() => {
     if (selectedModelId) {
-      refreshModel();
+      queryClient.invalidateQueries({
+        queryKey: ["process-model", selectedModelId],
+      });
     }
-  }, [selectedModelId, refreshModel]);
+  }, [selectedModelId, queryClient]);
+
+  const refreshAll = useCallback(() => {
+    refreshModel();
+    queryClient.invalidateQueries({ queryKey: ["process-models"] });
+  }, [refreshModel, queryClient]);
 
   const handleSelect = (
     type: "stage" | "step" | "field",
@@ -104,15 +117,20 @@ export default function TemplatesPage() {
 
   const handleCreated = async () => {
     if (addContext?.type === "model") {
-      const data = await getProcessModels();
-      setModels(data);
-      if (data.length > 0) {
-        setSelectedModelId(data[data.length - 1].id);
+      const freshModels = await getProcessModels();
+      queryClient.setQueryData<ProcessModel[]>(
+        ["process-models"],
+        freshModels
+      );
+      if (freshModels.length > 0) {
+        setSelectedModelId(freshModels[freshModels.length - 1].id);
       }
     } else {
-      await refreshModel();
+      refreshModel();
     }
   };
+
+  const loading = modelsLoading;
 
   const allFields: FieldTemplate[] =
     model?.stages.flatMap((s) => s.steps.flatMap((st) => st.fields)) ?? [];
@@ -185,10 +203,7 @@ export default function TemplatesPage() {
         onOpenChange={setEditPanelOpen}
         editItem={editItem}
         model={model}
-        onRefresh={async () => {
-          await refreshModel();
-          await loadModels();
-        }}
+        onRefresh={refreshAll}
         allFields={allFields}
       />
 
