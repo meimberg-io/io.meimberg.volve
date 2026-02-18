@@ -447,6 +447,50 @@ export async function reorderFields(
 }
 
 // =============================================
+// CROSS-CONTAINER MOVE
+// =============================================
+
+export async function moveStep(
+  stepId: string,
+  targetStageId: string,
+  orderedIds: string[]
+): Promise<void> {
+  const { error } = await supabase
+    .from("steps")
+    .update({ stage_id: targetStageId })
+    .eq("id", stepId);
+  if (error) throw error;
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    const { error: reorderError } = await supabase
+      .from("steps")
+      .update({ order_index: i, stage_id: targetStageId })
+      .eq("id", orderedIds[i]);
+    if (reorderError) throw reorderError;
+  }
+}
+
+export async function moveField(
+  fieldId: string,
+  targetStepId: string,
+  orderedIds: string[]
+): Promise<void> {
+  const { error } = await supabase
+    .from("fields")
+    .update({ step_id: targetStepId })
+    .eq("id", fieldId);
+  if (error) throw error;
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    const { error: reorderError } = await supabase
+      .from("fields")
+      .update({ order_index: i, step_id: targetStepId })
+      .eq("id", orderedIds[i]);
+    if (reorderError) throw reorderError;
+  }
+}
+
+// =============================================
 // EXPORT / IMPORT
 // =============================================
 

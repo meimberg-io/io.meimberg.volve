@@ -32,6 +32,48 @@ export async function POST(request: Request) {
     return new Response("Field not found", { status: 404 });
   }
 
+  // Resolve current structural context (step → stage → process)
+  const { data: step } = await supabase
+    .from("steps")
+    .select("name, stage_id")
+    .eq("id", field.step_id)
+    .single();
+
+  let stageName = "";
+  let processName = "";
+  let processDescription = "";
+
+  if (step) {
+    const { data: stage } = await supabase
+      .from("stages")
+      .select("name, process_id")
+      .eq("id", step.stage_id)
+      .single();
+
+    if (stage) {
+      stageName = stage.name;
+      const { data: process } = await supabase
+        .from("processes")
+        .select("name, description")
+        .eq("id", stage.process_id)
+        .single();
+      if (process) {
+        processName = process.name;
+        processDescription = process.description ?? "";
+      }
+    }
+  }
+
+  const structuralContext = [
+    processName && `Prozess: „${processName}"`,
+    processDescription && `Prozessbeschreibung: ${processDescription}`,
+    stageName && `Stage: „${stageName}"`,
+    step?.name && `Step: „${step.name}"`,
+    field.name && `Field: „${field.name}"`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const contextParts: string[] = [];
 
   // 1. Seed documents content
@@ -127,12 +169,20 @@ export async function POST(request: Request) {
     systemPrompt += `\n\nDer Nutzer möchte einen bestehenden Inhalt optimieren. Behalte die Grundstruktur bei, verbessere aber gemäß der Anweisung.`;
     userPrompt = `## Aktueller Inhalt\n${field.content}\n\n## Optimierungsanweisung\n${optimize_instruction}`;
 
+    if (structuralContext) {
+      userPrompt += `\n\n## Struktureller Kontext\n${structuralContext}`;
+    }
+
     if (context) {
       userPrompt += `\n\n## Kontext\n${context}`;
     }
   } else {
     const basePrompt = custom_prompt ?? field.ai_prompt ?? "Generiere passenden Inhalt für dieses Feld.";
     userPrompt = basePrompt;
+
+    if (structuralContext) {
+      userPrompt += `\n\n## Struktureller Kontext\n${structuralContext}`;
+    }
 
     if (additional_instructions) {
       userPrompt += `\n\n## Zusatzanweisungen\n${additional_instructions}`;

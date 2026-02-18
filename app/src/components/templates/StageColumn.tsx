@@ -1,21 +1,12 @@
 "use client";
 
-import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
+import { useState } from "react";
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
   useSortable,
 } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +14,6 @@ import { AiButton } from "@/components/ui/ai-button";
 import { cn } from "@/lib/utils";
 import { StepCard } from "./StepCard";
 import { GenerateStructureModal } from "./GenerateStructureModal";
-import { reorderSteps, type ProcessWithStages } from "@/lib/data/templates";
 import type {
   StageWithSteps,
   Stage,
@@ -34,7 +24,6 @@ import type {
 interface StageColumnProps {
   stage: StageWithSteps;
   stageNumber: number;
-  setModel: Dispatch<SetStateAction<ProcessWithStages | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
     item: Stage | Step | Field
@@ -49,7 +38,6 @@ interface StageColumnProps {
 export function StageColumn({
   stage,
   stageNumber,
-  setModel,
   onSelect,
   selectedId,
   onAddStep,
@@ -66,39 +54,20 @@ export function StageColumn({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: stage.id });
+  } = useSortable({
+    id: stage.id,
+    data: { type: "stage" },
+  });
+
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `stage-droppable-${stage.id}`,
+    data: { type: "stage-droppable", stageId: stage.id },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor)
-  );
-
-  const handleStepDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIdx = stage.steps.findIndex((s) => s.id === active.id);
-      const newIdx = stage.steps.findIndex((s) => s.id === over.id);
-      if (oldIdx === -1 || newIdx === -1) return;
-      const reordered = arrayMove(stage.steps, oldIdx, newIdx);
-      setModel((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stages: prev.stages.map((s) =>
-            s.id === stage.id ? { ...s, steps: reordered } : s
-          ),
-        };
-      });
-      reorderSteps(stage.id, reordered.map((s) => s.id));
-    },
-    [stage, setModel]
-  );
 
   return (
     <div
@@ -131,31 +100,24 @@ export function StageColumn({
         </div>
       </div>
 
-      {/* Steps */}
-      <div className="space-y-2 p-3">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleStepDragEnd}
+      {/* Steps (droppable area) */}
+      <div ref={setDroppableRef} className="space-y-2 p-3 min-h-[40px]">
+        <SortableContext
+          items={stage.steps.map((s) => s.id)}
+          strategy={verticalListSortingStrategy}
         >
-          <SortableContext
-            items={stage.steps.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {stage.steps.map((step, idx) => (
-              <StepCard
-                key={step.id}
-                step={step}
-                stepLetter={String.fromCharCode(65 + idx)}
-                stageId={stage.id}
-                setModel={setModel}
-                onSelect={onSelect}
-                selectedId={selectedId}
-                onAddField={onAddField}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+          {stage.steps.map((step, idx) => (
+            <StepCard
+              key={step.id}
+              step={step}
+              stepLetter={String.fromCharCode(65 + idx)}
+              stageId={stage.id}
+              onSelect={onSelect}
+              selectedId={selectedId}
+              onAddField={onAddField}
+            />
+          ))}
+        </SortableContext>
 
         {stage.steps.length === 0 && (
           <p className="py-4 text-center text-xs text-muted-foreground">

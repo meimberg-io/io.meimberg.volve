@@ -1,27 +1,16 @@
 "use client";
 
-import { useCallback, type Dispatch, type SetStateAction } from "react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
   useSortable,
 } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FieldItem } from "./FieldItem";
-import { reorderFields, type ProcessWithStages } from "@/lib/data/templates";
 import type {
   StepWithFields,
   Stage,
@@ -33,7 +22,6 @@ interface StepCardProps {
   step: StepWithFields;
   stepLetter: string;
   stageId: string;
-  setModel: Dispatch<SetStateAction<ProcessWithStages | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
     item: Stage | Step | Field
@@ -46,7 +34,6 @@ export function StepCard({
   step,
   stepLetter,
   stageId,
-  setModel,
   onSelect,
   selectedId,
   onAddField,
@@ -58,46 +45,20 @@ export function StepCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: step.id });
+  } = useSortable({
+    id: step.id,
+    data: { type: "step", stageId },
+  });
+
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `step-droppable-${step.id}`,
+    data: { type: "step-droppable", stepId: step.id },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor)
-  );
-
-  const handleFieldDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIdx = step.fields.findIndex((f) => f.id === active.id);
-      const newIdx = step.fields.findIndex((f) => f.id === over.id);
-      if (oldIdx === -1 || newIdx === -1) return;
-      const reordered = arrayMove(step.fields, oldIdx, newIdx);
-      setModel((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stages: prev.stages.map((s) =>
-            s.id === stageId
-              ? {
-                  ...s,
-                  steps: s.steps.map((st) =>
-                    st.id === step.id ? { ...st, fields: reordered } : st
-                  ),
-                }
-              : s
-          ),
-        };
-      });
-      reorderFields(step.id, reordered.map((f) => f.id));
-    },
-    [step, stageId, setModel]
-  );
 
   return (
     <div
@@ -130,18 +91,20 @@ export function StepCard({
         </span>
       </div>
 
-      {/* Fields */}
-      {step.fields.length > 0 && (
-        <div className="space-y-0.5 border-t border-border/50 px-2 py-1.5">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleFieldDragEnd}
-          >
-            <SortableContext
-              items={step.fields.map((f) => f.id)}
-              strategy={verticalListSortingStrategy}
-            >
+      {/* Fields (droppable area) */}
+      <div
+        ref={setDroppableRef}
+        className={cn(
+          "border-t border-border/50 px-2 py-1.5",
+          step.fields.length === 0 && "min-h-[28px]"
+        )}
+      >
+        <SortableContext
+          items={step.fields.map((f) => f.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {step.fields.length > 0 ? (
+            <div className="space-y-0.5">
               {step.fields.map((field) => (
                 <FieldItem
                   key={field.id}
@@ -150,10 +113,14 @@ export function StepCard({
                   isSelected={selectedId === field.id}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
-        </div>
-      )}
+            </div>
+          ) : (
+            <p className="text-center text-[10px] text-muted-foreground/50 py-1">
+              Keine Fields
+            </p>
+          )}
+        </SortableContext>
+      </div>
 
       {/* Add Field */}
       <div className="border-t border-border/50 px-1 py-1">

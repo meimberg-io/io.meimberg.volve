@@ -4,11 +4,14 @@ import { useCallback, useRef, useState, useEffect, type Dispatch, type SetStateA
 import { useRouter } from "next/navigation";
 import {
   DndContext,
-  closestCenter,
+  DragOverlay,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
+  type DragStartEvent,
+  type DragOverEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -16,8 +19,9 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon, MoreHorizontal, Download, Copy } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon, MoreHorizontal, Download, Copy, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,12 +33,35 @@ import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
 import { HeaderImageModal } from "./HeaderImageModal";
-import { reorderStages, updateProcess, bulkUpdateDependencies, downloadTemplateExport, copyProcess, type ProcessWithStages } from "@/lib/data/templates";
+import {
+  reorderStages,
+  reorderSteps,
+  reorderFields,
+  moveStep,
+  moveField,
+  updateProcess,
+  bulkUpdateDependencies,
+  downloadTemplateExport,
+  copyProcess,
+  type ProcessWithStages,
+} from "@/lib/data/templates";
 import type {
   Stage,
   Step,
   Field,
+  StepWithFields,
+  FieldType,
 } from "@/types";
+
+type DragItemType = "stage" | "step" | "field";
+
+const fieldTypeColors: Record<FieldType, string> = {
+  text: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  long_text: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  file: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  file_list: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  task: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+};
 
 interface PipelineViewProps {
   model: ProcessWithStages;
@@ -89,19 +116,305 @@ export function PipelineView({
     useSensor(KeyboardSensor)
   );
 
-  const handleStageDragEnd = useCallback(
+  // ── Unified DnD state ────────────────────────────────
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<DragItemType | null>(null);
+  const originalContainerRef = useRef<string | null>(null);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    const type = active.data.current?.type as DragItemType | undefined;
+    setActiveId(active.id as string);
+    setActiveType(type ?? null);
+
+    if (type === "step") {
+      originalContainerRef.current = active.data.current?.stageId ?? null;
+    } else if (type === "field") {
+      originalContainerRef.current = active.data.current?.stepId ?? null;
+    } else {
+      originalContainerRef.current = null;
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !activeType) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+    if (!activeData || !overData) return;
+
+    // ── Step cross-container ───────────────────────────
+    if (activeType === "step") {
+      let targetStageId: string | null = null;
+
+      if (overData.type === "step" && overData.stageId) {
+        targetStageId = overData.stageId as string;
+      } else if (overData.type === "stage-droppable" && overData.stageId) {
+        targetStageId = overData.stageId as string;
+      }
+
+      if (!targetStageId) return;
+
+      const activeStepId = active.id as string;
+
+      setModel((prev) => {
+        if (!prev) return prev;
+
+        const sourceStage = prev.stages.find((s) =>
+          s.steps.some((st) => st.id === activeStepId)
+        );
+        if (!sourceStage || sourceStage.id === targetStageId) return prev;
+
+        const movingStep = sourceStage.steps.find((st) => st.id === activeStepId);
+        if (!movingStep) return prev;
+
+        const overStepId = overData.type === "step" ? (over.id as string) : null;
+
+        return {
+          ...prev,
+          stages: prev.stages.map((stage) => {
+            if (stage.id === sourceStage.id) {
+              return { ...stage, steps: stage.steps.filter((st) => st.id !== activeStepId) };
+            }
+            if (stage.id === targetStageId) {
+              const updatedStep = { ...movingStep, stage_id: stage.id };
+              if (overStepId) {
+                const overIdx = stage.steps.findIndex((st) => st.id === overStepId);
+                const newSteps = [...stage.steps];
+                newSteps.splice(overIdx >= 0 ? overIdx : newSteps.length, 0, updatedStep);
+                return { ...stage, steps: newSteps };
+              }
+              return { ...stage, steps: [...stage.steps, updatedStep] };
+            }
+            return stage;
+          }),
+        };
+      });
+    }
+
+    // ── Field cross-container ──────────────────────────
+    if (activeType === "field") {
+      let targetStepId: string | null = null;
+
+      if (overData.type === "field" && overData.stepId) {
+        targetStepId = overData.stepId as string;
+      } else if (overData.type === "step-droppable" && overData.stepId) {
+        targetStepId = overData.stepId as string;
+      }
+
+      if (!targetStepId) return;
+
+      const activeFieldId = active.id as string;
+
+      setModel((prev) => {
+        if (!prev) return prev;
+
+        let sourceStep: StepWithFields | null = null;
+        for (const stage of prev.stages) {
+          for (const step of stage.steps) {
+            if (step.fields.some((f) => f.id === activeFieldId)) {
+              sourceStep = step;
+              break;
+            }
+          }
+          if (sourceStep) break;
+        }
+
+        if (!sourceStep || sourceStep.id === targetStepId) return prev;
+
+        const movingField = sourceStep.fields.find((f) => f.id === activeFieldId);
+        if (!movingField) return prev;
+
+        const overFieldId = overData.type === "field" ? (over.id as string) : null;
+
+        return {
+          ...prev,
+          stages: prev.stages.map((stage) => ({
+            ...stage,
+            steps: stage.steps.map((step) => {
+              if (step.id === sourceStep!.id) {
+                return { ...step, fields: step.fields.filter((f) => f.id !== activeFieldId) };
+              }
+              if (step.id === targetStepId) {
+                const updatedField = { ...movingField, step_id: step.id };
+                if (overFieldId) {
+                  const overIdx = step.fields.findIndex((f) => f.id === overFieldId);
+                  const newFields = [...step.fields];
+                  newFields.splice(overIdx >= 0 ? overIdx : newFields.length, 0, updatedField);
+                  return { ...step, fields: newFields };
+                }
+                return { ...step, fields: [...step.fields, updatedField] };
+              }
+              return step;
+            }),
+          })),
+        };
+      });
+    }
+  }, [activeType, setModel]);
+
+  const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIdx = model.stages.findIndex((s) => s.id === active.id);
-      const newIdx = model.stages.findIndex((s) => s.id === over.id);
-      if (oldIdx === -1 || newIdx === -1) return;
-      const reordered = arrayMove(model.stages, oldIdx, newIdx);
-      setModel((prev) => prev ? { ...prev, stages: reordered } : prev);
-      reorderStages(model.id, reordered.map((s) => s.id));
+
+      setActiveId(null);
+      setActiveType(null);
+
+      if (!over) {
+        originalContainerRef.current = null;
+        return;
+      }
+
+      const type = active.data.current?.type as DragItemType | undefined;
+
+      // ── Stage reorder ────────────────────────────────
+      if (type === "stage") {
+        if (active.id === over.id) return;
+        const oldIdx = model.stages.findIndex((s) => s.id === active.id);
+        const newIdx = model.stages.findIndex((s) => s.id === over.id);
+        if (oldIdx === -1 || newIdx === -1) return;
+        const reordered = arrayMove(model.stages, oldIdx, newIdx);
+        setModel((prev) => prev ? { ...prev, stages: reordered } : prev);
+        reorderStages(model.id, reordered.map((s) => s.id));
+        originalContainerRef.current = null;
+        return;
+      }
+
+      // ── Step reorder / move ──────────────────────────
+      if (type === "step") {
+        const originalStageId = originalContainerRef.current;
+        originalContainerRef.current = null;
+
+        const currentStage = model.stages.find((s) =>
+          s.steps.some((st) => st.id === active.id)
+        );
+        if (!currentStage) return;
+
+        let finalSteps = currentStage.steps;
+
+        if (active.id !== over.id) {
+          const overData = over.data.current;
+          const isOverStep = overData?.type === "step";
+          if (isOverStep) {
+            const overIdx = currentStage.steps.findIndex((st) => st.id === over.id);
+            const activeIdx = currentStage.steps.findIndex((st) => st.id === active.id);
+            if (overIdx !== -1 && activeIdx !== -1) {
+              finalSteps = arrayMove(currentStage.steps, activeIdx, overIdx);
+              setModel((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  stages: prev.stages.map((s) =>
+                    s.id === currentStage.id ? { ...s, steps: finalSteps } : s
+                  ),
+                };
+              });
+            }
+          }
+        }
+
+        const orderedIds = finalSteps.map((st) => st.id);
+        const containerChanged = originalStageId && originalStageId !== currentStage.id;
+
+        if (containerChanged) {
+          moveStep(active.id as string, currentStage.id, orderedIds);
+          const sourceStage = model.stages.find((s) => s.id === originalStageId);
+          if (sourceStage) {
+            const sourceIds = sourceStage.steps
+              .filter((st) => st.id !== active.id)
+              .map((st) => st.id);
+            if (sourceIds.length > 0) reorderSteps(originalStageId, sourceIds);
+          }
+        } else {
+          reorderSteps(currentStage.id, orderedIds);
+        }
+        return;
+      }
+
+      // ── Field reorder / move ─────────────────────────
+      if (type === "field") {
+        const originalStepId = originalContainerRef.current;
+        originalContainerRef.current = null;
+
+        let currentStep: StepWithFields | null = null;
+        for (const stage of model.stages) {
+          for (const step of stage.steps) {
+            if (step.fields.some((f) => f.id === active.id)) {
+              currentStep = step;
+              break;
+            }
+          }
+          if (currentStep) break;
+        }
+        if (!currentStep) return;
+
+        let finalFields = currentStep.fields;
+
+        if (active.id !== over.id) {
+          const overData = over.data.current;
+          const isOverField = overData?.type === "field";
+          if (isOverField) {
+            const overIdx = currentStep.fields.findIndex((f) => f.id === over.id);
+            const activeIdx = currentStep.fields.findIndex((f) => f.id === active.id);
+            if (overIdx !== -1 && activeIdx !== -1) {
+              finalFields = arrayMove(currentStep.fields, activeIdx, overIdx);
+              setModel((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  stages: prev.stages.map((stage) => ({
+                    ...stage,
+                    steps: stage.steps.map((step) =>
+                      step.id === currentStep!.id ? { ...step, fields: finalFields } : step
+                    ),
+                  })),
+                };
+              });
+            }
+          }
+        }
+
+        const orderedIds = finalFields.map((f) => f.id);
+        const containerChanged = originalStepId && originalStepId !== currentStep.id;
+
+        if (containerChanged) {
+          moveField(active.id as string, currentStep.id, orderedIds);
+          let sourceStep: StepWithFields | null = null;
+          for (const stage of model.stages) {
+            for (const step of stage.steps) {
+              if (step.id === originalStepId) {
+                sourceStep = step;
+                break;
+              }
+            }
+            if (sourceStep) break;
+          }
+          if (sourceStep) {
+            const sourceIds = sourceStep.fields
+              .filter((f) => f.id !== active.id)
+              .map((f) => f.id);
+            if (sourceIds.length > 0) reorderFields(originalStepId, sourceIds);
+          }
+        } else {
+          reorderFields(currentStep.id, orderedIds);
+        }
+        return;
+      }
     },
     [model, setModel]
   );
+
+  // ── Find active item for overlay ─────────────────────
+  const activeStage = activeType === "stage"
+    ? model.stages.find((s) => s.id === activeId)
+    : null;
+  const activeStep = activeType === "step"
+    ? (() => { for (const s of model.stages) { const st = s.steps.find((st) => st.id === activeId); if (st) return st; } return null; })()
+    : null;
+  const activeField = activeType === "field"
+    ? (() => { for (const s of model.stages) for (const st of s.steps) { const f = st.fields.find((f) => f.id === activeId); if (f) return f; } return null; })()
+    : null;
 
   const router = useRouter();
   const [showDescModal, setShowDescModal] = useState(false);
@@ -305,8 +618,10 @@ export function PipelineView({
         <div className="inline-flex items-start gap-0 p-1 pb-4">
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleStageDragEnd}
+            collisionDetection={pointerWithin}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
           >
             <SortableContext
               items={model.stages.map((s) => s.id)}
@@ -322,7 +637,6 @@ export function PipelineView({
                   <StageColumn
                     stage={stage}
                     stageNumber={index + 1}
-                    setModel={setModel}
                     onSelect={onSelect}
                     selectedId={selectedId}
                     onAddStep={onAddStep}
@@ -333,6 +647,40 @@ export function PipelineView({
                 </div>
               ))}
             </SortableContext>
+
+            {/* Drag Overlay */}
+            <DragOverlay dropAnimation={null}>
+              {activeStage && (
+                <div className="w-[280px] rounded-xl border border-primary bg-card p-3 shadow-lg opacity-90">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold">{activeStage.name}</span>
+                  </div>
+                </div>
+              )}
+              {activeStep && (
+                <div className="w-[250px] rounded-lg border border-primary bg-background p-2.5 shadow-lg opacity-90">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium">{activeStep.name}</span>
+                  </div>
+                </div>
+              )}
+              {activeField && (
+                <div className="w-[230px] rounded-md border border-primary bg-background px-2 py-1.5 shadow-lg opacity-90">
+                  <div className="flex items-center gap-1.5">
+                    <GripVertical className="h-3 w-3 text-muted-foreground" />
+                    <span className="truncate text-xs">{activeField.name}</span>
+                    <Badge
+                      variant="outline"
+                      className={`ml-auto h-4 px-1.5 text-[9px] font-normal ${fieldTypeColors[activeField.type]}`}
+                    >
+                      {activeField.type}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+            </DragOverlay>
           </DndContext>
 
           {/* Add Stage button */}

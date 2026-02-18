@@ -194,7 +194,7 @@ export async function POST(request: Request) {
     if (mode === "generate_field_prompt") {
       const result = streamText({
         model,
-        system: `${SYSTEM_BASE}\n\nDu erstellst einen präzisen, konkreten Prompt (Anweisung) für eine KI, die später den Inhalt eines bestimmten Feldes in einem Geschäftsprozess generieren soll. Der Prompt soll klar beschreiben, WAS generiert werden soll, in welchem KONTEXT (Prozess, Stage, Step) und welche QUALITÄTSKRITERIEN gelten. Schreibe den Prompt auf Deutsch, als direkte Anweisung an die KI. Verwende KEIN Markdown — nur Fließtext.`,
+        system: `${SYSTEM_BASE}\n\nDu erstellst einen präzisen, konkreten Prompt (Anweisung) für eine KI, die später den Inhalt eines bestimmten Feldes in einem Geschäftsprozess generieren soll. Der Prompt soll klar beschreiben, WAS generiert werden soll und welche QUALITÄTSKRITERIEN gelten. WICHTIG: Nenne NICHT die Namen von Stages, Steps, Abschnitten oder Nummerierungen — der strukturelle Kontext (Prozess, Stage, Step, Feldname) wird zur Laufzeit automatisch hinzugefügt und kann sich durch Verschiebungen ändern. Schreibe den Prompt auf Deutsch, als direkte Anweisung an die KI. Verwende KEIN Markdown — nur Fließtext.`,
         prompt: `Erstelle einen KI-Prompt für folgendes Feld:\n\nProzess: ${context.process_description || "(keine Beschreibung)"}\nStage: ${context.stage_name}${context.stage_description ? ` — ${context.stage_description}` : ""}\nStep: ${context.step_name}${context.step_description ? ` — ${context.step_description}` : ""}\nField: ${context.field_name}${context.field_description ? ` — ${context.field_description}` : ""}${userPrompt ? `\n\nZusatzhinweis: ${userPrompt}` : ""}`,
         maxOutputTokens: 500,
       });

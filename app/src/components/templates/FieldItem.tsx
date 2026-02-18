@@ -32,7 +32,10 @@ export function FieldItem({ field, onSelect, isSelected }: FieldItemProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: field.id });
+  } = useSortable({
+    id: field.id,
+    data: { type: "field", stepId: field.step_id },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
