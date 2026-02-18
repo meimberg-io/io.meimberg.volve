@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 
 interface GenerateAdvancedModalProps {
   open: boolean;
@@ -99,11 +99,9 @@ export function GenerateAdvancedModal({
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {/* Standard Prompt */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Standard-Prompt
-              </Label>
+          <FormField
+            label="Standard-Prompt"
+            actions={
               <Button
                 variant="ghost"
                 size="xs"
@@ -113,25 +111,23 @@ export function GenerateAdvancedModal({
                 {promptEditable ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                 {promptEditable ? "Sperren" : "Bearbeiten"}
               </Button>
-            </div>
+            }
+          >
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={!promptEditable}
-              className="min-h-[100px] text-sm resize-none bg-secondary/30 border-border/50"
+              className="min-h-[100px] text-sm resize-none"
             />
-          </div>
+          </FormField>
 
           {/* Additional Instructions */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Zusatzanweisungen
-            </Label>
+          <FormField label="Zusatzanweisungen">
             <Textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder="z. B. 'Schwerpunkt auf Internationalität', 'Bitte kurz halten'"
-              className="min-h-[80px] text-sm resize-none bg-secondary/30 border-border/50"
+              className="min-h-[80px] text-sm resize-none"
               autoFocus
             />
             <div className="flex flex-wrap gap-1.5">
@@ -145,7 +141,7 @@ export function GenerateAdvancedModal({
                 </button>
               ))}
             </div>
-          </div>
+          </FormField>
         </div>
 
         <DialogFooter className="px-6 py-4 border-t border-border/50 bg-card/50">

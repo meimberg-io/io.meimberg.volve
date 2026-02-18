@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FormField, CancelButton, SaveButton } from "@/components/ui/form-actions";
 import {
   Select,
   SelectContent,
@@ -110,8 +110,7 @@ export function AddTemplateDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="add-name" className="text-xs">Name</Label>
+          <FormField label="Name" htmlFor="add-name">
             <Input
               ref={inputRef}
               id="add-name"
@@ -119,13 +118,11 @@ export function AddTemplateDialog({
               onChange={(e) => setName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`Name des ${context ? typeLabels[context.type] : "Elements"}...`}
-              className="text-xs!"
             />
-          </div>
+          </FormField>
 
           {context?.type === "field" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">Typ</Label>
+            <FormField label="Typ">
               <Select
                 value={fieldType}
                 onValueChange={(v: FieldType) => setFieldType(v)}
@@ -141,28 +138,18 @@ export function AddTemplateDialog({
                   <SelectItem value="task">Task</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-2">
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-3 w-3" />
-            Abbrechen
-          </Button>
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs cursor-pointer bg-green-500/80 text-white hover:bg-green-500"
+          <CancelButton onClick={() => onOpenChange(false)} />
+          <SaveButton
+            label={submitting ? "Erstelle..." : "Erstellen"}
             onClick={handleSubmit}
             disabled={!name.trim() || submitting}
-          >
-            <Check className="h-3 w-3" />
-            {submitting ? "Erstelle..." : "Erstellen"}
-          </Button>
+            loading={submitting}
+          />
         </div>
       </DialogContent>
     </Dialog>

@@ -19,7 +19,7 @@ export const PromptField = forwardRef<HTMLTextAreaElement, PromptFieldProps>(
         rows={rows}
         placeholder={placeholder}
         className={cn(
-          "text-xs! text-amber-400 placeholder:text-amber-400/40 border-amber-400/30 focus-visible:border-amber-400/50! focus-visible:ring-0!",
+          "text-amber-400 placeholder:text-amber-400/40 border-amber-400/30 focus-visible:border-amber-400/50 focus-visible:ring-0",
           className
         )}
         {...props}

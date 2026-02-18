@@ -2,10 +2,12 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
+import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown } from "tiptap-markdown";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   Bold,
   Italic,
@@ -25,6 +27,9 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  minHeight?: number;
+  maxHeight?: number;
+  editorClassName?: string;
 }
 
 function BubbleButton({
@@ -59,7 +64,13 @@ export function MarkdownEditor({
   onChange,
   placeholder = "Schreibe hier...",
   disabled = false,
+  minHeight = 40,
+  maxHeight = 560,
+  editorClassName,
 }: MarkdownEditorProps) {
+  const isLikelyMarkdown = (text: string) =>
+    /(^|\n)(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|~~~|\|.+\|)/m.test(text);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -83,8 +94,11 @@ export function MarkdownEditor({
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm prose-invert max-w-none min-h-[40px] focus:outline-none text-xs leading-relaxed",
+        class: cn(
+          "prose prose-sm prose-invert max-w-none focus:outline-none text-xs leading-relaxed [scrollbar-color:var(--color-border)_var(--color-muted)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
+          editorClassName
+        ),
+        style: `min-height:${minHeight}px;max-height:${maxHeight}px;overflow-y:auto;`,
       },
     },
     immediatelyRender: false,
@@ -110,8 +124,26 @@ export function MarkdownEditor({
 
   const iconSize = "h-3.5 w-3.5";
 
+  const handlePasteCapture = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    if (!editor || disabled) return;
+    const text = event.clipboardData?.getData("text/plain");
+    if (!text || !isLikelyMarkdown(text)) return;
+
+    event.preventDefault();
+    // Parse markdown -> HTML -> ProseMirror slice and insert at current selection.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedHtml = (editor.storage as any).markdown.parser.parse(text);
+    const container = document.createElement("div");
+    container.innerHTML = parsedHtml;
+    const slice = PMDOMParser.fromSchema(editor.schema).parseSlice(container, {
+      preserveWhitespace: true,
+    });
+    const tr = editor.state.tr.replaceSelection(slice);
+    editor.view.dispatch(tr.scrollIntoView());
+  };
+
   return (
-    <div className="relative">
+    <div className="relative" onPasteCapture={handlePasteCapture}>
       {editor && !disabled && (
         <BubbleMenu
           editor={editor}

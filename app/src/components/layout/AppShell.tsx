@@ -11,6 +11,7 @@ import {
   X,
   Search,
   Blocks,
+  NotebookText,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ interface AppShellProps {
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Templates", icon: Blocks, path: "/templates" },
+  { label: "Snippets", icon: NotebookText, path: "/snippets" },
 ];
 
 export function AppShell({ children, user }: AppShellProps) {

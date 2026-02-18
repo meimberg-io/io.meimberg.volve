@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 import {
   Select,
   SelectContent,
@@ -261,10 +261,9 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
 
       {/* Task Description */}
       <div className="space-y-3 mt-2">
-        <div>
-          <Label className="text-xs text-muted-foreground">Beschreibung</Label>
+        <FormField label="Beschreibung">
           {isClosed ? (
-            <div className="text-sm whitespace-pre-wrap opacity-80 mt-1">{description}</div>
+            <div className="text-sm whitespace-pre-wrap opacity-80">{description}</div>
           ) : (
             <MarkdownEditor
               content={description}
@@ -273,14 +272,13 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
               disabled={isClosed}
             />
           )}
-        </div>
+        </FormField>
 
         {/* Assignee & Type */}
         {!isClosed && (
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Zuständig</Label>
-              <div className="relative mt-1">
+            <FormField label="Zuständig">
+              <div className="relative">
                 <UserCircle className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={assignee}
@@ -289,11 +287,10 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
                   className="pl-8 h-8 text-sm"
                 />
               </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Typ</Label>
+            </FormField>
+            <FormField label="Typ">
               <Select value={taskType} onValueChange={(v) => setTaskType(v)}>
-                <SelectTrigger className="h-8 mt-1 text-sm">
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -304,21 +301,20 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           </div>
         )}
 
         {/* Result (shown when in_progress or done) */}
         {(taskStatus === "in_progress" || taskStatus === "done") && (
-          <div>
-            <Label className="text-xs text-muted-foreground">Ergebnis</Label>
+          <FormField label="Ergebnis">
             <MarkdownEditor
               content={result}
               onChange={handleResultChange}
               placeholder="Ergebnis dokumentieren..."
               disabled={taskStatus === "done"}
             />
-          </div>
+          </FormField>
         )}
 
         {/* Status Transitions */}

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PromptField } from "@/components/field/PromptField";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 import { storageUrl } from "@/lib/utils";
 import { updateProcess } from "@/lib/data/templates";
 
@@ -116,15 +116,14 @@ export function HeaderImageModal({
           )}
 
           {/* Prompt field */}
-          <div className="space-y-1.5">
-            <Label className="text-xs">Promptergänzung (optional)</Label>
+          <FormField label="Promptergänzung (optional)">
             <PromptField
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
               rows={2}
               placeholder="z.B. Farbschema: blau-grün, futuristisch, mit Netzwerklinien..."
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Footer */}

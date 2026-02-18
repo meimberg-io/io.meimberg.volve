@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AiButton } from "@/components/ui/ai-button";
 import { PromptField } from "@/components/field/PromptField";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -201,27 +201,22 @@ export function GenerateStructureModal({
 
         <div className="space-y-4 py-2 min-h-0 flex-1 overflow-y-auto">
           {context.process_description && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Prozessbeschreibung</Label>
+            <FormField label="Prozessbeschreibung">
               <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-16 overflow-y-auto">
                 {context.process_description}
               </div>
-            </div>
+            </FormField>
           )}
 
           {context.stage_description && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Stage-Beschreibung</Label>
+            <FormField label="Stage-Beschreibung">
               <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-16 overflow-y-auto">
                 {context.stage_description}
               </div>
-            </div>
+            </FormField>
           )}
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">
-              Prompt {!hasResults && hasExisting ? "(für Ergänzen erforderlich)" : "(optional)"}
-            </Label>
+          <FormField label={`Prompt ${!hasResults && hasExisting ? "(für Ergänzen erforderlich)" : "(optional)"}`}>
             <PromptField
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
@@ -231,7 +226,7 @@ export function GenerateStructureModal({
                 : "Optionale Ergänzungen für die Generierung..."
               }
             />
-          </div>
+          </FormField>
 
           {error && (
             <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-2.5 text-xs text-destructive">
@@ -249,13 +244,7 @@ export function GenerateStructureModal({
 
           {/* Stages preview */}
           {stages && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Vorschau: {stages.length} Stages
-                {applyMode === "append" && (
-                  <span className="text-amber-400 ml-1">(werden ergänzt)</span>
-                )}
-              </Label>
+            <FormField label={`Vorschau: ${stages.length} Stages${applyMode === "append" ? " (werden ergänzt)" : ""}`}>
               <ScrollArea className="max-h-[280px]">
                 <div className="space-y-2">
                   {stages.map((stage, i) => (
@@ -276,18 +265,12 @@ export function GenerateStructureModal({
                   ))}
                 </div>
               </ScrollArea>
-            </div>
+            </FormField>
           )}
 
           {/* Steps + Fields preview */}
           {steps && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Vorschau: {steps.length} Steps, {totalFields} Fields
-                {applyMode === "append" && (
-                  <span className="text-amber-400 ml-1">(werden ergänzt)</span>
-                )}
-              </Label>
+            <FormField label={`Vorschau: ${steps.length} Steps, ${totalFields} Fields${applyMode === "append" ? " (werden ergänzt)" : ""}`}>
               <ScrollArea className="max-h-[280px]">
                 <div className="space-y-2">
                   {steps.map((step, i) => (
@@ -327,7 +310,7 @@ export function GenerateStructureModal({
                   ))}
                 </div>
               </ScrollArea>
-            </div>
+            </FormField>
           )}
         </div>
 

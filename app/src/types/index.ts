@@ -112,6 +112,29 @@ export interface Task {
   updated_at: string;
 }
 
+export interface SnippetFolder {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  description: string | null;
+  order_index: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Snippet {
+  id: string;
+  folder_id: string | null;
+  name: string;
+  short_description: string | null;
+  content: string;
+  order_index: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- User Profile ---
 
 export interface Profile {
@@ -134,6 +157,15 @@ export interface StageWithSteps extends Stage {
 
 export interface ProcessWithStages extends Process {
   stages: Stage[];
+}
+
+export interface SnippetFolderNode extends SnippetFolder {
+  children: SnippetFolderNode[];
+}
+
+export interface SnippetTree {
+  folders: SnippetFolderNode[];
+  snippetsByFolder: Record<string, Snippet[]>;
 }
 
 // --- AI Types ---

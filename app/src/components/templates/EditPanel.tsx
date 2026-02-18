@@ -10,10 +10,10 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AiButton } from "@/components/ui/ai-button";
+import { FormField } from "@/components/ui/form-actions";
 import { MarkdownField } from "@/components/field/MarkdownField";
 import { IconPicker } from "@/components/field/IconPicker";
 import { PromptField } from "@/components/field/PromptField";
@@ -256,21 +256,20 @@ function StageForm({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="stage-name" className="text-xs">Name</Label>
+      <FormField label="Name" htmlFor="stage-name">
         <Input
           id="stage-name"
           value={name}
-          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="stage-description" className="text-xs">Beschreibung</Label>
+      </FormField>
+      <FormField
+        label="Beschreibung"
+        htmlFor="stage-description"
+        actions={
           <div className="flex gap-1.5">
             <AiButton
               onClick={() => setModalMode("describe_stage")}
@@ -287,7 +286,8 @@ function StageForm({
               Optimieren
             </AiButton>
           </div>
-        </div>
+        }
+      >
         <MarkdownField
           content={description}
           onChange={(val) => {
@@ -297,10 +297,10 @@ function StageForm({
           placeholder="Beschreibung der Stage..."
           maxHeight="250px"
         />
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Icon</Label>
+      </FormField>
+      <FormField
+        label="Icon"
+        actions={
           <AiButton
             loading={suggestingIcon}
             disabled={suggestingIcon || !name.trim()}
@@ -309,7 +309,8 @@ function StageForm({
           >
             Vorschlagen
           </AiButton>
-        </div>
+        }
+      >
         <IconPicker
           value={icon}
           onChange={(val) => {
@@ -317,7 +318,7 @@ function StageForm({
             save({ icon: val || null });
           }}
         />
-      </div>
+      </FormField>
 
       {modalMode && (
         <GenerateDescriptionModal
@@ -378,21 +379,20 @@ function StepForm({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="step-name" className="text-xs">Name</Label>
+      <FormField label="Name" htmlFor="step-name">
         <Input
           id="step-name"
           value={name}
-          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="step-description" className="text-xs">Beschreibung</Label>
+      </FormField>
+      <FormField
+        label="Beschreibung"
+        htmlFor="step-description"
+        actions={
           <div className="flex gap-1.5">
             <AiButton
               onClick={() => setModalMode("describe_step")}
@@ -409,7 +409,8 @@ function StepForm({
               Optimieren
             </AiButton>
           </div>
-        </div>
+        }
+      >
         <MarkdownField
           content={description}
           onChange={(val) => {
@@ -419,7 +420,7 @@ function StepForm({
           placeholder="Beschreibung des Steps..."
           maxHeight="250px"
         />
-      </div>
+      </FormField>
 
       {modalMode && (
         <GenerateDescriptionModal
@@ -500,33 +501,28 @@ function FieldForm({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="field-name" className="text-xs">Name</Label>
+      <FormField label="Name" htmlFor="field-name">
         <Input
           id="field-name"
           value={name}
-          className="text-xs!"
           onChange={(e) => {
             setName(e.target.value);
             save({ name: e.target.value });
           }}
         />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="field-description" className="text-xs">Beschreibung</Label>
+      </FormField>
+      <FormField label="Beschreibung" htmlFor="field-description">
         <Textarea
           id="field-description"
           value={description}
           rows={2}
-          className="text-xs!"
           onChange={(e) => {
             setDescription(e.target.value);
             save({ description: e.target.value || null });
           }}
         />
-      </div>
-      <div className="space-y-1.5">
-        <Label className="text-xs">Typ</Label>
+      </FormField>
+      <FormField label="Typ">
         <Select
           value={type}
           onValueChange={(value: FieldType) => {
@@ -545,9 +541,8 @@ function FieldForm({
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="field-ai-prompt" className="text-xs">AI Prompt</Label>
+      </FormField>
+      <FormField label="AI Prompt" htmlFor="field-ai-prompt">
         <PromptField
           id="field-ai-prompt"
           value={aiPrompt}
@@ -558,11 +553,10 @@ function FieldForm({
             save({ ai_prompt: e.target.value || null });
           }}
         />
-      </div>
+      </FormField>
 
       {/* Dependencies */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">Abhängigkeiten</Label>
+      <FormField label="Abhängigkeiten">
 
         {/* Selected dependencies */}
         {dependencies.length > 0 && (
@@ -609,7 +603,7 @@ function FieldForm({
             </SelectContent>
           </Select>
         )}
-      </div>
+      </FormField>
     </div>
   );
 }

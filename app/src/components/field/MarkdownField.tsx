@@ -35,7 +35,7 @@ export function MarkdownField({
     <div
       ref={containerRef}
       className={cn(
-        "rounded-md border border-border p-3 overflow-y-auto overflow-x-hidden transition-colors [scrollbar-color:var(--color-border)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
+        "rounded-md border border-border/50 bg-secondary/30 p-3 overflow-y-auto overflow-x-hidden transition-colors [scrollbar-color:var(--color-border)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
         !disabled && "focus-within:border-ring",
         className
       )}

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PromptField } from "@/components/field/PromptField";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 
 interface GenerateDescriptionModalProps {
   open: boolean;
@@ -98,8 +98,7 @@ export function GenerateDescriptionModal({
 
         <div className="space-y-4 py-2 min-h-0 flex-1 overflow-y-auto">
           {mode === "process_description" ? (
-            <div className="space-y-1.5">
-              <Label className="text-xs">Beschreibe den Prozess</Label>
+            <FormField label="Beschreibe den Prozess">
               <PromptField
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
@@ -107,21 +106,19 @@ export function GenerateDescriptionModal({
                 placeholder="z.B. Ein Prozess für die Gründung eines SaaS-Unternehmens..."
                 autoFocus
               />
-            </div>
+            </FormField>
           ) : mode === "optimize_description" ? (
             <>
               {context.current_description && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Aktuelle Beschreibung</Label>
+                <FormField label="Aktuelle Beschreibung">
                   <div className="max-h-[150px] overflow-y-auto rounded-md bg-muted/50 p-2.5">
                     <div className="prose prose-sm prose-invert max-w-none text-xs">
                       <ReactMarkdown>{context.current_description}</ReactMarkdown>
                     </div>
                   </div>
-                </div>
+                </FormField>
               )}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Was soll geändert werden?</Label>
+              <FormField label="Was soll geändert werden?">
                 <PromptField
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
@@ -129,39 +126,36 @@ export function GenerateDescriptionModal({
                   placeholder="z.B. Wir brauchen noch eine Zielgruppenanalyse..."
                   autoFocus
                 />
-              </div>
+              </FormField>
             </>
           ) : (
             <>
               {context.process_description && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Prozessbeschreibung (Kontext)</Label>
+                <FormField label="Prozessbeschreibung (Kontext)">
                   <div className="rounded-md bg-muted/50 p-2.5 text-xs text-muted-foreground max-h-20 overflow-y-auto">
                     {context.process_description}
                   </div>
-                </div>
+                </FormField>
               )}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Zusatzhinweis (optional)</Label>
+              <FormField label="Zusatzhinweis (optional)">
                 <PromptField
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
                   rows={2}
                   placeholder="Optionale Ergänzungen für die Generierung..."
                 />
-              </div>
+              </FormField>
             </>
           )}
 
           {result && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Ergebnis</Label>
+            <FormField label="Ergebnis">
               <div className="max-h-[250px] overflow-y-auto rounded-md border border-border bg-background p-3">
                 <div className="prose prose-sm prose-invert max-w-none text-xs">
                   <ReactMarkdown>{result}</ReactMarkdown>
                 </div>
               </div>
-            </div>
+            </FormField>
           )}
         </div>
 

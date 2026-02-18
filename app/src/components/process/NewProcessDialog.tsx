@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 import {
   Select,
   SelectContent,
@@ -85,8 +85,7 @@ export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="process-template">Template</Label>
+            <FormField label="Template" htmlFor="process-template">
               {modelsLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -114,9 +113,8 @@ export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
                   </SelectContent>
                 </Select>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="process-name">Prozessname</Label>
+            </FormField>
+            <FormField label="Prozessname" htmlFor="process-name">
               <Input
                 id="process-name"
                 value={name}
@@ -125,7 +123,7 @@ export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
                 autoFocus
                 disabled={loading}
               />
-            </div>
+            </FormField>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={loading}>

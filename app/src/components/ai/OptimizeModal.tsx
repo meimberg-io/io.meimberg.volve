@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-actions";
 import { cn } from "@/lib/utils";
 
 interface OptimizeModalProps {
@@ -101,10 +101,7 @@ export function OptimizeModal({
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {/* Current Content Preview */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Aktueller Inhalt
-            </Label>
+          <FormField label="Aktueller Inhalt">
             <div className="max-h-[160px] overflow-y-auto rounded-lg border border-border/50 bg-secondary/30 p-3">
               <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
                 {currentContent.length > 800
@@ -112,13 +109,10 @@ export function OptimizeModal({
                   : currentContent}
               </div>
             </div>
-          </div>
+          </FormField>
 
           {/* Quick Actions */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Schnellaktionen
-            </Label>
+          <FormField label="Schnellaktionen">
             <div className="flex flex-wrap gap-1.5">
               {QUICK_ACTIONS.map((action) => (
                 <button
@@ -135,21 +129,18 @@ export function OptimizeModal({
                 </button>
               ))}
             </div>
-          </div>
+          </FormField>
 
           {/* Instruction */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Optimierungsanweisung
-            </Label>
+          <FormField label="Optimierungsanweisung">
             <Textarea
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               placeholder="z. B. 'Fasse kürzer zusammen', 'Ergänze quantitative Daten'"
-              className="min-h-[80px] text-sm resize-none bg-secondary/30 border-border/50"
+              className="min-h-[80px] text-sm resize-none"
               autoFocus
             />
-          </div>
+          </FormField>
         </div>
 
         <DialogFooter className="px-6 py-4 border-t border-border/50 bg-card/50">

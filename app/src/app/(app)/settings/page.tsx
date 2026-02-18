@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-actions";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,16 +141,16 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="ai-model" className="text-xs">KI-Modell</Label>
-              {saved["ai_model"] && (
-                <span className="flex items-center gap-1 text-[10px] text-emerald-500">
-                  <Check className="h-3 w-3" />
-                  Gespeichert
-                </span>
-              )}
-            </div>
+          <FormField
+            label="KI-Modell"
+            htmlFor="ai-model"
+            actions={saved["ai_model"] ? (
+              <span className="flex items-center gap-1 text-[10px] text-emerald-500">
+                <Check className="h-3 w-3" />
+                Gespeichert
+              </span>
+            ) : undefined}
+          >
             <Select
               value={settings["ai_model"] || "gpt-5.2"}
               onValueChange={(value) => handleChange("ai_model", value)}
@@ -174,28 +174,24 @@ export default function SettingsPage() {
             <p className="text-[11px] text-muted-foreground">
               Gilt global für alle KI-Generierungen (außer Bildgenerierung).
             </p>
-          </div>
+          </FormField>
           <Separator />
-          <div className="space-y-1.5">
-            <Label htmlFor="openai-key" className="text-xs">OpenAI API Key</Label>
+          <FormField label="OpenAI API Key" htmlFor="openai-key">
             <Input
               id="openai-key"
               type="password"
               placeholder="sk-..."
-              className="text-xs!"
               disabled
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="anthropic-key" className="text-xs">Anthropic API Key</Label>
+          </FormField>
+          <FormField label="Anthropic API Key" htmlFor="anthropic-key">
             <Input
               id="anthropic-key"
               type="password"
               placeholder="sk-ant-..."
-              className="text-xs!"
               disabled
             />
-          </div>
+          </FormField>
         </CardContent>
       </Card>
 
@@ -216,18 +212,16 @@ export default function SettingsPage() {
             PROMPT_KEYS.map((prompt, idx) => (
               <div key={prompt.key}>
                 {idx > 0 && <Separator className="mb-5" />}
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={prompt.key} className="text-xs font-medium">
-                      {prompt.label}
-                    </Label>
-                    {saved[prompt.key] && (
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-500">
-                        <Check className="h-3 w-3" />
-                        Gespeichert
-                      </span>
-                    )}
-                  </div>
+                <FormField
+                  label={prompt.label}
+                  htmlFor={prompt.key}
+                  actions={saved[prompt.key] ? (
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-500">
+                      <Check className="h-3 w-3" />
+                      Gespeichert
+                    </span>
+                  ) : undefined}
+                >
                   <p className="text-[11px] text-muted-foreground">{prompt.description}</p>
                   <PromptField
                     id={prompt.key}
@@ -248,7 +242,7 @@ export default function SettingsPage() {
                       </Badge>
                     ))}
                   </div>
-                </div>
+                </FormField>
               </div>
             ))
           )}

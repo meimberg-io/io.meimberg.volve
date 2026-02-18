@@ -1,0 +1,31 @@
+---
+description: Project-wide context and binding frontend documentation
+alwaysApply: true
+---
+
+# Project Rule
+
+## Binding Frontend Documentation
+
+For all frontend-related changes, the documentation in `docs/frontend/` is binding and must be followed:
+
+- `docs/frontend/README.md`
+- `docs/frontend/guidelines.md`
+- `docs/frontend/components.md`
+
+## Keep Frontend Documentation Up-to-Date
+
+After any frontend change that introduces, renames, or removes a shared component, UI primitive, or styling pattern:
+
+- Update `docs/frontend/components.md` if a reusable component was added, changed, or removed.
+- Update `docs/frontend/guidelines.md` if a styling convention or interaction pattern changed.
+
+Do this in the same changeset — never defer documentation updates.
+
+## Required Behavior
+
+- Always read `docs/frontend/` before creating new components or styling patterns.
+- Reuse existing frontend components and established modal/form patterns.
+- Keep styles and interaction patterns consistent with the documented guidelines.
+- Avoid introducing new one-off styling where shared components already exist.
+- When in doubt, check the existing UI primitives in `components/ui/` and domain components in `components/field/` before writing new code.
