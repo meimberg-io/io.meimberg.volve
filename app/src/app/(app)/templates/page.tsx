@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddTemplateDialog } from "@/components/templates/AddTemplateDialog";
-import { getProcessModels } from "@/lib/data/templates";
+import { getProcessModels, importTemplate } from "@/lib/data/templates";
 import { storageUrl } from "@/lib/utils";
 import type { ProcessModel } from "@/types";
 
@@ -15,6 +15,8 @@ export default function TemplatesPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["process-models"],
@@ -29,19 +31,60 @@ export default function TemplatesPage() {
     }
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const newModelId = await importTemplate(file);
+      await queryClient.invalidateQueries({ queryKey: ["process-models"] });
+      router.push(`/templates/${newModelId}`);
+    } catch (err) {
+      console.error("Import failed:", err);
+      alert("Import fehlgeschlagen. Bitte prüfe die JSON-Datei.");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Templates</h1>
-        <Button
-          onClick={() => setShowAddDialog(true)}
-          variant="outline"
-          size="sm"
-          className="cursor-pointer"
-        >
-          <Plus className="mr-1.5 h-4 w-4" />
-          Neues Modell
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="cursor-pointer"
+            disabled={importing}
+          >
+            {importing ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-1.5 h-4 w-4" />
+            )}
+            {importing ? "Importiere..." : "Importieren"}
+          </Button>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            variant="outline"
+            size="sm"
+            className="cursor-pointer"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Neues Modell
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

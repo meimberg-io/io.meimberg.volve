@@ -512,6 +512,189 @@ export async function reorderFieldTemplates(
 }
 
 // =============================================
+// EXPORT / IMPORT
+// =============================================
+
+export interface TemplateExport {
+  version: 1;
+  exportedAt: string;
+  template: {
+    name: string;
+    description: string | null;
+    metadata: Record<string, unknown> | null;
+    stages: {
+      name: string;
+      description: string | null;
+      icon: string | null;
+      order_index: number;
+      steps: {
+        name: string;
+        description: string | null;
+        order_index: number;
+        fields: {
+          _ref: string; // original ID for dependency mapping
+          name: string;
+          type: string;
+          description: string | null;
+          ai_prompt: string | null;
+          order_index: number;
+          dependency_refs: string[]; // original IDs of dependencies
+        }[];
+      }[];
+    }[];
+  };
+}
+
+export function buildTemplateExport(
+  model: ProcessModelWithTemplates
+): TemplateExport {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    template: {
+      name: model.name,
+      description: model.description,
+      metadata: model.metadata,
+      stages: model.stages.map((stage) => ({
+        name: stage.name,
+        description: stage.description,
+        icon: stage.icon,
+        order_index: stage.order_index,
+        steps: stage.steps.map((step) => ({
+          name: step.name,
+          description: step.description,
+          order_index: step.order_index,
+          fields: step.fields.map((field) => ({
+            _ref: field.id,
+            name: field.name,
+            type: field.type,
+            description: field.description,
+            ai_prompt: field.ai_prompt,
+            order_index: field.order_index,
+            dependency_refs: field.dependencies ?? [],
+          })),
+        })),
+      })),
+    },
+  };
+}
+
+export function downloadTemplateExport(
+  model: ProcessModelWithTemplates
+): void {
+  const payload = buildTemplateExport(model);
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${model.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_")}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importTemplate(
+  file: File
+): Promise<string> {
+  const text = await file.text();
+  const data: TemplateExport = JSON.parse(text);
+
+  if (data.version !== 1) {
+    throw new Error("Nicht unterstütztes Export-Format");
+  }
+
+  const t = data.template;
+
+  const { data: model, error: modelError } = await supabase
+    .from("process_models")
+    .insert({
+      name: t.name,
+      description: t.description,
+      metadata: t.metadata ?? {},
+    })
+    .select()
+    .single();
+
+  if (modelError) throw modelError;
+
+  // ref -> new ID mapping for dependency resolution
+  const refMap = new Map<string, string>();
+
+  for (const stage of t.stages) {
+    const { data: newStage, error: stageError } = await supabase
+      .from("stage_templates")
+      .insert({
+        model_id: model.id,
+        name: stage.name,
+        description: stage.description,
+        icon: stage.icon,
+        order_index: stage.order_index,
+      })
+      .select("id")
+      .single();
+
+    if (stageError) throw stageError;
+
+    for (const step of stage.steps) {
+      const { data: newStep, error: stepError } = await supabase
+        .from("step_templates")
+        .insert({
+          stage_template_id: newStage.id,
+          name: step.name,
+          description: step.description,
+          order_index: step.order_index,
+        })
+        .select("id")
+        .single();
+
+      if (stepError) throw stepError;
+
+      for (const field of step.fields) {
+        const { data: newField, error: fieldError } = await supabase
+          .from("field_templates")
+          .insert({
+            step_template_id: newStep.id,
+            name: field.name,
+            type: field.type,
+            description: field.description,
+            ai_prompt: field.ai_prompt,
+            order_index: field.order_index,
+          })
+          .select("id")
+          .single();
+
+        if (fieldError) throw fieldError;
+        refMap.set(field._ref, newField.id);
+      }
+    }
+  }
+
+  // Remap dependencies
+  const depUpdates: { id: string; dependencies: string[] }[] = [];
+  for (const stage of t.stages) {
+    for (const step of stage.steps) {
+      for (const field of step.fields) {
+        if (field.dependency_refs.length > 0) {
+          const newId = refMap.get(field._ref);
+          const mapped = field.dependency_refs
+            .map((ref) => refMap.get(ref))
+            .filter((id): id is string => !!id);
+          if (newId && mapped.length > 0) {
+            depUpdates.push({ id: newId, dependencies: mapped });
+          }
+        }
+      }
+    }
+  }
+
+  if (depUpdates.length > 0) {
+    await bulkUpdateDependencies(depUpdates);
+  }
+
+  return model.id;
+}
+
+// =============================================
 // INSTANCE COUNT (for delete-protection UI)
 // =============================================
 

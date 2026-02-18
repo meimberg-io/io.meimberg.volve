@@ -15,13 +15,19 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon, MoreHorizontal, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
 import { HeaderImageModal } from "./HeaderImageModal";
-import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies } from "@/lib/data/templates";
+import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies, downloadTemplateExport } from "@/lib/data/templates";
 import type {
   ProcessModelWithTemplates,
   StageTemplate,
@@ -218,6 +224,29 @@ export function PipelineView({
             )}
             {generatingDeps ? "Generiere..." : "Dependencies generieren"}
           </Button>
+
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-7 w-7 cursor-pointer"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => downloadTemplateExport(model)}
+                  className="cursor-pointer gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportieren
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 

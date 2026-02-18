@@ -5,26 +5,26 @@ help: ## Show this help
 
 # --- Supabase ---
 
-up: ## Start Supabase stack
+sb-up: ## Start Supabase stack
 	@docker network create traefik 2>/dev/null || true
 	cd supabase/docker && ./run.sh up -d
 
-down: ## Stop Supabase stack
+sb-down: ## Stop Supabase stack
 	cd supabase/docker && ./run.sh down
 
-restart: ## Restart Supabase stack
+sb-restart: ## Restart Supabase stack
 	cd supabase/docker && ./run.sh down && ./run.sh up -d
 
-logs: ## Tail Supabase logs (usage: make logs or make logs s=auth)
+sb-logs: ## Tail Supabase logs (usage: make logs or make logs s=auth)
 	cd supabase/docker && ./run.sh logs -f $(if $(s),$(s),)
 
-status: ## Show status of all containers
+sb-status: ## Show status of all containers
 	@docker ps --filter "name=supabase-" --format "table {{.Names}}\t{{.Status}}" | sort
 	@docker ps --filter "name=realtime-dev" --format "table {{.Names}}\t{{.Status}}"
 
 # --- Database ---
 
-migrate: ## Apply all SQL migrations to local Supabase
+sb-migrate: ## Apply all SQL migrations to local Supabase
 	@for f in $$(ls supabase/migrations/*.sql | sort); do \
 		echo "Applying: $$f"; \
 		docker exec -i supabase-db psql -U postgres -d postgres < "$$f"; \
@@ -33,7 +33,7 @@ migrate: ## Apply all SQL migrations to local Supabase
 
 # --- App ---
 
-app: ## Start Next.js dev server
+app-up: ## Start Next.js dev server
 	cd app && npm run dev
 
 app-stop: ## Kill Next.js dev server
@@ -41,19 +41,19 @@ app-stop: ## Kill Next.js dev server
 
 # --- Quality ---
 
-lint: ## Run ESLint
+app-lint: ## Run ESLint
 	cd app && npx eslint src/
 
-typecheck: ## Run TypeScript check
+app-typecheck: ## Run TypeScript check
 	cd app && npx tsc --noEmit
 
-check: lint typecheck ## Run lint + typecheck
+app-check: app-lint app-typecheck ## Run lint + typecheck
 
 # --- Build ---
 
-build: ## Build Next.js for production
+app-build: ## Build Next.js for production
 	cd app && npm run build
 
-clean: ## Remove build artifacts and node_modules
+app-clean: ## Remove build artifacts and node_modules
 	rm -rf app/.next app/node_modules
 	cd supabase/docker && rm -f .env.runtime
