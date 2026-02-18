@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getProcessModels } from "@/lib/data/templates";
-import type { ProcessModel } from "@/types";
+import { getTemplates } from "@/lib/data/templates";
+import type { Process } from "@/types";
 
 interface NewProcessDialogProps {
   onSubmit: (name: string, modelId: string) => Promise<void>;
@@ -32,14 +32,14 @@ export function NewProcessDialog({ onSubmit }: NewProcessDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [selectedModelId, setSelectedModelId] = useState("");
-  const [models, setModels] = useState<ProcessModel[]>([]);
+  const [models, setModels] = useState<Process[]>([]);
   const [loading, setLoading] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setModelsLoading(true);
-      getProcessModels().then((data) => {
+      getTemplates().then((data) => {
         setModels(data);
         if (data.length === 1) {
           setSelectedModelId(data[0].id);

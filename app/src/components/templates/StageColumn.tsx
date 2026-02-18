@@ -23,22 +23,21 @@ import { AiButton } from "@/components/ui/ai-button";
 import { cn } from "@/lib/utils";
 import { StepCard } from "./StepCard";
 import { GenerateStructureModal } from "./GenerateStructureModal";
-import { reorderStepTemplates } from "@/lib/data/templates";
+import { reorderSteps, type ProcessWithStages } from "@/lib/data/templates";
 import type {
-  ProcessModelWithTemplates,
-  StageTemplateWithSteps,
-  StageTemplate,
-  StepTemplate,
-  FieldTemplate,
+  StageWithSteps,
+  Stage,
+  Step,
+  Field,
 } from "@/types";
 
 interface StageColumnProps {
-  stage: StageTemplateWithSteps;
+  stage: StageWithSteps;
   stageNumber: number;
-  setModel: Dispatch<SetStateAction<ProcessModelWithTemplates | null>>;
+  setModel: Dispatch<SetStateAction<ProcessWithStages | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
-    item: StageTemplate | StepTemplate | FieldTemplate
+    item: Stage | Step | Field
   ) => void;
   selectedId: string | null;
   onAddStep: (stageId: string) => void;
@@ -96,7 +95,7 @@ export function StageColumn({
           ),
         };
       });
-      reorderStepTemplates(stage.id, reordered.map((s) => s.id));
+      reorderSteps(stage.id, reordered.map((s) => s.id));
     },
     [stage, setModel]
   );

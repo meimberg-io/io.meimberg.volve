@@ -10,12 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PipelineView } from "@/components/templates/PipelineView";
 import { EditPanel } from "@/components/templates/EditPanel";
 import { AddTemplateDialog } from "@/components/templates/AddTemplateDialog";
-import { getProcessWithFullTree, ProcessWithStages } from "@/lib/data/templates";
-import type {
-  Stage,
-  Step,
-  Field,
-} from "@/types";
+import { getProcessWithFullTree, type ProcessWithStages } from "@/lib/data/templates";
+import type { Stage, Step, Field } from "@/types";
 
 type EditItem = {
   type: "stage" | "step" | "field";
@@ -27,9 +23,9 @@ type AddContext = {
   parentId: string;
 } | null;
 
-export default function TemplateDetailPage() {
+export default function ProcessEditPage() {
   const params = useParams();
-  const modelId = params.id as string;
+  const processId = params.id as string;
   const queryClient = useQueryClient();
 
   const [editItem, setEditItem] = useState<EditItem | null>(null);
@@ -38,32 +34,27 @@ export default function TemplateDetailPage() {
   const [addContext, setAddContext] = useState<AddContext>(null);
 
   const { data: model = null, isLoading } = useQuery({
-    queryKey: ["process-model", modelId],
-    queryFn: () => getProcessWithFullTree(modelId),
-    enabled: !!modelId,
+    queryKey: ["process-edit", processId],
+    queryFn: () => getProcessWithFullTree(processId),
+    enabled: !!processId,
   });
 
   const setModel = useCallback(
     (updater: SetStateAction<ProcessWithStages | null>) => {
       queryClient.setQueryData<ProcessWithStages | null>(
-        ["process-model", modelId],
+        ["process-edit", processId],
         (prev) =>
           typeof updater === "function" ? updater(prev ?? null) : updater
       );
     },
-    [modelId, queryClient]
+    [processId, queryClient]
   );
 
   const refreshModel = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: ["process-model", modelId],
+      queryKey: ["process-edit", processId],
     });
-  }, [modelId, queryClient]);
-
-  const refreshAll = useCallback(() => {
-    refreshModel();
-    queryClient.invalidateQueries({ queryKey: ["templates"] });
-  }, [refreshModel, queryClient]);
+  }, [processId, queryClient]);
 
   const handleSelect = (
     type: "stage" | "step" | "field",
@@ -74,7 +65,7 @@ export default function TemplateDetailPage() {
   };
 
   const handleAddStage = () => {
-    setAddContext({ type: "stage", parentId: modelId });
+    setAddContext({ type: "stage", parentId: processId });
     setShowAddDialog(true);
   };
 
@@ -93,19 +84,18 @@ export default function TemplateDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/templates">
+        <Link href={`/process/${processId}`}>
           <Button variant="ghost" size="icon-sm" className="cursor-pointer">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <h1 className="text-2xl font-bold">
-          {model?.name ?? "Lade..."}
+          {model?.name ?? "Lade..."}{" "}
+          <span className="text-base font-normal text-muted-foreground">bearbeiten</span>
         </h1>
       </div>
 
-      {/* Pipeline View */}
       {isLoading ? (
         <div className="flex gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -125,24 +115,22 @@ export default function TemplateDetailPage() {
         />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
-          <h3 className="mb-1 text-lg font-medium">Modell nicht gefunden</h3>
+          <h3 className="mb-1 text-lg font-medium">Prozess nicht gefunden</h3>
           <p className="text-sm text-muted-foreground">
-            Das Prozessmodell existiert nicht oder wurde gelöscht.
+            Der Prozess existiert nicht oder wurde gelöscht.
           </p>
         </div>
       )}
 
-      {/* Edit Panel */}
       <EditPanel
         open={editPanelOpen}
         onOpenChange={setEditPanelOpen}
         editItem={editItem}
         model={model}
-        onRefresh={refreshAll}
+        onRefresh={refreshModel}
         allFields={allFields}
       />
 
-      {/* Add Dialog */}
       {addContext && (
         <AddTemplateDialog
           open={showAddDialog}

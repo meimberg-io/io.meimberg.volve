@@ -52,7 +52,7 @@ export function GenerateAdvancedModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          field_instance_id: fieldId,
+          field_id: fieldId,
           process_id: processId,
           custom_prompt: promptEditable ? prompt : undefined,
           additional_instructions: instructions || undefined,

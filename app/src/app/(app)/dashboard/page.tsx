@@ -10,24 +10,20 @@ import { createClient } from "@/lib/supabase/client";
 import { createProcess } from "@/lib/data/processes";
 import type { Process } from "@/types";
 
-export type ProcessWithImage = Process & {
-  process_models: { header_image: string | null } | null;
-};
-
 export default function DashboardPage() {
   const router = useRouter();
-  const [processes, setProcesses] = useState<ProcessWithImage[]>([]);
+  const [processes, setProcesses] = useState<Process[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadProcesses = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from("processes")
-      .select("*, process_models(header_image)")
+      .select("*")
       .neq("status", "archived")
       .order("updated_at", { ascending: false });
 
-    setProcesses((data as ProcessWithImage[] | null) ?? []);
+    setProcesses((data as Process[] | null) ?? []);
     setLoading(false);
   }, []);
 

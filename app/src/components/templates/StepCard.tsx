@@ -21,23 +21,22 @@ import { GripVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FieldItem } from "./FieldItem";
-import { reorderFieldTemplates } from "@/lib/data/templates";
+import { reorderFields, type ProcessWithStages } from "@/lib/data/templates";
 import type {
-  ProcessModelWithTemplates,
-  StepTemplateWithFields,
-  StageTemplate,
-  StepTemplate,
-  FieldTemplate,
+  StepWithFields,
+  Stage,
+  Step,
+  Field,
 } from "@/types";
 
 interface StepCardProps {
-  step: StepTemplateWithFields;
+  step: StepWithFields;
   stepLetter: string;
   stageId: string;
-  setModel: Dispatch<SetStateAction<ProcessModelWithTemplates | null>>;
+  setModel: Dispatch<SetStateAction<ProcessWithStages | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
-    item: StageTemplate | StepTemplate | FieldTemplate
+    item: Stage | Step | Field
   ) => void;
   selectedId: string | null;
   onAddField: (stepId: string) => void;
@@ -95,7 +94,7 @@ export function StepCard({
           ),
         };
       });
-      reorderFieldTemplates(step.id, reordered.map((f) => f.id));
+      reorderFields(step.id, reordered.map((f) => f.id));
     },
     [step, stageId, setModel]
   );

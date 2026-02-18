@@ -24,10 +24,10 @@ import { GenerateAdvancedModal } from "@/components/ai/GenerateAdvancedModal";
 import { OptimizeModal } from "@/components/ai/OptimizeModal";
 import { VersionHistoryPanel } from "./VersionHistoryPanel";
 import { DependencyHint } from "./DependencyHint";
-import type { FieldInstance } from "@/types";
+import type { Field } from "@/types";
 
 interface FieldCardProps {
-  field: FieldInstance;
+  field: Field;
   processId: string;
   onUpdate: () => void;
 }
@@ -65,14 +65,14 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
           const supabase = createClient();
           const newStatus = value.trim() ? "open" : "empty";
           await supabase
-            .from("field_instances")
+            .from("fields")
             .update({ content: value, status: newStatus })
             .eq("id", field.id);
 
           // Save version
           if (value.trim()) {
             await supabase.from("field_versions").insert({
-              field_instance_id: field.id,
+              field_id: field.id,
               content: value,
               source: "manual",
             });
@@ -102,7 +102,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          field_instance_id: field.id,
+          field_id: field.id,
           process_id: processId,
         }),
       });
@@ -126,12 +126,12 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
       // Save the generated content
       const supabase = createClient();
       await supabase
-        .from("field_instances")
+        .from("fields")
         .update({ content: accumulated, status: "open" })
         .eq("id", field.id);
 
       await supabase.from("field_versions").insert({
-        field_instance_id: field.id,
+        field_id: field.id,
         content: accumulated,
         source: "generate",
       });
@@ -150,7 +150,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
     if (!content.trim()) return;
     const supabase = createClient();
     await supabase
-      .from("field_instances")
+      .from("fields")
       .update({ status: "closed" })
       .eq("id", field.id);
 
@@ -179,7 +179,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
   const handleReopen = async () => {
     const supabase = createClient();
     await supabase
-      .from("field_instances")
+      .from("fields")
       .update({ status: "open" })
       .eq("id", field.id);
 
@@ -195,40 +195,40 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
 
       // Get field's step
       const { data: fieldData } = await supabase
-        .from("field_instances")
-        .select("step_instance_id")
+        .from("fields")
+        .select("step_id")
         .eq("id", fieldInstanceId)
         .single();
       if (!fieldData) return;
 
       // Check all fields in the step
       const { data: stepFields } = await supabase
-        .from("field_instances")
+        .from("fields")
         .select("status")
-        .eq("step_instance_id", fieldData.step_instance_id);
+        .eq("step_id", fieldData.step_id);
 
       const allClosed = stepFields?.every((f) => f.status === "closed") ?? false;
       const anyActive = stepFields?.some((f) => f.status !== "empty") ?? false;
       const stepStatus = allClosed ? "completed" : anyActive ? "in_progress" : "open";
 
       await supabase
-        .from("step_instances")
+        .from("steps")
         .update({ status: stepStatus })
-        .eq("id", fieldData.step_instance_id);
+        .eq("id", fieldData.step_id);
 
       // Get step's stage
       const { data: stepData } = await supabase
-        .from("step_instances")
-        .select("stage_instance_id")
-        .eq("id", fieldData.step_instance_id)
+        .from("steps")
+        .select("stage_id")
+        .eq("id", fieldData.step_id)
         .single();
       if (!stepData) return;
 
       // Check all steps in the stage
       const { data: stageSteps } = await supabase
-        .from("step_instances")
+        .from("steps")
         .select("status")
-        .eq("stage_instance_id", stepData.stage_instance_id);
+        .eq("stage_id", stepData.stage_id);
 
       const allStepsCompleted = stageSteps?.every((s) => s.status === "completed") ?? false;
       const anyStepActive = stageSteps?.some((s) => s.status !== "open") ?? false;
@@ -238,21 +238,21 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         : 0;
 
       await supabase
-        .from("stage_instances")
+        .from("stages")
         .update({ status: stageStatus, progress: stageProgress })
-        .eq("id", stepData.stage_instance_id);
+        .eq("id", stepData.stage_id);
 
       // Get stage's process
       const { data: stageData } = await supabase
-        .from("stage_instances")
+        .from("stages")
         .select("process_id")
-        .eq("id", stepData.stage_instance_id)
+        .eq("id", stepData.stage_id)
         .single();
       if (!stageData) return;
 
       // Check all stages
       const { data: processStages } = await supabase
-        .from("stage_instances")
+        .from("stages")
         .select("status, progress")
         .eq("process_id", stageData.process_id);
 
@@ -278,12 +278,12 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
     setContent(result);
     const supabase = createClient();
     await supabase
-      .from("field_instances")
+      .from("fields")
       .update({ content: result, status: "open" })
       .eq("id", field.id);
 
     await supabase.from("field_versions").insert({
-      field_instance_id: field.id,
+      field_id: field.id,
       content: result,
       source,
     });
@@ -440,7 +440,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
           {/* Dependency Hint */}
           {dependencies.length > 0 && (
             <DependencyHint
-              dependencyTemplateIds={dependencies}
+              dependencyIds={dependencies}
               processId={processId}
             />
           )}

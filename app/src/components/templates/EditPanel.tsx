@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -37,22 +37,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  updateStageTemplate,
-  updateStepTemplate,
-  updateFieldTemplate,
-  deleteStageTemplate,
-  deleteStepTemplate,
-  deleteFieldTemplate,
-  getTemplateInstanceCount,
+  updateStage,
+  updateStep,
+  updateField,
+  deleteStage,
+  deleteStep,
+  deleteField,
+  type ProcessWithStages,
 } from "@/lib/data/templates";
 import { GenerateDescriptionModal } from "./GenerateDescriptionModal";
-import type {
-  ProcessModelWithTemplates,
-  StageTemplate,
-  StepTemplate,
-  FieldTemplate,
-  FieldType,
-} from "@/types";
+import type { Stage, Step, Field, FieldType } from "@/types";
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: "text", label: "Text" },
@@ -67,11 +61,11 @@ interface EditPanelProps {
   onOpenChange: (open: boolean) => void;
   editItem: {
     type: "stage" | "step" | "field";
-    item: StageTemplate | StepTemplate | FieldTemplate;
+    item: Stage | Step | Field;
   } | null;
-  model: ProcessModelWithTemplates | null;
+  model: ProcessWithStages | null;
   onRefresh: () => void;
-  allFields: FieldTemplate[];
+  allFields: Field[];
 }
 
 export function EditPanel({
@@ -82,27 +76,19 @@ export function EditPanel({
   onRefresh,
   allFields,
 }: EditPanelProps) {
-  const [instanceCount, setInstanceCount] = useState<number>(0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!editItem) return;
-    getTemplateInstanceCount(editItem.type, editItem.item.id).then(
-      setInstanceCount
-    );
-  }, [editItem]);
 
   const handleDelete = async () => {
     if (!editItem) return;
     setDeleting(true);
     try {
       if (editItem.type === "stage") {
-        await deleteStageTemplate(editItem.item.id);
+        await deleteStage(editItem.item.id);
       } else if (editItem.type === "step") {
-        await deleteStepTemplate(editItem.item.id);
+        await deleteStep(editItem.item.id);
       } else {
-        await deleteFieldTemplate(editItem.item.id);
+        await deleteField(editItem.item.id);
       }
       setShowDeleteDialog(false);
       onOpenChange(false);
@@ -137,7 +123,7 @@ export function EditPanel({
               {editItem.type === "stage" && (
                 <StageForm
                   key={editItem.item.id}
-                  stage={editItem.item as StageTemplate}
+                  stage={editItem.item as Stage}
                   processDescription={model?.description ?? ""}
                   onRefresh={onRefresh}
                 />
@@ -145,7 +131,7 @@ export function EditPanel({
               {editItem.type === "step" && (
                 <StepForm
                   key={editItem.item.id}
-                  step={editItem.item as StepTemplate}
+                  step={editItem.item as Step}
                   model={model}
                   onRefresh={onRefresh}
                 />
@@ -153,7 +139,7 @@ export function EditPanel({
               {editItem.type === "field" && (
                 <FieldForm
                   key={editItem.item.id}
-                  field={editItem.item as FieldTemplate}
+                  field={editItem.item as Field}
                   allFields={allFields}
                   onRefresh={onRefresh}
                 />
@@ -161,28 +147,11 @@ export function EditPanel({
 
               <Separator />
 
-              {/* Instance count & delete */}
+              {/* Delete */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Instanzen:</span>
-                  <Badge variant="secondary" className="text-[10px]">{instanceCount}</Badge>
-                </div>
-
-                {instanceCount > 0 && (
-                  <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-400">
-                    <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-                    <span>
-                      Dieses Template wird von {instanceCount} Instanz
-                      {instanceCount !== 1 && "en"} verwendet und kann nicht
-                      gelöscht werden.
-                    </span>
-                  </div>
-                )}
-
                 <Button
                   size="sm"
                   className="w-full gap-1.5 text-xs cursor-pointer bg-red-500/80 text-white hover:bg-red-500"
-                  disabled={instanceCount > 0}
                   onClick={() => setShowDeleteDialog(true)}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -237,7 +206,7 @@ function StageForm({
   processDescription,
   onRefresh,
 }: {
-  stage: StageTemplate;
+  stage: Stage;
   processDescription: string;
   onRefresh: () => void;
 }) {
@@ -249,10 +218,10 @@ function StageForm({
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
-    (data: Partial<Pick<StageTemplate, "name" | "description" | "icon">>) => {
+    (data: Partial<Pick<Stage, "name" | "description" | "icon">>) => {
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
-        await updateStageTemplate(stage.id, data);
+        await updateStage(stage.id, data);
         onRefresh();
       }, 500);
     },
@@ -380,8 +349,8 @@ function StepForm({
   model,
   onRefresh,
 }: {
-  step: StepTemplate;
-  model: ProcessModelWithTemplates | null;
+  step: Step;
+  model: ProcessWithStages | null;
   onRefresh: () => void;
 }) {
   const [name, setName] = useState(step.name);
@@ -390,10 +359,10 @@ function StepForm({
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
-    (data: Partial<Pick<StepTemplate, "name" | "description">>) => {
+    (data: Partial<Pick<Step, "name" | "description">>) => {
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
-        await updateStepTemplate(step.id, data);
+        await updateStep(step.id, data);
         onRefresh();
       }, 500);
     },
@@ -482,8 +451,8 @@ function FieldForm({
   allFields,
   onRefresh,
 }: {
-  field: FieldTemplate;
-  allFields: FieldTemplate[];
+  field: Field;
+  allFields: Field[];
   onRefresh: () => void;
 }) {
   const [name, setName] = useState(field.name);
@@ -499,14 +468,14 @@ function FieldForm({
     (
       data: Partial<
         Pick<
-          FieldTemplate,
+          Field,
           "name" | "description" | "type" | "ai_prompt" | "dependencies"
         >
       >
     ) => {
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
-        await updateFieldTemplate(field.id, data);
+        await updateField(field.id, data);
         onRefresh();
       }, 500);
     },

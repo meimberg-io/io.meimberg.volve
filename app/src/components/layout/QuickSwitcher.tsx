@@ -66,7 +66,7 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
 
     // Get stages with snapshot columns
     const { data: stages } = await supabase
-      .from("stage_instances")
+      .from("stages")
       .select(`
         *,
         process:processes(id, name, status)

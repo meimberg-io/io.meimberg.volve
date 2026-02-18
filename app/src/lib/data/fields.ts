@@ -1,29 +1,27 @@
 import { createClient } from "@/lib/supabase/client";
-import type { FieldInstance, FieldVersion } from "@/types";
+import type { Field, FieldVersion } from "@/types";
 
 const supabase = createClient();
 
 export async function updateFieldContent(
-  fieldInstanceId: string,
+  fieldId: string,
   content: string,
   source: string = "manual"
 ): Promise<void> {
-  // Update field content and status
   const newStatus = content.trim() ? "open" : "empty";
 
   const { error: updateError } = await supabase
-    .from("field_instances")
+    .from("fields")
     .update({ content, status: newStatus })
-    .eq("id", fieldInstanceId);
+    .eq("id", fieldId);
 
   if (updateError) throw updateError;
 
-  // Create version entry
   if (content.trim()) {
     const { error: versionError } = await supabase
       .from("field_versions")
       .insert({
-        field_instance_id: fieldInstanceId,
+        field_id: fieldId,
         content,
         source,
       });
@@ -32,31 +30,31 @@ export async function updateFieldContent(
   }
 }
 
-export async function closeField(fieldInstanceId: string): Promise<void> {
+export async function closeField(fieldId: string): Promise<void> {
   const { error } = await supabase
-    .from("field_instances")
+    .from("fields")
     .update({ status: "closed" })
-    .eq("id", fieldInstanceId);
+    .eq("id", fieldId);
 
   if (error) throw error;
 }
 
-export async function reopenField(fieldInstanceId: string): Promise<void> {
+export async function reopenField(fieldId: string): Promise<void> {
   const { error } = await supabase
-    .from("field_instances")
+    .from("fields")
     .update({ status: "open" })
-    .eq("id", fieldInstanceId);
+    .eq("id", fieldId);
 
   if (error) throw error;
 }
 
 export async function getFieldVersions(
-  fieldInstanceId: string
+  fieldId: string
 ): Promise<FieldVersion[]> {
   const { data, error } = await supabase
     .from("field_versions")
     .select("*")
-    .eq("field_instance_id", fieldInstanceId)
+    .eq("field_id", fieldId)
     .order("created_at", { ascending: false })
     .limit(20);
 
@@ -65,29 +63,26 @@ export async function getFieldVersions(
 }
 
 export async function restoreFieldVersion(
-  fieldInstanceId: string,
+  fieldId: string,
   versionId: string
 ): Promise<void> {
-  // Get the version content
   const { data: version, error: versionError } = await supabase
     .from("field_versions")
     .select("content")
     .eq("id", versionId)
     .single();
 
-  if (versionError || !version) throw versionError ?? new Error("Version nicht gefunden");
+  if (versionError || !version)
+    throw versionError ?? new Error("Version nicht gefunden");
 
-  // Update field with version content
-  await updateFieldContent(fieldInstanceId, version.content, "manual");
+  await updateFieldContent(fieldId, version.content, "manual");
 }
 
-export async function getFieldInstance(
-  fieldInstanceId: string
-): Promise<FieldInstance | null> {
+export async function getField(fieldId: string): Promise<Field | null> {
   const { data, error } = await supabase
-    .from("field_instances")
+    .from("fields")
     .select("*")
-    .eq("id", fieldInstanceId)
+    .eq("id", fieldId)
     .single();
 
   if (error) return null;
@@ -95,36 +90,34 @@ export async function getFieldInstance(
 }
 
 export async function getDependencyContents(
-  dependencyTemplateIds: string[],
+  dependencyIds: string[],
   processId: string
 ): Promise<Record<string, { name: string; content: string }>> {
-  if (!dependencyTemplateIds.length) return {};
+  if (!dependencyIds.length) return {};
 
-  // Get field instances that match these templates within this process
-  const { data: fieldInstances, error } = await supabase
-    .from("field_instances")
+  const { data: fields, error } = await supabase
+    .from("fields")
     .select(`
       id,
       content,
       name,
-      field_template_id,
-      step_instance:step_instances(
-        stage_instance:stage_instances(process_id)
+      step:steps(
+        stage:stages(process_id)
       )
     `)
-    .in("field_template_id", dependencyTemplateIds);
+    .in("id", dependencyIds);
 
   if (error) throw error;
 
   const result: Record<string, { name: string; content: string }> = {};
 
-  for (const fi of fieldInstances ?? []) {
+  for (const f of fields ?? []) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stageInstance = (fi as any).step_instance?.stage_instance;
-    if (stageInstance?.process_id === processId && fi.content) {
-      result[fi.field_template_id] = {
-        name: fi.name ?? "Unbekannt",
-        content: fi.content,
+    const stage = (f as any).step?.stage;
+    if (stage?.process_id === processId && f.content) {
+      result[f.id] = {
+        name: f.name ?? "Unbekannt",
+        content: f.content,
       };
     }
   }

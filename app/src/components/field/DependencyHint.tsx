@@ -10,53 +10,53 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 interface DependencyHintProps {
-  dependencyTemplateIds: string[];
+  dependencyIds: string[];
   processId: string;
 }
 
 interface DepInfo {
-  templateId: string;
+  fieldId: string;
   name: string;
   content: string | null;
 }
 
 export function DependencyHint({
-  dependencyTemplateIds,
+  dependencyIds,
   processId,
 }: DependencyHintProps) {
   const [deps, setDeps] = useState<DepInfo[]>([]);
 
   useEffect(() => {
     async function loadDeps() {
-      if (dependencyTemplateIds.length === 0) return;
+      if (dependencyIds.length === 0) return;
 
       const supabase = createClient();
 
-      // Get field instances matching these templates in this process (using snapshot columns)
+      // Get fields matching these IDs in this process (using snapshot columns)
       const { data: instances } = await supabase
-        .from("field_instances")
+        .from("fields")
         .select(`
+          id,
           content,
           name,
-          field_template_id,
-          step_instance:step_instances(
-            stage_instance:stage_instances(process_id)
+          step:steps(
+            stage:stages(process_id)
           )
         `)
-        .in("field_template_id", dependencyTemplateIds);
+        .in("id", dependencyIds);
 
       if (!instances) return;
 
-      const depInfos: DepInfo[] = dependencyTemplateIds
-        .map((templateId) => {
+      const depInfos: DepInfo[] = dependencyIds
+        .map((depId) => {
           const instance = instances.find(
             (i) =>
-              i.field_template_id === templateId &&
+              i.id === depId &&
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (i as any).step_instance?.stage_instance?.process_id === processId
+              (i as any).step?.stage?.process_id === processId
           );
           return {
-            templateId,
+            fieldId: depId,
             name: instance?.name ?? "Feld",
             content: instance?.content ?? null,
           };
@@ -67,7 +67,7 @@ export function DependencyHint({
     }
 
     loadDeps();
-  }, [dependencyTemplateIds, processId]);
+  }, [dependencyIds, processId]);
 
   if (deps.length === 0) return null;
 
@@ -76,7 +76,7 @@ export function DependencyHint({
       <LinkIcon className="h-3 w-3" />
       <span>Input von:</span>
       {deps.map((dep, i) => (
-        <span key={dep.templateId}>
+        <span key={dep.fieldId}>
           <HoverCard>
             <HoverCardTrigger asChild>
               <button className="text-primary/80 hover:text-primary underline-offset-2 hover:underline">

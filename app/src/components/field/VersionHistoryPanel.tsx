@@ -55,7 +55,7 @@ export function VersionHistoryPanel({
       const { data } = await supabase
         .from("field_versions")
         .select("*")
-        .eq("field_instance_id", fieldInstanceId)
+        .eq("field_id", fieldInstanceId)
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -69,12 +69,12 @@ export function VersionHistoryPanel({
   const handleRestore = async (version: FieldVersion) => {
     const supabase = createClient();
     await supabase
-      .from("field_instances")
+      .from("fields")
       .update({ content: version.content, status: "open" })
       .eq("id", fieldInstanceId);
 
     await supabase.from("field_versions").insert({
-      field_instance_id: fieldInstanceId,
+      field_id: fieldInstanceId,
       content: version.content,
       source: "manual",
     });

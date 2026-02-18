@@ -27,20 +27,19 @@ import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
 import { HeaderImageModal } from "./HeaderImageModal";
-import { reorderStageTemplates, updateProcessModel, bulkUpdateDependencies, downloadTemplateExport } from "@/lib/data/templates";
+import { reorderStages, updateProcess, bulkUpdateDependencies, downloadTemplateExport, type ProcessWithStages } from "@/lib/data/templates";
 import type {
-  ProcessModelWithTemplates,
-  StageTemplate,
-  StepTemplate,
-  FieldTemplate,
+  Stage,
+  Step,
+  Field,
 } from "@/types";
 
 interface PipelineViewProps {
-  model: ProcessModelWithTemplates;
-  setModel: Dispatch<SetStateAction<ProcessModelWithTemplates | null>>;
+  model: ProcessWithStages;
+  setModel: Dispatch<SetStateAction<ProcessWithStages | null>>;
   onSelect: (
     type: "stage" | "step" | "field",
-    item: StageTemplate | StepTemplate | FieldTemplate
+    item: Stage | Step | Field
   ) => void;
   selectedId: string | null;
   onAddStage: () => void;
@@ -97,7 +96,7 @@ export function PipelineView({
       if (oldIdx === -1 || newIdx === -1) return;
       const reordered = arrayMove(model.stages, oldIdx, newIdx);
       setModel((prev) => prev ? { ...prev, stages: reordered } : prev);
-      reorderStageTemplates(model.id, reordered.map((s) => s.id));
+      reorderStages(model.id, reordered.map((s) => s.id));
     },
     [model, setModel]
   );
@@ -330,7 +329,7 @@ export function PipelineView({
         onOpenChange={setShowDescModal}
         description={model.description ?? ""}
         onSave={async (desc) => {
-          await updateProcessModel(model.id, { description: desc || null });
+          await updateProcess(model.id, { description: desc || null });
           setModel((prev) => prev ? { ...prev, description: desc || null } : prev);
         }}
       />

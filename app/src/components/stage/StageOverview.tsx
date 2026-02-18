@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import type { StageInstance } from "@/types";
+import type { Stage } from "@/types";
 
 interface StageOverviewProps {
   processId: string;
-  stages: StageInstance[];
+  stages: Stage[];
   processProgress: number;
 }
 
@@ -128,11 +128,11 @@ export function StageOverview({
                         isCompleted ? "text-accent" : "text-primary"
                       )}
                     >
-                      {Math.round(stage.progress)}%
+                      {Math.round(stage.progress ?? 0)}%
                     </span>
                   </div>
                   <Progress
-                    value={stage.progress}
+                    value={stage.progress ?? 0}
                     className="h-1.5"
                   />
                 </div>

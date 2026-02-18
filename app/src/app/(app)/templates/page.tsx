@@ -7,9 +7,9 @@ import { Plus, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddTemplateDialog } from "@/components/templates/AddTemplateDialog";
-import { getProcessModels, importTemplate } from "@/lib/data/templates";
+import { getTemplates, importTemplate } from "@/lib/data/templates";
 import { storageUrl } from "@/lib/utils";
-import type { ProcessModel } from "@/types";
+import type { Process } from "@/types";
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -19,13 +19,13 @@ export default function TemplatesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: models = [], isLoading } = useQuery({
-    queryKey: ["process-models"],
-    queryFn: getProcessModels,
+    queryKey: ["templates"],
+    queryFn: getTemplates,
   });
 
   const handleCreated = async () => {
-    const freshModels = await getProcessModels();
-    queryClient.setQueryData<ProcessModel[]>(["process-models"], freshModels);
+    const freshModels = await getTemplates();
+    queryClient.setQueryData<Process[]>(["templates"], freshModels);
     if (freshModels.length > 0) {
       router.push(`/templates/${freshModels[freshModels.length - 1].id}`);
     }
@@ -38,7 +38,7 @@ export default function TemplatesPage() {
     setImporting(true);
     try {
       const newModelId = await importTemplate(file);
-      await queryClient.invalidateQueries({ queryKey: ["process-models"] });
+      await queryClient.invalidateQueries({ queryKey: ["templates"] });
       router.push(`/templates/${newModelId}`);
     } catch (err) {
       console.error("Import failed:", err);

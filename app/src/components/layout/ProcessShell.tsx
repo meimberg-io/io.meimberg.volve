@@ -6,17 +6,19 @@ import { usePathname } from "next/navigation";
 import {
   ChevronRight,
   Check,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import type { StageInstance } from "@/types";
+import type { Stage } from "@/types";
 
 interface ProcessShellProps {
   children: ReactNode;
   processId: string;
   processName: string;
-  stages: StageInstance[];
+  stages: Stage[];
   currentStageId?: string;
 }
 
@@ -44,6 +46,14 @@ export function ProcessShell({
         >
           {processName}
         </Link>
+        {!isSeedView && (
+          <Link href={`/process/${processId}/edit`} className="ml-auto">
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs cursor-pointer">
+              <Pencil className="h-3 w-3" />
+              Prozess bearbeiten
+            </Button>
+          </Link>
+        )}
         {currentStageId && stages.length > 0 && (
           <>
             <ChevronRight className="h-3.5 w-3.5" />
@@ -149,8 +159,8 @@ export function ProcessShell({
                     </span>
                     <div className="flex-1 min-w-0">
                       <span className="block truncate">{stage.name ?? "Stage"}</span>
-                      {stage.progress > 0 && stage.progress < 100 && (
-                        <Progress value={stage.progress} className="h-1 mt-1" />
+                      {(stage.progress ?? 0) > 0 && (stage.progress ?? 0) < 100 && (
+                        <Progress value={stage.progress ?? 0} className="h-1 mt-1" />
                       )}
                     </div>
                   </Link>

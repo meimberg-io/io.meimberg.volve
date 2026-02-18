@@ -19,12 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  createProcessModel,
-  createStageTemplate,
-  createStepTemplate,
-  createFieldTemplate,
-} from "@/lib/data/templates";
+import { createTemplate, createStage, createStep, createField } from "@/lib/data/templates";
 import type { FieldType } from "@/types";
 
 interface AddTemplateDialogProps {
@@ -69,19 +64,19 @@ export function AddTemplateDialog({
     try {
       switch (context.type) {
         case "model":
-          await createProcessModel(name.trim());
+          await createTemplate(name.trim());
           break;
         case "stage":
           if (context.parentId)
-            await createStageTemplate(context.parentId, name.trim());
+            await createStage(context.parentId, name.trim());
           break;
         case "step":
           if (context.parentId)
-            await createStepTemplate(context.parentId, name.trim());
+            await createStep(context.parentId, name.trim());
           break;
         case "field":
           if (context.parentId)
-            await createFieldTemplate(
+            await createField(
               context.parentId,
               name.trim(),
               fieldType

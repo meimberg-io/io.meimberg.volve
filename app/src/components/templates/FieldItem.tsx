@@ -5,12 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type {
-  FieldTemplate,
-  StageTemplate,
-  StepTemplate,
-  FieldType,
-} from "@/types";
+import type { Field, Stage, Step, FieldType } from "@/types";
 
 const fieldTypeColors: Record<FieldType, string> = {
   text: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -21,10 +16,10 @@ const fieldTypeColors: Record<FieldType, string> = {
 };
 
 interface FieldItemProps {
-  field: FieldTemplate;
+  field: Field;
   onSelect: (
     type: "stage" | "step" | "field",
-    item: StageTemplate | StepTemplate | FieldTemplate
+    item: Stage | Step | Field
   ) => void;
   isSelected: boolean;
 }

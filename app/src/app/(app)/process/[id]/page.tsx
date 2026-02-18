@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ProcessShell } from "@/components/layout/ProcessShell";
 import { StageOverview } from "@/components/stage/StageOverview";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Process, StageInstance } from "@/types";
+import type { Process, Stage } from "@/types";
 
 export default function ProcessPage() {
   const params = useParams();
@@ -14,7 +14,7 @@ export default function ProcessPage() {
   const processId = params.id as string;
 
   const [process, setProcess] = useState<Process | null>(null);
-  const [stages, setStages] = useState<StageInstance[]>([]);
+  const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -39,7 +39,7 @@ export default function ProcessPage() {
     setProcess(proc);
 
     const { data: stageData } = await supabase
-      .from("stage_instances")
+      .from("stages")
       .select("*")
       .eq("process_id", processId)
       .order("order_index", { ascending: true });

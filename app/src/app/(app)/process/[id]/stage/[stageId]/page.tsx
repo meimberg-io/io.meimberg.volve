@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ProcessShell } from "@/components/layout/ProcessShell";
 import { StageDetail } from "@/components/stage/StageDetail";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Process, StageInstance, StageWithSteps, FieldInstance } from "@/types";
+import type { Process, Stage, StageWithSteps, Field } from "@/types";
 
 export default function StageDetailPage() {
   const params = useParams();
@@ -15,7 +15,7 @@ export default function StageDetailPage() {
   const stageId = params.stageId as string;
 
   const [process, setProcess] = useState<Process | null>(null);
-  const [allStages, setAllStages] = useState<StageInstance[]>([]);
+  const [allStages, setAllStages] = useState<Stage[]>([]);
   const [stage, setStage] = useState<StageWithSteps | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +37,7 @@ export default function StageDetailPage() {
 
     // Load all stages for navigation (snapshot columns have display data)
     const { data: stagesData } = await supabase
-      .from("stage_instances")
+      .from("stages")
       .select("*")
       .eq("process_id", processId)
       .order("order_index", { ascending: true });
@@ -46,7 +46,7 @@ export default function StageDetailPage() {
 
     // Load current stage with steps and fields
     const { data: stageData } = await supabase
-      .from("stage_instances")
+      .from("stages")
       .select("*")
       .eq("id", stageId)
       .single();
@@ -58,26 +58,26 @@ export default function StageDetailPage() {
 
     // Get steps (snapshot columns have display data)
     const { data: steps } = await supabase
-      .from("step_instances")
+      .from("steps")
       .select("*")
-      .eq("stage_instance_id", stageId)
+      .eq("stage_id", stageId)
       .order("order_index", { ascending: true });
 
     // Get all fields for these steps (snapshot columns have display data)
     const stepIds = (steps ?? []).map((s) => s.id);
     const { data: fields } = await supabase
-      .from("field_instances")
+      .from("fields")
       .select("*")
-      .in("step_instance_id", stepIds.length > 0 ? stepIds : ["none"])
+      .in("step_id", stepIds.length > 0 ? stepIds : ["none"])
       .order("order_index", { ascending: true });
 
     // Group fields by step
-    const fieldsByStep: Record<string, FieldInstance[]> = {};
+    const fieldsByStep: Record<string, Field[]> = {};
     for (const field of fields ?? []) {
-      if (!fieldsByStep[field.step_instance_id]) {
-        fieldsByStep[field.step_instance_id] = [];
+      if (!fieldsByStep[field.step_id]) {
+        fieldsByStep[field.step_id] = [];
       }
-      fieldsByStep[field.step_instance_id].push(field);
+      fieldsByStep[field.step_id].push(field);
     }
 
     const stepsWithFields = (steps ?? []).map((step) => ({

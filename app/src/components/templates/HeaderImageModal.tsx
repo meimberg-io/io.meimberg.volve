@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PromptField } from "@/components/field/PromptField";
 import { Label } from "@/components/ui/label";
 import { storageUrl } from "@/lib/utils";
-import { updateProcessModel } from "@/lib/data/templates";
+import { updateProcess } from "@/lib/data/templates";
 
 interface HeaderImageModalProps {
   open: boolean;
@@ -72,7 +72,7 @@ export function HeaderImageModal({
   const handleApply = useCallback(async () => {
     if (!generatedPath) return;
     try {
-      await updateProcessModel(modelId, { header_image: generatedPath });
+      await updateProcess(modelId, { header_image: generatedPath });
       onImageGenerated(generatedPath);
     } catch (err) {
       console.error("Failed to save header image:", err);

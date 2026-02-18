@@ -22,12 +22,8 @@ import {
 import { storageUrl } from "@/lib/utils";
 import type { Process } from "@/types";
 
-type ProcessWithImage = Process & {
-  process_models?: { header_image: string | null } | null;
-};
-
 interface ProcessCardProps {
-  process: ProcessWithImage;
+  process: Process;
   onArchive?: (id: string) => void;
   onUnarchive?: (id: string) => void;
 }
@@ -57,7 +53,7 @@ export function ProcessCard({ process, onArchive, onUnarchive }: ProcessCardProp
     locale: de,
   });
 
-  const headerImage = storageUrl(process.process_models?.header_image);
+  const headerImage = storageUrl(process.header_image);
 
   return (
     <div className="process-card group">

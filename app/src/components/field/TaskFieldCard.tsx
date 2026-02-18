@@ -28,10 +28,10 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { DependencyHint } from "./DependencyHint";
-import type { FieldInstance, Task, TaskStatus } from "@/types";
+import type { Field, Task, TaskStatus } from "@/types";
 
 interface TaskFieldCardProps {
-  field: FieldInstance;
+  field: Field;
   processId: string;
   onUpdate: () => void;
 }
@@ -86,7 +86,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
     const { data } = await supabase
       .from("tasks")
       .select("*")
-      .eq("field_instance_id", field.id)
+      .eq("field_id", field.id)
       .single();
 
     if (data) {
@@ -111,7 +111,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
     // If status transitions to 'accepted', also close the field
     if (updates.status === "accepted") {
       await supabase
-        .from("field_instances")
+        .from("fields")
         .update({ status: "closed" })
         .eq("id", field.id);
     }
@@ -140,7 +140,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
           .update({ description: value })
           .eq("id", task.id);
         await supabase
-          .from("field_instances")
+          .from("fields")
           .update({ content: value, status: value.trim() ? "open" : "empty" })
           .eq("id", field.id);
       }
@@ -175,7 +175,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          field_instance_id: field.id,
+          field_id: field.id,
           process_id: processId,
         }),
       });
@@ -254,7 +254,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
       {/* Dependencies */}
       {dependencies.length > 0 && (
         <DependencyHint
-          dependencyTemplateIds={dependencies}
+          dependencyIds={dependencies}
           processId={processId}
         />
       )}

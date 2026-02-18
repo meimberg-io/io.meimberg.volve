@@ -1,10 +1,10 @@
 // =============================================
-// Volve Domain Types
+// Volve Domain Types (Unified Model)
 // =============================================
 
 // --- Enums ---
 
-export type ProcessStatus = "seeding" | "active" | "completed" | "archived";
+export type ProcessStatus = "template" | "seeding" | "active" | "completed" | "archived";
 
 export type StageStatus = "locked" | "open" | "in_progress" | "completed";
 
@@ -25,57 +25,58 @@ export type TaskType = "self" | "delegated" | "agent";
 
 export type AIActionSource = "generate" | "generate_advanced" | "optimize" | "manual";
 
-// --- Template Layer (read-only, predefined models) ---
+// --- Unified Data Layer ---
 
-export interface ProcessModel {
+export interface Process {
   id: string;
+  user_id: string | null;
   name: string;
+  model_id: string | null;
+  is_template: boolean;
   description: string | null;
   header_image: string | null;
   metadata: Record<string, unknown> | null;
+  status: ProcessStatus;
+  progress: number;
   created_at: string;
+  updated_at: string;
 }
 
-export interface StageTemplate {
+export interface Stage {
   id: string;
-  model_id: string;
+  process_id: string;
   name: string;
   description: string | null;
-  order_index: number;
   icon: string | null;
+  order_index: number;
+  status: StageStatus | null;
+  progress: number | null;
   created_at: string;
+  updated_at: string;
 }
 
-export interface StepTemplate {
+export interface Step {
   id: string;
-  stage_template_id: string;
+  stage_id: string;
   name: string;
   description: string | null;
   order_index: number;
+  status: StepStatus | null;
   created_at: string;
+  updated_at: string;
 }
 
-export interface FieldTemplate {
+export interface Field {
   id: string;
-  step_template_id: string;
+  step_id: string;
   name: string;
   type: FieldType;
   description: string | null;
   ai_prompt: string | null;
   order_index: number;
-  dependencies: string[] | null; // IDs of other field templates
-  created_at: string;
-}
-
-// --- Instance Layer (user data) ---
-
-export interface Process {
-  id: string;
-  user_id: string;
-  name: string;
-  model_id: string;
-  status: ProcessStatus;
-  progress: number; // 0-100
+  dependencies: string[] | null;
+  content: string | null;
+  status: FieldStatus | null;
   created_at: string;
   updated_at: string;
 }
@@ -91,61 +92,9 @@ export interface SeedDocument {
   created_at: string;
 }
 
-export interface StageInstance {
-  id: string;
-  process_id: string;
-  stage_template_id: string;
-  // Snapshot columns (copied from template at creation)
-  name: string | null;
-  description: string | null;
-  icon: string | null;
-  order_index: number | null;
-  status: StageStatus;
-  progress: number; // 0-100
-  created_at: string;
-  updated_at: string;
-  // Joined data (deprecated – use snapshot columns instead)
-  template?: StageTemplate;
-}
-
-export interface StepInstance {
-  id: string;
-  stage_instance_id: string;
-  step_template_id: string;
-  // Snapshot columns (copied from template at creation)
-  name: string | null;
-  description: string | null;
-  order_index: number | null;
-  status: StepStatus;
-  created_at: string;
-  updated_at: string;
-  // Joined data (deprecated – use snapshot columns instead)
-  template?: StepTemplate;
-  fields?: FieldInstance[];
-}
-
-export interface FieldInstance {
-  id: string;
-  step_instance_id: string;
-  field_template_id: string;
-  // Snapshot columns (copied from template at creation)
-  name: string | null;
-  type: string | null;
-  description: string | null;
-  ai_prompt: string | null;
-  order_index: number | null;
-  dependencies: string[] | null;
-  content: string | null;
-  status: FieldStatus;
-  created_at: string;
-  updated_at: string;
-  // Joined data (deprecated – use snapshot columns instead)
-  template?: FieldTemplate;
-}
-
 export interface FieldVersion {
   id: string;
-  field_instance_id: string;
+  field_id: string;
   content: string;
   source: AIActionSource;
   created_at: string;
@@ -153,7 +102,7 @@ export interface FieldVersion {
 
 export interface Task {
   id: string;
-  field_instance_id: string;
+  field_id: string;
   description: string;
   assignee: string | null;
   type: TaskType;
@@ -173,47 +122,30 @@ export interface Profile {
   created_at: string;
 }
 
-// --- Composite Types (for UI) ---
+// --- Composite Types ---
+
+export interface StepWithFields extends Step {
+  fields: Field[];
+}
+
+export interface StageWithSteps extends Stage {
+  steps: StepWithFields[];
+}
 
 export interface ProcessWithStages extends Process {
-  stages: StageInstance[];
-  model?: ProcessModel;
-}
-
-export interface StageWithSteps extends StageInstance {
-  steps: StepInstanceWithFields[];
-}
-
-export interface StepInstanceWithFields extends StepInstance {
-  fields: FieldInstance[];
-}
-
-// --- Template Composite Types (for Template Editor) ---
-
-export interface ProcessModelWithTemplates extends ProcessModel {
-  stages: StageTemplateWithSteps[];
-}
-
-export interface StageTemplateWithSteps extends StageTemplate {
-  steps: StepTemplateWithFields[];
-  instance_count?: number;
-}
-
-export interface StepTemplateWithFields extends StepTemplate {
-  fields: FieldTemplate[];
-  instance_count?: number;
+  stages: Stage[];
 }
 
 // --- AI Types ---
 
 export interface AIGenerateRequest {
-  field_instance_id: string;
+  field_id: string;
   additional_instructions?: string;
   custom_prompt?: string;
 }
 
 export interface AIOptimizeRequest {
-  field_instance_id: string;
+  field_id: string;
   instruction: string;
 }
 

@@ -146,9 +146,9 @@ export function GenerateStructureModal({
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
           const { data: existing } = await supabase
-            .from("stage_templates")
+            .from("stages")
             .select("order_index")
-            .eq("model_id", parentId)
+            .eq("process_id", parentId)
             .order("order_index", { ascending: false })
             .limit(1);
           const offset = existing && existing.length > 0 ? existing[0].order_index + 1 : 0;
@@ -162,9 +162,9 @@ export function GenerateStructureModal({
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
           const { data: existing } = await supabase
-            .from("step_templates")
+            .from("steps")
             .select("order_index")
-            .eq("stage_template_id", parentId)
+            .eq("stage_id", parentId)
             .order("order_index", { ascending: false })
             .limit(1);
           const offset = existing && existing.length > 0 ? existing[0].order_index + 1 : 0;

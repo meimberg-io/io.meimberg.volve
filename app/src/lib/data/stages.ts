@@ -1,50 +1,46 @@
 import { createClient } from "@/lib/supabase/client";
-import type { StageWithSteps, StepInstanceWithFields, FieldInstance } from "@/types";
+import type { StageWithSteps, StepWithFields, Field } from "@/types";
 
 const supabase = createClient();
 
 export async function getStageWithSteps(
-  stageInstanceId: string
+  stageId: string
 ): Promise<StageWithSteps | null> {
-  // Get stage instance (snapshot columns have all display data)
   const { data: stage, error: stageError } = await supabase
-    .from("stage_instances")
+    .from("stages")
     .select("*")
-    .eq("id", stageInstanceId)
+    .eq("id", stageId)
     .single();
 
   if (stageError || !stage) return null;
 
-  // Get step instances (snapshot columns have all display data)
   const { data: steps, error: stepsError } = await supabase
-    .from("step_instances")
+    .from("steps")
     .select("*")
-    .eq("stage_instance_id", stageInstanceId)
+    .eq("stage_id", stageId)
     .order("order_index", { ascending: true });
 
   if (stepsError) throw stepsError;
 
-  // Get field instances for all steps (snapshot columns have all display data)
   const stepIds = (steps ?? []).map((s) => s.id);
   const { data: fields, error: fieldsError } = await supabase
-    .from("field_instances")
+    .from("fields")
     .select("*")
-    .in("step_instance_id", stepIds)
+    .in("step_id", stepIds.length > 0 ? stepIds : ["none"])
     .order("order_index", { ascending: true });
 
   if (fieldsError) throw fieldsError;
 
-  // Group fields by step
-  const fieldsByStep = (fields ?? []).reduce<Record<string, FieldInstance[]>>(
+  const fieldsByStep = (fields ?? []).reduce<Record<string, Field[]>>(
     (acc, field) => {
-      if (!acc[field.step_instance_id]) acc[field.step_instance_id] = [];
-      acc[field.step_instance_id].push(field);
+      if (!acc[field.step_id]) acc[field.step_id] = [];
+      acc[field.step_id].push(field);
       return acc;
     },
     {}
   );
 
-  const stepsWithFields: StepInstanceWithFields[] = (steps ?? []).map((step) => ({
+  const stepsWithFields: StepWithFields[] = (steps ?? []).map((step) => ({
     ...step,
     fields: fieldsByStep[step.id] ?? [],
   }));
@@ -53,18 +49,4 @@ export async function getStageWithSteps(
     ...stage,
     steps: stepsWithFields,
   };
-}
-
-export async function getStageInstanceByTemplateAndProcess(
-  processId: string,
-  stageTemplateId: string
-): Promise<string | null> {
-  const { data } = await supabase
-    .from("stage_instances")
-    .select("id")
-    .eq("process_id", processId)
-    .eq("stage_template_id", stageTemplateId)
-    .single();
-
-  return data?.id ?? null;
 }

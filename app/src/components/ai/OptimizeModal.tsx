@@ -54,7 +54,7 @@ export function OptimizeModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          field_instance_id: fieldId,
+          field_id: fieldId,
           process_id: processId,
           optimize: true,
           optimize_instruction: instruction,
