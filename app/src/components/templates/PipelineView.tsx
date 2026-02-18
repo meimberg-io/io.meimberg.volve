@@ -195,7 +195,7 @@ export function PipelineView({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            className="gap-1.5 h-7 text-xs cursor-pointer text-amber-400 border-amber-400/30 hover:!bg-amber-400 hover:!text-black hover:!border-amber-400"
             onClick={() => setShowGenStages(true)}
             disabled={!model.description}
             title={!model.description ? "Prozessbeschreibung wird zuerst benötigt" : undefined}
@@ -206,7 +206,7 @@ export function PipelineView({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 h-7 text-xs text-amber-400 border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
+            className="gap-1.5 h-7 text-xs cursor-pointer text-amber-400 border-amber-400/30 hover:!bg-amber-400 hover:!text-black hover:!border-amber-400"
             onClick={handleGenerateDependencies}
             disabled={allFields.length === 0 || generatingDeps}
             title={allFields.length === 0 ? "Keine Fields vorhanden" : undefined}
