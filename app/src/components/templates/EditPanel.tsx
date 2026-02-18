@@ -140,6 +140,7 @@ export function EditPanel({
                 <FieldForm
                   key={editItem.item.id}
                   field={editItem.item as Field}
+                  model={model}
                   allFields={allFields}
                   onRefresh={onRefresh}
                 />
@@ -449,10 +450,12 @@ function StepForm({
 
 function FieldForm({
   field,
+  model,
   allFields,
   onRefresh,
 }: {
   field: Field;
+  model: ProcessWithStages | null;
   allFields: Field[];
   onRefresh: () => void;
 }) {
@@ -463,6 +466,7 @@ function FieldForm({
   const [dependencies, setDependencies] = useState<string[]>(
     field.dependencies ?? []
   );
+  const [modalMode, setModalMode] = useState<"generate_field_prompt" | "optimize_field_prompt" | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
@@ -482,6 +486,15 @@ function FieldForm({
     },
     [field.id, onRefresh]
   );
+
+  const parentStep = model?.stages
+    .flatMap((s) => s.steps)
+    .find((st) => st.fields?.some((f) => f.id === field.id));
+  const parentStage = model?.stages.find((s) =>
+    s.steps.some((st) => st.id === parentStep?.id)
+  );
+  const processDescription = model?.description ?? "";
+  const hasPrompt = aiPrompt.trim().length > 0;
 
   const otherFields = allFields.filter((f) => f.id !== field.id);
 
@@ -542,7 +555,28 @@ function FieldForm({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="AI Prompt" htmlFor="field-ai-prompt">
+      <FormField
+        label="AI Prompt"
+        htmlFor="field-ai-prompt"
+        actions={
+          <div className="flex gap-1.5">
+            <AiButton
+              onClick={() => setModalMode("generate_field_prompt")}
+              disabled={!processDescription}
+              title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Generieren
+            </AiButton>
+            <AiButton
+              onClick={() => setModalMode("optimize_field_prompt")}
+              disabled={!processDescription || !hasPrompt}
+              title={!hasPrompt ? "Erst einen Prompt erstellen" : !processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+            >
+              Optimieren
+            </AiButton>
+          </div>
+        }
+      >
         <PromptField
           id="field-ai-prompt"
           value={aiPrompt}
@@ -604,6 +638,39 @@ function FieldForm({
           </Select>
         )}
       </FormField>
+
+      {modalMode && (
+        <GenerateDescriptionModal
+          open={!!modalMode}
+          onOpenChange={(open) => { if (!open) setModalMode(null); }}
+          mode={modalMode}
+          context={
+            modalMode === "optimize_field_prompt"
+              ? {
+                  current_description: aiPrompt,
+                  field_name: name,
+                  field_description: description,
+                  step_name: parentStep?.name ?? "",
+                  stage_name: parentStage?.name ?? "",
+                  process_description: processDescription,
+                }
+              : {
+                  field_name: name,
+                  field_description: description,
+                  step_name: parentStep?.name ?? "",
+                  step_description: parentStep?.description ?? "",
+                  stage_name: parentStage?.name ?? "",
+                  stage_description: parentStage?.description ?? "",
+                  process_description: processDescription,
+                }
+          }
+          title={modalMode === "optimize_field_prompt" ? "AI Prompt optimieren" : "AI Prompt generieren"}
+          onApply={(text) => {
+            setAiPrompt(text);
+            save({ ai_prompt: text || null });
+          }}
+        />
+      )}
     </div>
   );
 }

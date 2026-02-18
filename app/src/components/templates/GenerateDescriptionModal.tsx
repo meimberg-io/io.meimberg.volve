@@ -17,7 +17,7 @@ import { FormField } from "@/components/ui/form-actions";
 interface GenerateDescriptionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "process_description" | "optimize_description" | "describe_stage" | "describe_step";
+  mode: "process_description" | "optimize_description" | "describe_stage" | "describe_step" | "generate_field_prompt" | "optimize_field_prompt";
   context: Record<string, string>;
   title: string;
   onApply: (description: string) => void;
@@ -92,7 +92,9 @@ export function GenerateDescriptionModal({
         <DialogHeader>
           <DialogTitle className="text-sm">{title}</DialogTitle>
           <DialogDescription className="text-xs">
-            KI-gestützte Beschreibung generieren
+            {mode === "generate_field_prompt" || mode === "optimize_field_prompt"
+              ? "KI-gestützten Prompt generieren"
+              : "KI-gestützte Beschreibung generieren"}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,13 +109,13 @@ export function GenerateDescriptionModal({
                 autoFocus
               />
             </FormField>
-          ) : mode === "optimize_description" ? (
+          ) : mode === "optimize_description" || mode === "optimize_field_prompt" ? (
             <>
               {context.current_description && (
-                <FormField label="Aktuelle Beschreibung">
+                <FormField label={mode === "optimize_field_prompt" ? "Aktueller Prompt" : "Aktuelle Beschreibung"}>
                   <div className="max-h-[150px] overflow-y-auto rounded-md bg-muted/50 p-2.5">
-                    <div className="prose prose-sm prose-invert max-w-none text-xs">
-                      <ReactMarkdown>{context.current_description}</ReactMarkdown>
+                    <div className="prose prose-sm prose-invert max-w-none text-xs whitespace-pre-wrap">
+                      {context.current_description}
                     </div>
                   </div>
                 </FormField>
@@ -123,7 +125,10 @@ export function GenerateDescriptionModal({
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
                   rows={2}
-                  placeholder="z.B. Wir brauchen noch eine Zielgruppenanalyse..."
+                  placeholder={mode === "optimize_field_prompt"
+                    ? "z.B. Detaillierter, mehr Kontext einbeziehen..."
+                    : "z.B. Wir brauchen noch eine Zielgruppenanalyse..."
+                  }
                   autoFocus
                 />
               </FormField>
@@ -151,9 +156,13 @@ export function GenerateDescriptionModal({
           {result && (
             <FormField label="Ergebnis">
               <div className="max-h-[250px] overflow-y-auto rounded-md border border-border bg-background p-3">
-                <div className="prose prose-sm prose-invert max-w-none text-xs">
-                  <ReactMarkdown>{result}</ReactMarkdown>
-                </div>
+                {mode === "generate_field_prompt" || mode === "optimize_field_prompt" ? (
+                  <div className="text-xs text-muted-foreground whitespace-pre-wrap">{result}</div>
+                ) : (
+                  <div className="prose prose-sm prose-invert max-w-none text-xs">
+                    <ReactMarkdown>{result}</ReactMarkdown>
+                  </div>
+                )}
               </div>
             </FormField>
           )}
@@ -183,7 +192,7 @@ export function GenerateDescriptionModal({
           </div>
           <Button
             size="sm"
-            disabled={loading || ((mode === "process_description" || mode === "optimize_description") && !userPrompt.trim())}
+            disabled={loading || ((mode === "process_description" || mode === "optimize_description" || mode === "optimize_field_prompt") && !userPrompt.trim())}
             onClick={handleGenerate}
             className="gap-1.5 text-xs cursor-pointer bg-amber-400 text-black border-amber-400 hover:bg-amber-500 hover:border-amber-500"
           >

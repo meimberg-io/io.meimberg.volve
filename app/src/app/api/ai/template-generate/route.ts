@@ -191,6 +191,28 @@ export async function POST(request: Request) {
       return Response.json(result.object);
     }
 
+    if (mode === "generate_field_prompt") {
+      const result = streamText({
+        model,
+        system: `${SYSTEM_BASE}\n\nDu erstellst einen präzisen, konkreten Prompt (Anweisung) für eine KI, die später den Inhalt eines bestimmten Feldes in einem Geschäftsprozess generieren soll. Der Prompt soll klar beschreiben, WAS generiert werden soll, in welchem KONTEXT (Prozess, Stage, Step) und welche QUALITÄTSKRITERIEN gelten. Schreibe den Prompt auf Deutsch, als direkte Anweisung an die KI. Verwende KEIN Markdown — nur Fließtext.`,
+        prompt: `Erstelle einen KI-Prompt für folgendes Feld:\n\nProzess: ${context.process_description || "(keine Beschreibung)"}\nStage: ${context.stage_name}${context.stage_description ? ` — ${context.stage_description}` : ""}\nStep: ${context.step_name}${context.step_description ? ` — ${context.step_description}` : ""}\nField: ${context.field_name}${context.field_description ? ` — ${context.field_description}` : ""}${userPrompt ? `\n\nZusatzhinweis: ${userPrompt}` : ""}`,
+        maxOutputTokens: 500,
+      });
+      return result.toTextStreamResponse();
+    }
+
+    if (mode === "optimize_field_prompt") {
+      const currentPrompt = context.current_description ?? "";
+      const instruction = userPrompt ?? "Optimiere den Prompt.";
+      const result = streamText({
+        model,
+        system: `${SYSTEM_BASE}\n\nDer Nutzer hat einen bestehenden KI-Prompt für ein Feld in einem Geschäftsprozess und möchte ihn verbessern. Behalte die grundlegende Intention bei, aber passe den Prompt gemäß der Anweisung an. Gib den vollständigen, überarbeiteten Prompt zurück. Verwende KEIN Markdown — nur Fließtext.`,
+        prompt: `## Aktueller Prompt\n${currentPrompt}\n\n## Kontext\nProzess: ${context.process_description || "(keine Beschreibung)"}\nStage: ${context.stage_name || "(unbekannt)"}\nStep: ${context.step_name || "(unbekannt)"}\nField: ${context.field_name || "(unbekannt)"}${context.field_description ? ` — ${context.field_description}` : ""}\n\n## Änderungsanweisung\n${instruction}`,
+        maxOutputTokens: 500,
+      });
+      return result.toTextStreamResponse();
+    }
+
     if (mode === "generate_dependencies") {
       const template = await getTemplate("tpl_generate_dependencies");
       const prompt = fillTemplate(template, context);
