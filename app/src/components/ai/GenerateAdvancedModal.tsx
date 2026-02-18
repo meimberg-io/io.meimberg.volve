@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ZapOff, Lock, Unlock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -13,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 
 interface GenerateAdvancedModalProps {
   open: boolean;
@@ -24,7 +22,7 @@ interface GenerateAdvancedModalProps {
   onResult: (content: string) => void;
 }
 
-const RECENT_INSTRUCTIONS = [
+const QUICK_INSTRUCTIONS = [
   "Fokus auf DACH-Markt",
   "Bitte kurz halten",
   "Mit konkreten Zahlen",
@@ -84,25 +82,35 @@ export function GenerateAdvancedModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Erweiterte Generierung</DialogTitle>
-          <DialogDescription>
-            Passe den Prompt an oder gib Zusatzanweisungen.
-          </DialogDescription>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 bg-amber-500/5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15">
+              <ZapOff className="h-4.5 w-4.5 text-amber-400" />
+            </div>
+            <div>
+              <DialogTitle className="text-base">Erweiterte Generierung</DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Passe den Prompt an oder gib Zusatzanweisungen.
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto py-2">
+        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {/* Standard Prompt */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Standard-Prompt</Label>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Standard-Prompt
+              </Label>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
+                size="xs"
+                className="gap-1 text-muted-foreground"
                 onClick={() => setPromptEditable(!promptEditable)}
               >
+                {promptEditable ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                 {promptEditable ? "Sperren" : "Bearbeiten"}
               </Button>
             </div>
@@ -110,45 +118,52 @@ export function GenerateAdvancedModal({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={!promptEditable}
-              className="min-h-[100px] text-sm resize-none"
+              className="min-h-[100px] text-sm resize-none bg-secondary/30 border-border/50"
             />
           </div>
 
           {/* Additional Instructions */}
           <div className="space-y-2">
-            <Label>Zusatzanweisungen</Label>
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Zusatzanweisungen
+            </Label>
             <Textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder="z. B. 'Schwerpunkt auf Internationalität', 'Bitte kurz halten'"
-              className="min-h-[80px] text-sm resize-none"
+              className="min-h-[80px] text-sm resize-none bg-secondary/30 border-border/50"
               autoFocus
             />
             <div className="flex flex-wrap gap-1.5">
-              {RECENT_INSTRUCTIONS.map((instr) => (
-                <Badge
+              {QUICK_INSTRUCTIONS.map((instr) => (
+                <button
                   key={instr}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary/20"
+                  className="rounded-md border border-border/50 bg-secondary/40 px-2.5 py-1 text-xs text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 transition-colors cursor-pointer"
                   onClick={() => setInstructions(instr)}
                 >
                   {instr}
-                </Badge>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t border-border/50 bg-card/50">
           <Button
             variant="ghost"
+            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
             Abbrechen
           </Button>
-          <Button onClick={handleGenerate} disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button
+            size="sm"
+            onClick={handleGenerate}
+            disabled={loading}
+            className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+          >
+            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Generieren
           </Button>
         </DialogFooter>

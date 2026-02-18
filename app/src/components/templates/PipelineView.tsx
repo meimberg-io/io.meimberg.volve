@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -15,19 +16,20 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon, MoreHorizontal, Download } from "lucide-react";
+import { Plus, ChevronRight, Sparkles, FileCheck, FileX, Loader2, Link2, ImageIcon, MoreHorizontal, Download, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StageColumn } from "./StageColumn";
 import { ProcessDescriptionModal } from "./ProcessDescriptionModal";
 import { GenerateStructureModal } from "./GenerateStructureModal";
 import { HeaderImageModal } from "./HeaderImageModal";
-import { reorderStages, updateProcess, bulkUpdateDependencies, downloadTemplateExport, type ProcessWithStages } from "@/lib/data/templates";
+import { reorderStages, updateProcess, bulkUpdateDependencies, downloadTemplateExport, copyProcess, type ProcessWithStages } from "@/lib/data/templates";
 import type {
   Stage,
   Step,
@@ -101,10 +103,12 @@ export function PipelineView({
     [model, setModel]
   );
 
+  const router = useRouter();
   const [showDescModal, setShowDescModal] = useState(false);
   const [showGenStages, setShowGenStages] = useState(false);
   const [showHeaderImage, setShowHeaderImage] = useState(false);
   const [generatingDeps, setGeneratingDeps] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   const allFields = model.stages.flatMap((s, si) =>
     s.steps.flatMap((st, sti) =>
@@ -163,6 +167,21 @@ export function PipelineView({
       setGeneratingDeps(false);
     }
   }, [allFields, onRefresh]);
+
+  const handleSaveAsNewProcess = useCallback(async () => {
+    setCopying(true);
+    try {
+      const newProcess = await copyProcess(model.id, {
+        is_template: false,
+        name: `${model.name} (Kopie)`,
+      });
+      router.push(`/process/${newProcess.id}`);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    } finally {
+      setCopying(false);
+    }
+  }, [model.id, model.name, router]);
 
   return (
     <div className="w-full">
@@ -240,6 +259,19 @@ export function PipelineView({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {!model.is_template && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleSaveAsNewProcess}
+                      disabled={copying}
+                      className="cursor-pointer gap-2"
+                    >
+                      {copying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                      Als neuen Prozess speichern
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={() => downloadTemplateExport(model)}
                   className="cursor-pointer gap-2"

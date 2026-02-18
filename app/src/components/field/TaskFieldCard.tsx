@@ -235,7 +235,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
                 onClick={handleGenerate}
                 disabled={generating}
               >

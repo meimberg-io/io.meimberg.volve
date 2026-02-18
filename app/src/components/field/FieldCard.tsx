@@ -9,6 +9,7 @@ import {
   Pencil,
   Loader2,
   History,
+  MinusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,8 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
   const fieldType = field.type ?? "long_text";
   const isTask = fieldType === "task";
   const isClosed = field.status === "closed";
+  const isSkipped = field.status === "skipped";
+  const isDone = isClosed || isSkipped;
   const isEmpty = field.status === "empty" || !field.content?.trim();
   const dependencies: string[] = field.dependencies ?? [];
 
@@ -178,14 +181,41 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
   // Reopen field with reverse cascade
   const handleReopen = async () => {
     const supabase = createClient();
+    const newStatus = content.trim() ? "open" : "empty";
     await supabase
       .from("fields")
-      .update({ status: "open" })
+      .update({ status: newStatus })
       .eq("id", field.id);
 
-    // Trigger reverse status cascade
     await recalculateStatus(field.id);
     onUpdate();
+  };
+
+  // Skip field (mark as not relevant)
+  const handleSkip = async () => {
+    const supabase = createClient();
+    await supabase
+      .from("fields")
+      .update({ status: "skipped" })
+      .eq("id", field.id);
+
+    await recalculateStatus(field.id);
+    onUpdate();
+
+    setTimeout(() => {
+      const allFieldCards = document.querySelectorAll("[id^='field-']");
+      let foundCurrent = false;
+      for (const card of allFieldCards) {
+        if (card.id === `field-${field.id}`) {
+          foundCurrent = true;
+          continue;
+        }
+        if (foundCurrent && card.querySelector(".field-card-open, .field-card-empty")) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          break;
+        }
+      }
+    }, 100);
   };
 
   // Recalculate status cascade
@@ -207,9 +237,9 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         .select("status")
         .eq("step_id", fieldData.step_id);
 
-      const allClosed = stepFields?.every((f) => f.status === "closed") ?? false;
+      const allDone = stepFields?.every((f) => f.status === "closed" || f.status === "skipped") ?? false;
       const anyActive = stepFields?.some((f) => f.status !== "empty") ?? false;
-      const stepStatus = allClosed ? "completed" : anyActive ? "in_progress" : "open";
+      const stepStatus = allDone ? "completed" : anyActive ? "in_progress" : "open";
 
       await supabase
         .from("steps")
@@ -297,13 +327,15 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
       <div
         className={cn(
           "field-card",
-          isClosed
-            ? "field-card-closed"
-            : streaming
-              ? "field-card-streaming"
-              : isEmpty
-                ? "field-card-empty"
-                : "field-card-open"
+          isSkipped
+            ? "field-card-skipped"
+            : isClosed
+              ? "field-card-closed"
+              : streaming
+                ? "field-card-streaming"
+                : isEmpty
+                  ? "field-card-empty"
+                  : "field-card-open"
         )}
         id={`field-${field.id}`}
       >
@@ -311,13 +343,15 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         <div
           className={cn(
             "-mx-4 -mt-4 mb-3 px-4 py-2.5 rounded-t-lg space-y-1.5",
-            isClosed
-              ? "bg-accent/8"
-              : streaming
-                ? "bg-primary/8"
-                : isEmpty
-                  ? "bg-muted/50"
-                  : "bg-status-warning/8"
+            isSkipped
+              ? "bg-muted/30"
+              : isClosed
+                ? "bg-accent/8"
+                : streaming
+                  ? "bg-primary/8"
+                  : isEmpty
+                    ? "bg-muted/50"
+                    : "bg-status-warning/8"
           )}
         >
           <div className="flex items-center justify-between">
@@ -325,17 +359,24 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
               <span
                 className={cn(
                   "inline-block h-2 w-2 rounded-full",
-                  isClosed
-                    ? "bg-accent"
-                    : streaming
-                      ? "bg-primary animate-pulse"
-                      : isEmpty
-                        ? "bg-destructive/70"
-                        : "bg-status-warning"
+                  isSkipped
+                    ? "bg-muted-foreground/50"
+                    : isClosed
+                      ? "bg-accent"
+                      : streaming
+                        ? "bg-primary animate-pulse"
+                        : isEmpty
+                          ? "bg-destructive/70"
+                          : "bg-status-warning"
                 )}
               />
-              <h4 className="text-sm font-medium">{field.name ?? "Feld"}</h4>
-              {isTask && (
+              <h4 className={cn("text-sm font-medium", isSkipped && "text-muted-foreground line-through")}>{field.name ?? "Feld"}</h4>
+              {isSkipped && (
+                <span className="rounded bg-muted-foreground/15 px-1.5 py-0.5 text-xs text-muted-foreground">
+                  Nicht relevant
+                </span>
+              )}
+              {isTask && !isSkipped && (
                 <span className="rounded bg-status-warning/20 px-1.5 py-0.5 text-xs text-status-warning">
                   Task
                 </span>
@@ -350,7 +391,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-1">
-            {isClosed ? (
+            {isDone ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -372,7 +413,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
                       onClick={handleGenerate}
                       disabled={streaming || !field.ai_prompt}
                     >
@@ -392,7 +433,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
                       onClick={() => setShowAdvanced(true)}
                       disabled={streaming || !field.ai_prompt}
                     >
@@ -408,7 +449,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
                       onClick={() => setShowOptimize(true)}
                       disabled={streaming || !content.trim()}
                     >
@@ -447,51 +488,64 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
         </div>
 
         {/* Content Area */}
-        <div className="mt-2">
-          {fieldType === "text" ? (
-            <Input
-              value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={isEmpty ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten." : ""}
-              disabled={isClosed}
-              className={cn(
-                "bg-transparent border-none focus-visible:ring-0 px-0",
-                isClosed && "opacity-80"
-              )}
-              maxLength={500}
-            />
-          ) : isClosed ? (
-            <MarkdownEditor
-              content={content}
-              onChange={() => {}}
-              disabled={true}
-            />
-          ) : (
-            <MarkdownEditor
-              content={content}
-              onChange={handleContentChange}
-              placeholder={
-                isEmpty
-                  ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten."
-                  : "Schreibe hier..."
-              }
-              disabled={isClosed}
-            />
-          )}
-        </div>
+        {!isSkipped && (
+          <div className="mt-2">
+            {fieldType === "text" ? (
+              <Input
+                value={content}
+                onChange={(e) => handleContentChange(e.target.value)}
+                placeholder={isEmpty ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten." : ""}
+                disabled={isClosed}
+                className={cn(
+                  "bg-transparent border-none focus-visible:ring-0 px-0",
+                  isClosed && "opacity-80"
+                )}
+                maxLength={500}
+              />
+            ) : isClosed ? (
+              <MarkdownEditor
+                content={content}
+                onChange={() => {}}
+                disabled={true}
+              />
+            ) : (
+              <MarkdownEditor
+                content={content}
+                onChange={handleContentChange}
+                placeholder={
+                  isEmpty
+                    ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten."
+                    : "Schreibe hier..."
+                }
+                disabled={isClosed}
+              />
+            )}
+          </div>
+        )}
 
-        {/* Footer: Close Button */}
-        {!isClosed && content.trim() && (
-          <div className="flex justify-end mt-3 pt-2 border-t border-border/30">
+        {/* Footer */}
+        {!isDone && (
+          <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-border/30">
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleClose}
-              className="gap-1.5 text-xs text-accent hover:text-accent"
+              onClick={handleSkip}
+              className="gap-1.5 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
             >
-              <Check className="h-3.5 w-3.5" />
-              Abschließen
+              <MinusCircle className="h-3.5 w-3.5" />
+              Nicht relevant
             </Button>
+            {content.trim() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                className="gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Abschließen
+              </Button>
+            )}
           </div>
         )}
       </div>

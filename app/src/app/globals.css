@@ -283,6 +283,11 @@
     @apply opacity-80;
   }
 
+  .field-card-skipped {
+    border-left-color: var(--status-muted);
+    @apply opacity-60;
+  }
+
   /* Status indicators */
   .status-dot {
     @apply inline-flex h-2.5 w-2.5 rounded-full;

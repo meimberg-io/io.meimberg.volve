@@ -90,7 +90,7 @@ export function ProcessShell({
                       isActive
                         ? "bg-primary/15 text-primary border border-primary/30 shadow-[0_0_12px_-3px] shadow-primary/20"
                         : isCompleted
-                          ? "bg-accent/10 text-accent border border-accent/15"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"
                           : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground border border-transparent"
                     )}
                   >
@@ -100,7 +100,7 @@ export function ProcessShell({
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : isCompleted
-                            ? "bg-accent text-accent-foreground"
+                            ? "bg-emerald-500 text-white"
                             : "bg-secondary text-muted-foreground group-hover:bg-muted-foreground/20"
                       )}
                     >
@@ -136,7 +136,7 @@ export function ProcessShell({
                       isActive
                         ? "bg-primary/15 text-primary border border-primary/30 shadow-[0_0_12px_-3px] shadow-primary/20"
                         : isCompleted
-                          ? "bg-accent/10 text-accent border border-accent/15"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"
                           : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground border border-transparent"
                     )}
                   >
@@ -147,7 +147,7 @@ export function ProcessShell({
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : isCompleted
-                            ? "bg-accent text-accent-foreground"
+                            ? "bg-emerald-500 text-white"
                             : "bg-secondary text-muted-foreground group-hover:bg-muted-foreground/20"
                       )}
                     >

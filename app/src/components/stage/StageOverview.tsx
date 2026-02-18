@@ -74,7 +74,7 @@ export function StageOverview({
               href={`/process/${processId}/stage/${stage.id}`}
               className={cn(
                 "process-card group flex flex-col gap-3",
-                isCompleted && "border-accent/20",
+                isCompleted && "border-emerald-500/20",
                 isInProgress && "border-primary/20"
               )}
             >
@@ -84,14 +84,14 @@ export function StageOverview({
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-lg",
                       isCompleted
-                        ? "bg-accent/10"
+                        ? "bg-emerald-500/10"
                         : isInProgress
                           ? "bg-primary/10"
                           : "bg-secondary"
                     )}
                   >
                     {isCompleted ? (
-                      <Check className="h-5 w-5 text-accent" />
+                      <Check className="h-5 w-5 text-emerald-400" />
                     ) : (
                       <Icon
                         className={cn(
@@ -125,7 +125,7 @@ export function StageOverview({
                     <span className="text-muted-foreground">Fortschritt</span>
                     <span
                       className={cn(
-                        isCompleted ? "text-accent" : "text-primary"
+                        isCompleted ? "text-emerald-400" : "text-primary"
                       )}
                     >
                       {Math.round(stage.progress ?? 0)}%

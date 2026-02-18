@@ -10,7 +10,7 @@ export type StageStatus = "locked" | "open" | "in_progress" | "completed";
 
 export type StepStatus = "open" | "in_progress" | "completed";
 
-export type FieldStatus = "empty" | "open" | "closed";
+export type FieldStatus = "empty" | "open" | "closed" | "skipped";
 
 export type FieldType = "text" | "long_text" | "file" | "file_list" | "task";
 

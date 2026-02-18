@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, MinusCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Accordion,
@@ -36,7 +36,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
             variant="secondary"
             className={cn(
               stage.status === "completed"
-                ? "bg-accent/20 text-accent"
+                ? "bg-emerald-500/20 text-emerald-400"
                 : stage.status === "in_progress"
                   ? "bg-primary/20 text-primary"
                   : ""
@@ -71,6 +71,10 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
         {stage.steps.map((step, index) => {
           const totalFields = step.fields.length;
           const isCompleted = step.status === "completed";
+          const isNotRelevantStep =
+            isCompleted &&
+            totalFields > 0 &&
+            step.fields.every((f) => f.status === "skipped");
           const stepLetter = String.fromCharCode(65 + index); // A, B, C, ...
 
           return (
@@ -91,13 +95,19 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                   <div
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full shrink-0 text-sm font-bold",
-                      isCompleted
-                        ? "bg-accent text-accent-foreground"
+                      isNotRelevantStep
+                        ? "bg-muted text-muted-foreground"
+                        : isCompleted
+                        ? "bg-emerald-500 text-white"
                         : "bg-primary/15 text-primary"
                     )}
                   >
                     {isCompleted ? (
-                      <Check className="h-4 w-4" />
+                      isNotRelevantStep ? (
+                        <MinusCircle className="h-4 w-4" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )
                     ) : (
                       stepLetter
                     )}
@@ -122,18 +132,22 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                           key={f.id}
                           className={cn(
                             "inline-block h-3 w-3 rounded-full",
-                            f.status === "closed"
-                              ? "bg-accent"
-                              : f.status === "open"
-                                ? "bg-status-warning"
-                                : "bg-destructive/70"
+                            f.status === "skipped"
+                              ? "bg-muted-foreground/40"
+                              : f.status === "closed"
+                                ? "bg-accent"
+                                : f.status === "open"
+                                  ? "bg-status-warning"
+                                  : "bg-destructive/70"
                           )}
                           title={
-                            f.status === "closed"
-                              ? "Abgeschlossen"
-                              : f.status === "open"
-                                ? "In Bearbeitung"
-                                : "Leer"
+                            f.status === "skipped"
+                              ? "Nicht relevant"
+                              : f.status === "closed"
+                                ? "Abgeschlossen"
+                                : f.status === "open"
+                                  ? "In Bearbeitung"
+                                  : "Leer"
                           }
                         />
                       ))}

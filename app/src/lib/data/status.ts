@@ -18,12 +18,12 @@ export async function recalculateStatusCascade(
     .select("status")
     .eq("step_id", field.step_id);
 
-  const allFieldsClosed =
-    stepFields?.every((f) => f.status === "closed") ?? false;
+  const allFieldsDone =
+    stepFields?.every((f) => f.status === "closed" || f.status === "skipped") ?? false;
   const anyFieldOpen =
     stepFields?.some((f) => f.status !== "empty") ?? false;
 
-  const stepStatus = allFieldsClosed
+  const stepStatus = allFieldsDone
     ? "completed"
     : anyFieldOpen
       ? "in_progress"
@@ -98,11 +98,11 @@ export async function recalculateStatusCascade(
   });
 
   const totalFields = processFields.length;
-  const closedFields = processFields.filter(
-    (f) => f.status === "closed"
+  const doneFields = processFields.filter(
+    (f) => f.status === "closed" || f.status === "skipped"
   ).length;
   const processProgress =
-    totalFields > 0 ? (closedFields / totalFields) * 100 : 0;
+    totalFields > 0 ? (doneFields / totalFields) * 100 : 0;
 
   const processStatus = allStagesCompleted ? "completed" : "active";
 
