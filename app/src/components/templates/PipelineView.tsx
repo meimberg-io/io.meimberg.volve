@@ -107,14 +107,18 @@ export function PipelineView({
   const [showHeaderImage, setShowHeaderImage] = useState(false);
   const [generatingDeps, setGeneratingDeps] = useState(false);
 
-  const allFields = model.stages.flatMap((s) =>
-    s.steps.flatMap((st) =>
-      st.fields.map((f) => ({
+  const allFields = model.stages.flatMap((s, si) =>
+    s.steps.flatMap((st, sti) =>
+      st.fields.map((f, fi) => ({
         id: f.id,
         name: f.name,
+        type: f.type,
         description: f.description ?? "",
         stepName: st.name,
         stageName: s.name,
+        stageIndex: si + 1,
+        stepIndex: sti + 1,
+        fieldIndex: fi + 1,
       }))
     )
   );
@@ -124,7 +128,7 @@ export function PipelineView({
     setGeneratingDeps(true);
     try {
       const fieldsList = allFields
-        .map((f) => `- ID: ${f.id} | Name: "${f.name}" | Stage: "${f.stageName}" | Step: "${f.stepName}" | Beschreibung: ${f.description}`)
+        .map((f) => `Stage ${f.stageIndex} "${f.stageName}" > Step ${f.stepIndex} "${f.stepName}" > Field ${f.fieldIndex} "${f.name}" (ID: ${f.id}, ${f.type}): ${f.description}`)
         .join("\n");
 
       const response = await fetch("/api/ai/template-generate", {

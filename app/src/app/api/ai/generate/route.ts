@@ -1,6 +1,6 @@
 import { streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { createClient } from "@/lib/supabase/server";
+import { getModel } from "@/lib/ai/model";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -172,8 +172,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const model = await getModel();
     const result = streamText({
-      model: openai("gpt-4o-mini"),
+      model,
       system: systemPrompt,
       prompt: userPrompt,
       maxOutputTokens: 2000,

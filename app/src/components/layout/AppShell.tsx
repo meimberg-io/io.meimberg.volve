@@ -43,7 +43,6 @@ interface AppShellProps {
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Templates", icon: Blocks, path: "/templates" },
-  { label: "Einstellungen", icon: Settings, path: "/settings" },
 ];
 
 export function AppShell({ children, user }: AppShellProps) {
@@ -125,6 +124,20 @@ export function AppShell({ children, user }: AppShellProps) {
                 onClick={() => setQuickSwitcherOpen(true)}
               />
             </div>
+
+            {/* Settings */}
+            <Link href="/settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "cursor-pointer text-white/70 hover:text-white",
+                  pathname === "/settings" && "text-white"
+                )}
+              >
+                <Settings className="size-5" />
+              </Button>
+            </Link>
 
             {/* User Menu */}
             <DropdownMenu>

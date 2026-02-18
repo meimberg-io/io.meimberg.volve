@@ -7,9 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Check, Sparkles } from "lucide-react";
 import { PromptField } from "@/components/field/PromptField";
 import { getSettings, updateSetting } from "@/lib/data/settings";
+
+const AI_MODEL_GROUPS = [
+  {
+    label: "OpenAI",
+    models: [
+      { id: "gpt-4o-mini", label: "GPT-4o Mini" },
+      { id: "gpt-4o", label: "GPT-4o" },
+      { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
+      { id: "gpt-4.1", label: "GPT-4.1" },
+      { id: "gpt-5.2", label: "GPT-5.2" },
+    ],
+  },
+  {
+    label: "Anthropic Sonnet",
+    models: [
+      { id: "claude-3.5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
+      { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+    ],
+  },
+  {
+    label: "Anthropic Opus",
+    models: [
+      { id: "claude-opus-4-20250514", label: "Claude Opus 4" },
+      { id: "claude-opus-4-5-20251101", label: "Claude Opus 4.5" },
+      { id: "claude-opus-4-6", label: "Claude Opus 4.6" },
+    ],
+  },
+] as const;
 
 const PROMPT_KEYS = [
   {
@@ -104,6 +141,41 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="ai-model" className="text-xs">KI-Modell</Label>
+              {saved["ai_model"] && (
+                <span className="flex items-center gap-1 text-[10px] text-emerald-500">
+                  <Check className="h-3 w-3" />
+                  Gespeichert
+                </span>
+              )}
+            </div>
+            <Select
+              value={settings["ai_model"] || "gpt-5.2"}
+              onValueChange={(value) => handleChange("ai_model", value)}
+            >
+              <SelectTrigger id="ai-model" className="w-full text-xs h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_MODEL_GROUPS.map((group) => (
+                  <SelectGroup key={group.label}>
+                    <SelectLabel>{group.label}</SelectLabel>
+                    {group.models.map((m) => (
+                      <SelectItem key={m.id} value={m.id} className="text-xs">
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Gilt global für alle KI-Generierungen (außer Bildgenerierung).
+            </p>
+          </div>
+          <Separator />
           <div className="space-y-1.5">
             <Label htmlFor="openai-key" className="text-xs">OpenAI API Key</Label>
             <Input

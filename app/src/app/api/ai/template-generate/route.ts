@@ -1,7 +1,7 @@
 import { streamText, generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
+import { getModel } from "@/lib/ai/model";
 import { z } from "zod";
 
 const SYSTEM_BASE = `Du bist ein erfahrener Business-Berater und Prozess-Designer. Du hilfst bei der systematischen Strukturierung von Geschäftsprozessen. Antworte auf Deutsch.`;
@@ -78,11 +78,13 @@ export async function POST(request: Request) {
     return data?.value ?? "";
   }
 
+  const model = await getModel();
+
   try {
     if (mode === "process_description") {
       const prompt = userPrompt ?? "Beschreibe diesen Prozess.";
       const result = streamText({
-        model: openai("gpt-4o-mini"),
+        model,
         system: `${SYSTEM_BASE}\n\nErstelle eine strukturierte Beschreibung für einen Geschäftsprozess basierend auf der Eingabe des Nutzers. Die Beschreibung soll klar und prägnant sein, die Ziele des Prozesses erklären und für wen er gedacht ist. Nutze Markdown-Formatierung.`,
         prompt,
         maxOutputTokens: 1000,
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
       const currentDesc = context.current_description ?? "";
       const instruction = userPrompt ?? "Optimiere die Beschreibung.";
       const result = streamText({
-        model: openai("gpt-4o-mini"),
+        model,
         system: `${SYSTEM_BASE}\n\nDer Nutzer hat eine bestehende Prozessbeschreibung, die er optimieren oder ergänzen möchte. Behalte die bestehende Struktur und den Inhalt bei, aber passe sie gemäß der Anweisung an. Gib die vollständige, überarbeitete Beschreibung zurück. Nutze Markdown-Formatierung.`,
         prompt: `## Aktuelle Beschreibung\n${currentDesc}\n\n## Änderungsanweisung\n${instruction}`,
         maxOutputTokens: 2000,
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
       const template = await getTemplate("tpl_describe_stage");
       const prompt = fillTemplate(template, context);
       const result = streamText({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt: userPrompt ? `${prompt}\n\nZusatzhinweis: ${userPrompt}` : prompt,
         maxOutputTokens: 500,
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
       const template = await getTemplate("tpl_describe_step");
       const prompt = fillTemplate(template, context);
       const result = streamText({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt: userPrompt ? `${prompt}\n\nZusatzhinweis: ${userPrompt}` : prompt,
         maxOutputTokens: 500,
@@ -130,7 +132,7 @@ export async function POST(request: Request) {
       const template = await getTemplate("tpl_generate_stages");
       const prompt = fillTemplate(template, context);
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt: userPrompt ? `${prompt}\n\nZusatzhinweis: ${userPrompt}` : prompt,
         schema: stagesSchema,
@@ -143,7 +145,7 @@ export async function POST(request: Request) {
       const extendContext = { ...context, user_prompt: userPrompt || "" };
       const prompt = fillTemplate(template, extendContext);
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt,
         schema: stagesSchema,
@@ -155,7 +157,7 @@ export async function POST(request: Request) {
       const template = await getTemplate("tpl_generate_steps");
       const prompt = fillTemplate(template, context);
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt: userPrompt ? `${prompt}\n\nZusatzhinweis: ${userPrompt}` : prompt,
         schema: stepsSchema,
@@ -168,7 +170,7 @@ export async function POST(request: Request) {
       const extendContext = { ...context, user_prompt: userPrompt || "" };
       const prompt = fillTemplate(template, extendContext);
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
+        model,
         system: SYSTEM_BASE,
         prompt,
         schema: stepsSchema,
@@ -181,7 +183,7 @@ export async function POST(request: Request) {
         icon: z.string().describe("Lucide icon name in kebab-case, e.g. 'sparkles', 'file-text', 'rocket'"),
       });
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
+        model,
         system: `${SYSTEM_BASE}\n\nDu wählst ein passendes Lucide-React Icon (lucide.dev) für eine Stage eines Geschäftsprozesses aus. Verwende den kebab-case Icon-Namen (z.B. "sparkles", "lightbulb", "target", "search", "bar-chart", "file-text", "rocket", "shield-check", "users", "settings", "zap", "brain", "clipboard-list", "check-circle", "trending-up"). Wähle ein Icon das den Inhalt und Zweck der Stage visuell gut repräsentiert.`,
         prompt: `Stage: "${context.stage_name}"\nBeschreibung: ${context.stage_description || "(keine)"}`,
         schema: iconSchema,
@@ -193,8 +195,8 @@ export async function POST(request: Request) {
       const template = await getTemplate("tpl_generate_dependencies");
       const prompt = fillTemplate(template, context);
       const result = await generateObject({
-        model: openai("gpt-4o-mini"),
-        system: `${SYSTEM_BASE}\n\nDu analysierst die Struktur eines Prozess-Templates und bestimmst logische Abhängigkeiten zwischen Fields. Verwende ausschließlich die angegebenen Field-IDs.`,
+        model,
+        system: `${SYSTEM_BASE}\n\nDu analysierst die Struktur eines Prozess-Templates und bestimmst logische Abhängigkeiten zwischen Fields. Die Fields sind in Prozessreihenfolge nummeriert (Stage > Step > Field). Verwende AUSSCHLIESSLICH die angegebenen Field-IDs. Erzeuge Dependencies für JEDES Field, das sinnvolle Vorgänger hat. Sortiere depends_on so, dass das späteste (konkreteste) Field zuerst steht. Im Zweifel lieber eine Dependency zu viel als zu wenig.`,
         prompt,
         schema: dependenciesSchema,
       });
