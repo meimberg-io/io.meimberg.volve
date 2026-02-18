@@ -67,7 +67,7 @@ export function HeaderImageModal({
     } finally {
       setLoading(false);
     }
-  }, [modelId, processDescription, userPrompt]);
+  }, [modelId, modelName, processDescription, userPrompt]);
 
   const handleApply = useCallback(async () => {
     if (!generatedPath) return;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Sparkles, Loader2, Check, X, ChevronRight, AlertTriangle } from "lucide-react";
+import { Loader2, Check, X, ChevronRight, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,

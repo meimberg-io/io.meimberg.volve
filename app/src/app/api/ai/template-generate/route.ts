@@ -232,7 +232,7 @@ export async function POST(request: Request) {
         n: 1,
       });
 
-      const imageUrl = imageResponse.data[0]?.url;
+      const imageUrl = imageResponse.data?.[0]?.url;
       if (!imageUrl) {
         return new Response("Image generation failed", { status: 500 });
       }
