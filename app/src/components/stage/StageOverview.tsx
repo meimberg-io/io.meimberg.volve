@@ -57,7 +57,11 @@ export function StageOverview({
             {Math.round(processProgress)}%
           </span>
         </div>
-        <Progress value={processProgress} className="h-2" />
+        <Progress
+          value={processProgress}
+          className="h-2"
+          indicatorClassName={processProgress >= 100 ? "bg-emerald-500" : undefined}
+        />
       </div>
 
       {/* Stage Grid */}
@@ -134,6 +138,7 @@ export function StageOverview({
                   <Progress
                     value={stage.progress ?? 0}
                     className="h-1.5"
+                    indicatorClassName={isCompleted ? "bg-emerald-500" : undefined}
                   />
                 </div>
               )}
