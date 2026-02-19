@@ -481,14 +481,14 @@ export function PipelineView({
     }
   }, [allFields, onRefresh]);
 
-  const handleSaveAsNewProcess = useCallback(async () => {
+  const handleSaveAsNewTemplate = useCallback(async () => {
     setCopying(true);
     try {
-      const newProcess = await copyProcess(model.id, {
-        is_template: false,
+      const newTemplate = await copyProcess(model.id, {
+        is_template: true,
         name: `${model.name} (Kopie)`,
       });
-      router.push(`/process/${newProcess.id}`);
+      router.push(`/templates/${newTemplate.id}`);
     } catch (err) {
       console.error("Copy failed:", err);
     } finally {
@@ -575,12 +575,12 @@ export function PipelineView({
                 {!model.is_template && (
                   <>
                     <DropdownMenuItem
-                      onClick={handleSaveAsNewProcess}
+                      onClick={handleSaveAsNewTemplate}
                       disabled={copying}
                       className="cursor-pointer gap-2"
                     >
                       {copying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-                      Als neuen Prozess speichern
+                      Als neues Template speichern
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>

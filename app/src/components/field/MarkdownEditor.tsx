@@ -5,6 +5,10 @@ import { BubbleMenu } from "@tiptap/react/menus";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import { Markdown } from "tiptap-markdown";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -76,6 +80,10 @@ export function MarkdownEditor({
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Placeholder.configure({
         placeholder,
       }),
@@ -273,6 +281,24 @@ export function MarkdownEditor({
         .tiptap li p {
           margin-top: 0;
           margin-bottom: 0;
+        }
+        .tiptap table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 0.5em 0;
+          font-size: 0.75rem;
+        }
+        .tiptap th,
+        .tiptap td {
+          border: 1px solid var(--color-border);
+          padding: 0.35em 0.6em;
+          text-align: left;
+          color: #aaaaaa;
+        }
+        .tiptap th {
+          background: hsl(var(--muted) / 0.5);
+          font-weight: 600;
+          color: var(--foreground);
         }
       `}</style>
     </div>

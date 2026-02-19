@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useCallback, type SetStateAction } from "react";
+import { useState, useCallback, useRef, type SetStateAction } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PipelineView } from "@/components/templates/PipelineView";
 import { EditPanel } from "@/components/templates/EditPanel";
 import { AddTemplateDialog } from "@/components/templates/AddTemplateDialog";
-import { getProcessWithFullTree, ProcessWithStages } from "@/lib/data/templates";
+import { getProcessWithFullTree, updateProcess, ProcessWithStages } from "@/lib/data/templates";
 import type {
   Stage,
   Step,
@@ -36,6 +36,8 @@ export default function TemplateDetailPage() {
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addContext, setAddContext] = useState<AddContext>(null);
+  const [editingName, setEditingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const { data: model = null, isLoading } = useQuery({
     queryKey: ["process-model", modelId],
@@ -91,6 +93,18 @@ export default function TemplateDetailPage() {
   const allFields: Field[] =
     model?.stages.flatMap((s) => s.steps.flatMap((st) => st.fields)) ?? [];
 
+  const handleRename = useCallback(async (newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed || !model || trimmed === model.name) {
+      setEditingName(false);
+      return;
+    }
+    await updateProcess(model.id, { name: trimmed });
+    setModel((prev) => prev ? { ...prev, name: trimmed } : prev);
+    queryClient.invalidateQueries({ queryKey: ["templates"] });
+    setEditingName(false);
+  }, [model, setModel, queryClient]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -100,9 +114,29 @@ export default function TemplateDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">
-          {model?.name ?? "Lade..."}
-        </h1>
+        {editingName ? (
+          <input
+            ref={nameInputRef}
+            className="text-2xl font-bold bg-transparent border-b border-primary outline-none"
+            defaultValue={model?.name ?? ""}
+            autoFocus
+            onBlur={(e) => handleRename(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRename(e.currentTarget.value);
+              if (e.key === "Escape") setEditingName(false);
+            }}
+          />
+        ) : (
+          <button
+            className="group flex items-center gap-2 cursor-pointer"
+            onClick={() => setEditingName(true)}
+          >
+            <h1 className="text-2xl font-bold">
+              {model?.name ?? "Lade..."}
+            </h1>
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        )}
       </div>
 
       {/* Pipeline View */}
