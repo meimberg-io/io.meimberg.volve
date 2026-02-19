@@ -680,6 +680,12 @@ export async function copyProcess(
   const source = await getProcessWithFullTree(sourceId);
   if (!source) throw new Error("Source process not found");
 
+  let userId = opts.userId ?? null;
+  if (!userId && !opts.is_template) {
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+  }
+
   const { data: newProcess, error: processError } = await supabase
     .from("processes")
     .insert({
@@ -689,7 +695,7 @@ export async function copyProcess(
       metadata: source.metadata ?? {},
       is_template: opts.is_template,
       model_id: source.is_template ? source.id : source.model_id,
-      user_id: opts.userId ?? null,
+      user_id: userId,
       status: opts.is_template ? "template" : "seeding",
       progress: 0,
     })
