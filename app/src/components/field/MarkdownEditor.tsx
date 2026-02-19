@@ -138,7 +138,6 @@ export function MarkdownEditor({
     if (!text || !isLikelyMarkdown(text)) return;
 
     event.preventDefault();
-    // Parse markdown -> HTML -> ProseMirror slice and insert at current selection.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsedHtml = (editor.storage as any).markdown.parser.parse(text);
     const container = document.createElement("div");
@@ -157,7 +156,6 @@ export function MarkdownEditor({
           editor={editor}
           className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg"
         >
-          {/* Inline */}
           <BubbleButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive("bold")}
@@ -189,7 +187,6 @@ export function MarkdownEditor({
 
           <div className="mx-0.5 h-4 w-px bg-border" />
 
-          {/* Headings */}
           <BubbleButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             isActive={editor.isActive("heading", { level: 1 })}
@@ -214,7 +211,6 @@ export function MarkdownEditor({
 
           <div className="mx-0.5 h-4 w-px bg-border" />
 
-          {/* Blocks */}
           <BubbleButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             isActive={editor.isActive("bulletList")}

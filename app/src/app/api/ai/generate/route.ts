@@ -161,7 +161,9 @@ export async function POST(request: Request) {
 
   const context = contextParts.join("\n\n---\n\n");
 
-  let systemPrompt = `Du bist ein erfahrener Business-Berater und Strategie-Assistent. Du hilfst bei der systematischen Entwicklung von Geschäftsideen. Antworte auf Deutsch. Nutze Markdown-Formatierung.`;
+  let systemPrompt = `Du bist ein erfahrener Business-Berater und Strategie-Assistent. Du hilfst bei der systematischen Entwicklung von Geschäftsideen. Antworte auf Deutsch. Nutze Markdown-Formatierung (Überschriften, Tabellen, Listen, etc.).
+
+WICHTIG: Erzeuge KEINE Mermaid-Diagramme oder andere Code-Diagramme. Nutze ausschließlich Text, Tabellen und Listen zur Darstellung von Zusammenhängen.`;
 
   let userPrompt: string;
 
@@ -199,7 +201,7 @@ export async function POST(request: Request) {
       model,
       system: systemPrompt,
       prompt: userPrompt,
-      maxOutputTokens: 2000,
+      maxOutputTokens: 40000,
     });
 
     return result.toTextStreamResponse();
