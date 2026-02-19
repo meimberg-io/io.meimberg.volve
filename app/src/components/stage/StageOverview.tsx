@@ -32,16 +32,6 @@ const stageIcons: Record<string, React.ComponentType<{ className?: string }>> = 
   rocket: Rocket,
 };
 
-const stageDescriptions: Record<number, string> = {
-  0: "Seed-Dokumente konsolidieren",
-  1: "Vision, Naming und Einordnung",
-  2: "Themen, Zielgruppen und Markt",
-  3: "Stärken, Schwächen, Chancen, Risiken",
-  4: "Geschäftsmodell und Wettbewerb",
-  5: "Meilensteine, Aufgaben, Ressourcen",
-  6: "Go/No-Go und Rollout",
-};
-
 export function StageOverview({
   processId,
   stages,
@@ -70,7 +60,7 @@ export function StageOverview({
           const Icon = stageIcons[stage.icon ?? "sparkles"] ?? Sparkles;
           const isCompleted = stage.status === "completed";
           const isInProgress = stage.status === "in_progress";
-          const description = stageDescriptions[index] ?? stage.description ?? "";
+          const description = stage.description ?? "";
 
           return (
             <Link
