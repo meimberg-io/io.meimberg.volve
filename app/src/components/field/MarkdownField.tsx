@@ -46,6 +46,7 @@ export function MarkdownField({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        autoScroll={autoScroll}
       />
     </div>
   );

@@ -270,6 +270,7 @@ export function TaskFieldCard({ field, processId, onUpdate }: TaskFieldCardProps
               onChange={handleDescriptionChange}
               placeholder="Aufgabenbeschreibung..."
               disabled={isClosed}
+              autoScroll={generating}
             />
           )}
         </FormField>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Check, X, Sparkles, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -34,6 +34,13 @@ export function GenerateDescriptionModal({
   const [userPrompt, setUserPrompt] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (loading && resultRef.current) {
+      resultRef.current.scrollTop = resultRef.current.scrollHeight;
+    }
+  }, [loading, result]);
 
   const handleGenerate = useCallback(async () => {
     setLoading(true);
@@ -155,7 +162,7 @@ export function GenerateDescriptionModal({
 
           {result && (
             <FormField label="Ergebnis">
-              <div className="max-h-[250px] overflow-y-auto rounded-md border border-border bg-background p-3">
+              <div ref={resultRef} className="max-h-[250px] overflow-y-auto rounded-md border border-border bg-background p-3">
                 {mode === "generate_field_prompt" || mode === "optimize_field_prompt" ? (
                   <div className="text-xs text-muted-foreground whitespace-pre-wrap">{result}</div>
                 ) : (

@@ -34,6 +34,7 @@ interface MarkdownEditorProps {
   minHeight?: number;
   maxHeight?: number;
   editorClassName?: string;
+  autoScroll?: boolean;
 }
 
 function BubbleButton({
@@ -71,6 +72,7 @@ export function MarkdownEditor({
   minHeight = 40,
   maxHeight = 560,
   editorClassName,
+  autoScroll = false,
 }: MarkdownEditorProps) {
   const isLikelyMarkdown = (text: string) =>
     /(^|\n)(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|~~~|\|.+\|)/m.test(text);
@@ -119,9 +121,15 @@ export function MarkdownEditor({
       const currentMd = (editor.storage as any).markdown.getMarkdown();
       if (content !== currentMd) {
         editor.commands.setContent(content || "");
+        if (autoScroll) {
+          requestAnimationFrame(() => {
+            const el = editor.view.dom;
+            el.scrollTop = el.scrollHeight;
+          });
+        }
       }
     }
-  }, [content, editor]);
+  }, [content, editor, autoScroll]);
 
   // Sync editable state
   useEffect(() => {

@@ -518,6 +518,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     : "Schreibe hier..."
                 }
                 disabled={isClosed}
+                autoScroll={streaming}
               />
             )}
           </div>
