@@ -413,7 +413,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
+                      className="h-7 w-7 text-blue-400 hover:!bg-blue-400 hover:!text-black"
                       onClick={handleGenerate}
                       disabled={streaming || !field.ai_prompt}
                     >
@@ -433,7 +433,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
+                      className="h-7 w-7 text-blue-400 hover:!bg-blue-400 hover:!text-black"
                       onClick={() => setShowAdvanced(true)}
                       disabled={streaming || !field.ai_prompt}
                     >
@@ -449,7 +449,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-amber-400 hover:!bg-amber-400 hover:!text-black"
+                      className="h-7 w-7 text-blue-400 hover:!bg-blue-400 hover:!text-black"
                       onClick={() => setShowOptimize(true)}
                       disabled={streaming || !content.trim()}
                     >

@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/ui/form-actions";
+import { PromptField } from "@/components/field/PromptField";
 
 interface GenerateAdvancedModalProps {
   open: boolean;
@@ -83,10 +83,10 @@ export function GenerateAdvancedModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 bg-amber-500/5">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 bg-blue-500/5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15">
-              <ZapOff className="h-4.5 w-4.5 text-amber-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/15">
+              <ZapOff className="h-4.5 w-4.5 text-blue-400" />
             </div>
             <div>
               <DialogTitle className="text-base">Erweiterte Generierung</DialogTitle>
@@ -113,28 +113,30 @@ export function GenerateAdvancedModal({
               </Button>
             }
           >
-            <Textarea
+            <PromptField
+              variant="execution"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={!promptEditable}
-              className="min-h-[100px] text-sm resize-none"
+              rows={5}
             />
           </FormField>
 
           {/* Additional Instructions */}
           <FormField label="Zusatzanweisungen">
-            <Textarea
+            <PromptField
+              variant="execution"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder="z. B. 'Schwerpunkt auf Internationalität', 'Bitte kurz halten'"
-              className="min-h-[80px] text-sm resize-none"
+              rows={3}
               autoFocus
             />
             <div className="flex flex-wrap gap-1.5">
               {QUICK_INSTRUCTIONS.map((instr) => (
                 <button
                   key={instr}
-                  className="rounded-md border border-border/50 bg-secondary/40 px-2.5 py-1 text-xs text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 transition-colors cursor-pointer"
+                  className="rounded-md border border-border/50 bg-secondary/40 px-2.5 py-1 text-xs text-muted-foreground hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30 transition-colors cursor-pointer"
                   onClick={() => setInstructions(instr)}
                 >
                   {instr}
@@ -157,7 +159,7 @@ export function GenerateAdvancedModal({
             size="sm"
             onClick={handleGenerate}
             disabled={loading}
-            className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-medium"
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Generieren

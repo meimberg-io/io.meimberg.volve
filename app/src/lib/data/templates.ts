@@ -218,7 +218,7 @@ export async function createField(
 
 export async function updateProcess(
   id: string,
-  data: Partial<Pick<Process, "name" | "description" | "header_image">>
+  data: Partial<Pick<Process, "name" | "description" | "header_image" | "ai_system_prompt">>
 ): Promise<void> {
   const { error } = await supabase
     .from("processes")
@@ -230,7 +230,7 @@ export async function updateProcess(
 
 export async function updateStage(
   id: string,
-  data: Partial<Pick<Stage, "name" | "description" | "icon">>
+  data: Partial<Pick<Stage, "name" | "description" | "icon" | "ai_system_prompt">>
 ): Promise<void> {
   const { error } = await supabase
     .from("stages")
@@ -693,6 +693,7 @@ export async function copyProcess(
       description: source.description,
       header_image: source.header_image,
       metadata: source.metadata ?? {},
+      ai_system_prompt: source.ai_system_prompt,
       is_template: opts.is_template,
       model_id: source.is_template ? source.id : source.model_id,
       user_id: userId,
@@ -714,6 +715,7 @@ export async function copyProcess(
         name: stage.name,
         description: stage.description,
         icon: stage.icon,
+        ai_system_prompt: stage.ai_system_prompt,
         order_index: stage.order_index,
         status: opts.is_template ? null : "open",
         progress: opts.is_template ? null : 0,

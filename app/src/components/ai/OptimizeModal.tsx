@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/ui/form-actions";
+import { PromptField } from "@/components/field/PromptField";
 import { cn } from "@/lib/utils";
 
 interface OptimizeModalProps {
@@ -85,10 +85,10 @@ export function OptimizeModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 bg-amber-500/5">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 bg-blue-500/5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15">
-              <Wrench className="h-4.5 w-4.5 text-amber-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/15">
+              <Wrench className="h-4.5 w-4.5 text-blue-400" />
             </div>
             <div>
               <DialogTitle className="text-base">Inhalt optimieren</DialogTitle>
@@ -120,8 +120,8 @@ export function OptimizeModal({
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs transition-colors cursor-pointer",
                     instruction === action
-                      ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
-                      : "border-border/50 bg-secondary/40 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30"
+                      ? "border-blue-500/40 bg-blue-500/15 text-blue-400"
+                      : "border-border/50 bg-secondary/40 text-muted-foreground hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30"
                   )}
                   onClick={() => setInstruction(action)}
                 >
@@ -133,11 +133,12 @@ export function OptimizeModal({
 
           {/* Instruction */}
           <FormField label="Optimierungsanweisung">
-            <Textarea
+            <PromptField
+              variant="execution"
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
               placeholder="z. B. 'Fasse kürzer zusammen', 'Ergänze quantitative Daten'"
-              className="min-h-[80px] text-sm resize-none"
+              rows={3}
               autoFocus
             />
           </FormField>
@@ -156,7 +157,7 @@ export function OptimizeModal({
             size="sm"
             onClick={handleOptimize}
             disabled={!instruction.trim() || loading}
-            className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-medium"
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Optimieren

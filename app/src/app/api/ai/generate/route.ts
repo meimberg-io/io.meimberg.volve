@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return new Response("Field not found", { status: 404 });
   }
 
-  // Resolve current structural context (step → stage → process)
+  // Resolve current structural context and system prompts (step → stage → process)
   const { data: step } = await supabase
     .from("steps")
     .select("name, stage_id")
@@ -40,29 +40,53 @@ export async function POST(request: Request) {
     .single();
 
   let stageName = "";
+  let stageSystemPrompt: string | null = null;
   let processName = "";
   let processDescription = "";
+  let processSystemPrompt: string | null = null;
 
   if (step) {
     const { data: stage } = await supabase
       .from("stages")
-      .select("name, process_id")
+      .select("name, process_id, ai_system_prompt")
       .eq("id", step.stage_id)
       .single();
 
     if (stage) {
       stageName = stage.name;
+      stageSystemPrompt = stage.ai_system_prompt;
       const { data: process } = await supabase
         .from("processes")
-        .select("name, description")
+        .select("name, description, ai_system_prompt")
         .eq("id", stage.process_id)
         .single();
       if (process) {
         processName = process.name;
         processDescription = process.description ?? "";
+        processSystemPrompt = process.ai_system_prompt;
       }
     }
   }
+
+  // Load global settings: execution system prompt + meta prompt
+  const { data: settingsRows } = await supabase
+    .from("app_settings")
+    .select("key, value")
+    .in("key", ["ai_system_execution", "ai_meta_prompt"]);
+
+  const settings: Record<string, string> = {};
+  for (const row of settingsRows ?? []) {
+    settings[row.key] = row.value;
+  }
+
+  // Cascade: stage → process → global setting
+  const executionPrompt =
+    stageSystemPrompt
+    ?? processSystemPrompt
+    ?? settings["ai_system_execution"]
+    ?? "Du bist ein hilfreicher Assistent. Antworte auf Deutsch. Nutze Markdown-Formatierung.";
+
+  const metaPrompt = settings["ai_meta_prompt"] ?? "";
 
   const structuralContext = [
     processName && `Prozess: „${processName}"`,
@@ -161,9 +185,10 @@ export async function POST(request: Request) {
 
   const context = contextParts.join("\n\n---\n\n");
 
-  let systemPrompt = `Du bist ein erfahrener Business-Berater und Strategie-Assistent. Du hilfst bei der systematischen Entwicklung von Geschäftsideen. Antworte auf Deutsch. Nutze Markdown-Formatierung (Überschriften, Tabellen, Listen, etc.).
-
-WICHTIG: Erzeuge KEINE Mermaid-Diagramme oder andere Code-Diagramme. Nutze ausschließlich Text, Tabellen und Listen zur Darstellung von Zusammenhängen.`;
+  let systemPrompt = executionPrompt;
+  if (metaPrompt) {
+    systemPrompt += `\n\n${metaPrompt}`;
+  }
 
   let userPrompt: string;
 

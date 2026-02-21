@@ -214,12 +214,13 @@ function StageForm({
   const [name, setName] = useState(stage.name);
   const [description, setDescription] = useState(stage.description ?? "");
   const [icon, setIcon] = useState(stage.icon ?? "");
+  const [stageSystemPrompt, setStageSystemPrompt] = useState(stage.ai_system_prompt ?? "");
   const [modalMode, setModalMode] = useState<"describe_stage" | "optimize_description" | null>(null);
   const [suggestingIcon, setSuggestingIcon] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const save = useCallback(
-    (data: Partial<Pick<Stage, "name" | "description" | "icon">>) => {
+    (data: Partial<Pick<Stage, "name" | "description" | "icon" | "ai_system_prompt">>) => {
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
         await updateStage(stage.id, data);
@@ -317,6 +318,25 @@ function StageForm({
           onChange={(val) => {
             setIcon(val);
             save({ icon: val || null });
+          }}
+        />
+      </FormField>
+
+      <Separator />
+
+      <FormField label="System-Prompt (Stage-Override)" htmlFor="stage-system-prompt">
+        <p className="text-[11px] text-muted-foreground">
+          Überschreibt den Prozess-/Global-Prompt bei der Ausführung dieser Stage. Leer lassen für Fallback.
+        </p>
+        <PromptField
+          id="stage-system-prompt"
+          variant="execution"
+          value={stageSystemPrompt}
+          rows={3}
+          placeholder="z.B. Du bist ein erfahrener UX-Designer..."
+          onChange={(e) => {
+            setStageSystemPrompt(e.target.value);
+            save({ ai_system_prompt: e.target.value || null });
           }}
         />
       </FormField>
@@ -579,6 +599,7 @@ function FieldForm({
       >
         <PromptField
           id="field-ai-prompt"
+          variant="execution"
           value={aiPrompt}
           rows={4}
           placeholder="Anweisungen für die KI-Generierung..."

@@ -708,9 +708,17 @@ export function PipelineView({
         open={showDescModal}
         onOpenChange={setShowDescModal}
         description={model.description ?? ""}
-        onSave={async (desc) => {
-          await updateProcess(model.id, { description: desc || null });
-          setModel((prev) => prev ? { ...prev, description: desc || null } : prev);
+        systemPrompt={model.ai_system_prompt ?? ""}
+        onSave={async (desc, sysPrompt) => {
+          await updateProcess(model.id, {
+            description: desc || null,
+            ai_system_prompt: sysPrompt || null,
+          });
+          setModel((prev) => prev ? {
+            ...prev,
+            description: desc || null,
+            ai_system_prompt: sysPrompt || null,
+          } : prev);
         }}
       />
 

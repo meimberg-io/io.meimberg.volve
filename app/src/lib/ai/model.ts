@@ -1,5 +1,5 @@
-import { openai } from "@ai-sdk/openai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai, createOpenAI } from "@ai-sdk/openai";
+import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
 import { createClient } from "@/lib/supabase/server";
 
 export const AI_MODELS = [
@@ -19,21 +19,44 @@ export type AIModelId = (typeof AI_MODELS)[number]["id"];
 
 const DEFAULT_MODEL: AIModelId = "gpt-5.2";
 
-function resolveModel(modelId: string) {
+function resolveModel(
+  modelId: string,
+  customKeys?: { openai?: string; anthropic?: string }
+) {
   const entry = AI_MODELS.find((m) => m.id === modelId);
-  if (!entry) return openai(DEFAULT_MODEL);
-  return entry.provider === "anthropic"
-    ? anthropic(entry.id)
+  if (!entry) {
+    return customKeys?.openai
+      ? createOpenAI({ apiKey: customKeys.openai })(DEFAULT_MODEL)
+      : openai(DEFAULT_MODEL);
+  }
+
+  if (entry.provider === "anthropic") {
+    return customKeys?.anthropic
+      ? createAnthropic({ apiKey: customKeys.anthropic })(entry.id)
+      : anthropic(entry.id);
+  }
+
+  return customKeys?.openai
+    ? createOpenAI({ apiKey: customKeys.openai })(entry.id)
     : openai(entry.id);
 }
 
 export async function getModel() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data: rows } = await supabase
     .from("app_settings")
-    .select("value")
-    .eq("key", "ai_model")
-    .single();
+    .select("key, value")
+    .in("key", ["ai_model", "openai_api_key", "anthropic_api_key"]);
 
-  return resolveModel(data?.value ?? DEFAULT_MODEL);
+  const settings: Record<string, string> = {};
+  for (const row of rows ?? []) {
+    settings[row.key] = row.value;
+  }
+
+  const customKeys = {
+    openai: settings["openai_api_key"] || undefined,
+    anthropic: settings["anthropic_api_key"] || undefined,
+  };
+
+  return resolveModel(settings["ai_model"] ?? DEFAULT_MODEL, customKeys);
 }

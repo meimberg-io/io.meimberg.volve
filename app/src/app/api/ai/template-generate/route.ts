@@ -4,8 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getModel } from "@/lib/ai/model";
 import { z } from "zod";
 
-const SYSTEM_BASE = `Du bist ein erfahrener Business-Berater und Prozess-Designer. Du hilfst bei der systematischen Strukturierung von Geschäftsprozessen. Antworte auf Deutsch.`;
-
 const stagesSchema = z.object({
   stages: z.array(
     z.object({
@@ -79,6 +77,24 @@ export async function POST(request: Request) {
   }
 
   const model = await getModel();
+
+  // Load modelling system prompt + global meta prompt
+  const { data: settingsRows } = await supabase
+    .from("app_settings")
+    .select("key, value")
+    .in("key", ["ai_system_modelling", "ai_meta_prompt"]);
+
+  const settingsMap: Record<string, string> = {};
+  for (const row of settingsRows ?? []) {
+    settingsMap[row.key] = row.value;
+  }
+
+  const modellingPrompt = settingsMap["ai_system_modelling"]
+    ?? "Du bist ein erfahrener Business-Berater und Prozess-Designer. Du hilfst bei der systematischen Strukturierung von Geschäftsprozessen. Antworte auf Deutsch.";
+  const metaPrompt = settingsMap["ai_meta_prompt"] ?? "";
+  const SYSTEM_BASE = metaPrompt
+    ? `${modellingPrompt}\n\n${metaPrompt}`
+    : modellingPrompt;
 
   try {
     if (mode === "process_description") {

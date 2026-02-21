@@ -36,6 +36,7 @@ export interface Process {
   description: string | null;
   header_image: string | null;
   metadata: Record<string, unknown> | null;
+  ai_system_prompt: string | null;
   status: ProcessStatus;
   progress: number;
   created_at: string;
@@ -48,6 +49,7 @@ export interface Stage {
   name: string;
   description: string | null;
   icon: string | null;
+  ai_system_prompt: string | null;
   order_index: number;
   status: StageStatus | null;
   progress: number | null;

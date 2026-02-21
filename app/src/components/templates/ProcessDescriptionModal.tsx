@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AiButton } from "@/components/ui/ai-button";
+import { Separator } from "@/components/ui/separator";
+import { FormField } from "@/components/ui/form-actions";
 import { MarkdownField } from "@/components/field/MarkdownField";
 import { PromptField } from "@/components/field/PromptField";
 
@@ -18,25 +20,29 @@ interface ProcessDescriptionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   description: string;
-  onSave: (description: string) => void;
+  systemPrompt?: string;
+  onSave: (description: string, systemPrompt?: string) => void;
 }
 
 export function ProcessDescriptionModal({
   open,
   onOpenChange,
   description,
+  systemPrompt = "",
   onSave,
 }: ProcessDescriptionModalProps) {
   const [localDesc, setLocalDesc] = useState(description);
+  const [localSystemPrompt, setLocalSystemPrompt] = useState(systemPrompt);
   const [aiPrompt, setAiPrompt] = useState("");
   const [activeAi, setActiveAi] = useState<"generate" | "optimize" | null>(null);
 
   useEffect(() => {
     if (open) {
       setLocalDesc(description);
+      setLocalSystemPrompt(systemPrompt);
       setAiPrompt("");
     }
-  }, [open, description]);
+  }, [open, description, systemPrompt]);
 
   const hasDescription = localDesc.trim().length > 0;
 
@@ -85,7 +91,7 @@ export function ProcessDescriptionModal({
   );
 
   const handleSave = () => {
-    onSave(localDesc);
+    onSave(localDesc, localSystemPrompt || undefined);
     onOpenChange(false);
   };
 
@@ -93,7 +99,7 @@ export function ProcessDescriptionModal({
     onOpenChange(false);
   };
 
-  const hasChanges = localDesc !== description;
+  const hasChanges = localDesc !== description || localSystemPrompt !== systemPrompt;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -120,6 +126,22 @@ export function ProcessDescriptionModal({
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
           />
+
+          <Separator />
+
+          <FormField label="System-Prompt Ausführung (Prozess-Level)" htmlFor="process-system-prompt">
+            <p className="text-[11px] text-muted-foreground">
+              Wird bei der Ausführung dieses Prozesses als System-Prompt verwendet. Wird beim Erstellen eines Prozesses aus diesem Template kopiert. Leer = globaler Fallback.
+            </p>
+            <PromptField
+              id="process-system-prompt"
+              variant="execution"
+              value={localSystemPrompt}
+              rows={3}
+              placeholder="z.B. Du bist ein erfahrener Requirements Engineer..."
+              onChange={(e) => setLocalSystemPrompt(e.target.value)}
+            />
+          </FormField>
         </div>
 
         {/* Footer: AI buttons left, actions right */}
