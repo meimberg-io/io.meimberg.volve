@@ -346,7 +346,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
             isSkipped
               ? "bg-muted/30"
               : isClosed
-                ? "bg-accent/8"
+                ? "bg-emerald-500/8"
                 : streaming
                   ? "bg-primary/8"
                   : isEmpty
@@ -362,7 +362,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                   isSkipped
                     ? "bg-muted-foreground/50"
                     : isClosed
-                      ? "bg-accent"
+                      ? "bg-emerald-500"
                       : streaming
                         ? "bg-primary animate-pulse"
                         : isEmpty
@@ -530,7 +530,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
               variant="ghost"
               size="sm"
               onClick={handleSkip}
-              className="gap-1.5 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-muted/50"
+              className="gap-1.5 text-xs text-muted-foreground hover:!bg-red-500/10 hover:!text-red-400"
             >
               <MinusCircle className="h-3.5 w-3.5" />
               Nicht relevant
@@ -540,7 +540,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleClose}
-                className="gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                className="gap-1.5 text-xs text-emerald-400 hover:!bg-emerald-500 hover:!text-black"
               >
                 <Check className="h-3.5 w-3.5" />
                 Abschließen

@@ -55,7 +55,7 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
           </p>
         )}
         <div className="flex items-center gap-3">
-          <Progress value={stage.progress ?? 0} className="h-1.5 flex-1" />
+          <Progress value={stage.progress ?? 0} className="h-1.5 flex-1" indicatorClassName={(stage.progress ?? 0) >= 100 ? "bg-emerald-500" : undefined} />
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             {Math.round(stage.progress ?? 0)}%
           </span>
