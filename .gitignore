@@ -1,2 +1,2 @@
-# Cursor IDE (may contain secrets like MCP tokens)
+# Cursor IDE (contains secrets)
 .cursor/mcp.json
