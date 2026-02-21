@@ -152,7 +152,11 @@ jobs:
 
             if [ "$already" = "0" ]; then
               echo "Applying: ${filename}"
-              docker exec -i supabase-db psql -U postgres -d postgres < "$f"
+              docker exec -i supabase-db psql -U postgres -d postgres --set ON_ERROR_STOP=on < "$f"
+              if [ $? -ne 0 ]; then
+                echo "ERROR: Migration ${filename} failed!"
+                exit 1
+              fi
               docker exec supabase-db psql -U postgres -d postgres -c \
                 "INSERT INTO _migrations (filename) VALUES ('${filename}');"
               applied=$((applied + 1))
