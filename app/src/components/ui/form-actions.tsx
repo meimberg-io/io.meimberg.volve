@@ -13,7 +13,7 @@ export function FormField({
   className,
   actions,
 }: {
-  label: string;
+  label: ReactNode;
   htmlFor?: string;
   children: ReactNode;
   className?: string;

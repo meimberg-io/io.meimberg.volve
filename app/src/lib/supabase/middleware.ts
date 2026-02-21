@@ -48,10 +48,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If authenticated and trying to access login, redirect to dashboard
+  // If authenticated and trying to access login, redirect to projects
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/projects";
     return NextResponse.redirect(url);
   }
 

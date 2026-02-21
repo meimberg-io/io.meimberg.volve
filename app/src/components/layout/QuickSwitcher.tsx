@@ -78,7 +78,7 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
       id: p.id,
       label: p.name,
       description: p.status === "seeding" ? "Seeding" : "Aktiv",
-      href: p.status === "seeding" ? `/process/${p.id}/seed` : `/process/${p.id}`,
+      href: p.status === "seeding" ? `/project/${p.id}/seed` : `/project/${p.id}`,
       icon: FileText,
     }));
 
@@ -90,7 +90,7 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
         id: s.id,
         label: s.name ?? "Stage",
         description: s.process?.name ?? "",
-        href: `/process/${s.process_id}/stage/${s.id}`,
+        href: `/project/${s.process_id}/stage/${s.id}`,
         icon: stageIcons[s.icon ?? "sparkles"] ?? Sparkles,
       }));
 
@@ -108,12 +108,12 @@ export function QuickSwitcher({ open, onOpenChange }: QuickSwitcherProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Prozess, Stage oder Step suchen..." />
+      <CommandInput placeholder="Projekt, Stage oder Step suchen..." />
       <CommandList>
         <CommandEmpty>Keine Ergebnisse gefunden.</CommandEmpty>
 
         {results.processes.length > 0 && (
-          <CommandGroup heading="Prozesse">
+          <CommandGroup heading="Projekte">
             {results.processes.map((result) => (
               <CommandItem
                 key={result.id}

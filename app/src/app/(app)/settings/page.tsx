@@ -152,7 +152,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="ai" className="w-full">
         <TabsList>
           <TabsTrigger value="ai" className="text-xs cursor-pointer">KI-Konfiguration</TabsTrigger>
-          <TabsTrigger value="prompts" className="text-xs cursor-pointer">Template-Prompts</TabsTrigger>
+          <TabsTrigger value="prompts" className="text-xs cursor-pointer">Prozess-Prompts</TabsTrigger>
           <TabsTrigger value="display" className="text-xs cursor-pointer">Darstellung</TabsTrigger>
         </TabsList>
 
@@ -161,7 +161,7 @@ export default function SettingsPage() {
           {/* Model + API Keys */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Modell &amp; API-Schlüssel</CardTitle>
+              <CardTitle className="text-sm">KI-Modell &amp; API-Schlüssel</CardTitle>
               <CardDescription className="text-xs">
                 KI-Modell und Zugangsdaten. Wenn kein Schlüssel eingetragen ist, wird die Umgebungsvariable verwendet.
               </CardDescription>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                     actions={<SavedIndicator show={!!saved["ai_system_modelling"]} />}
                   >
                     <p className="text-[11px] text-muted-foreground">
-                      Rolle der KI beim Erstellen und Bearbeiten von Templates (Stages, Steps, Beschreibungen).
+                      Rolle der KI beim Erstellen und Bearbeiten von Prozessen (Stages, Steps, Beschreibungen).
                     </p>
                     <PromptField
                       id="ai_system_modelling"
@@ -323,16 +323,16 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* ==================== Template-Prompts ==================== */}
+        {/* ==================== Prozess-Prompts ==================== */}
         <TabsContent value="prompts" className="space-y-5 mt-4">
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-400" />
-                <CardTitle className="text-sm">Template-KI-Prompts</CardTitle>
+                <CardTitle className="text-sm">Prozess-KI-Prompts</CardTitle>
               </div>
               <CardDescription className="text-xs">
-                Prompt-Templates für die KI-gestützte Template-Generierung. Verwende Platzhalter in doppelten geschweiften Klammern.
+                Prompt-Templates für die KI-gestützte Prozess-Generierung. Verwende Platzhalter in doppelten geschweiften Klammern.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">

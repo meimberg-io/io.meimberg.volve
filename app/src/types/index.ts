@@ -4,7 +4,7 @@
 
 // --- Enums ---
 
-export type ProcessStatus = "template" | "seeding" | "active" | "completed" | "archived";
+export type ProcessStatus = "process" | "seeding" | "active" | "completed" | "archived";
 
 export type StageStatus = "locked" | "open" | "in_progress" | "completed";
 
@@ -31,8 +31,8 @@ export interface Process {
   id: string;
   user_id: string | null;
   name: string;
-  model_id: string | null;
-  is_template: boolean;
+  source_process_id: string | null;
+  is_process: boolean;
   description: string | null;
   header_image: string | null;
   metadata: Record<string, unknown> | null;

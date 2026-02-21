@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 import type { Stage } from "@/types";
 
 interface StageOverviewProps {
-  processId: string;
+  projectId: string;
   stages: Stage[];
-  processProgress: number;
+  projectProgress: number;
 }
 
 const stageIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -33,9 +33,9 @@ const stageIcons: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 export function StageOverview({
-  processId,
+  projectId,
   stages,
-  processProgress,
+  projectProgress,
 }: StageOverviewProps) {
   return (
     <div className="space-y-6">
@@ -44,13 +44,13 @@ export function StageOverview({
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Gesamtfortschritt</h2>
           <span className="text-sm text-muted-foreground">
-            {Math.round(processProgress)}%
+            {Math.round(projectProgress)}%
           </span>
         </div>
         <Progress
-          value={processProgress}
+          value={projectProgress}
           className="h-2"
-          indicatorClassName={processProgress >= 100 ? "bg-emerald-500" : undefined}
+          indicatorClassName={projectProgress >= 100 ? "bg-emerald-500" : undefined}
         />
       </div>
 
@@ -65,7 +65,7 @@ export function StageOverview({
           return (
             <Link
               key={stage.id}
-              href={`/process/${processId}/stage/${stage.id}`}
+              href={`/project/${projectId}/stage/${stage.id}`}
               className={cn(
                 "process-card group flex flex-col gap-3",
                 isCompleted && "border-emerald-500/20",

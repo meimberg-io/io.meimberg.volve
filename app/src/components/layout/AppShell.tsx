@@ -42,8 +42,8 @@ interface AppShellProps {
 }
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Templates", icon: Blocks, path: "/templates" },
+  { label: "Projekte", icon: LayoutDashboard, path: "/projects" },
+  { label: "Prozesse", icon: Blocks, path: "/processes" },
   { label: "Snippets", icon: NotebookText, path: "/snippets" },
 ];
 
@@ -80,7 +80,7 @@ export function AppShell({ children, user }: AppShellProps) {
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Left: Logo & Nav */}
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2.5 hover-lift">
+            <Link href="/projects" className="flex items-center gap-2.5 hover-lift">
               <Image
                 src="/wolf.png?v=2"
                 alt="Volve"
