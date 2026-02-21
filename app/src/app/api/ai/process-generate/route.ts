@@ -21,7 +21,7 @@ const stepsSchema = z.object({
       fields: z.array(
         z.object({
           name: z.string(),
-          type: z.enum(["text", "long_text", "file", "file_list", "task"]),
+          type: z.enum(["text", "long_text", "file", "file_list", "task", "task_list"]),
           description: z.string(),
           ai_prompt: z.string(),
         })

@@ -489,7 +489,7 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
 
         {/* Content Area */}
         {!isSkipped && (
-          <div className="mt-2">
+          <div className={cn("mt-2", fieldType !== "text" && "w-full min-w-0 max-w-full")}>
             {fieldType === "text" ? (
               <Input
                 value={content}
@@ -502,24 +502,35 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                 )}
                 maxLength={500}
               />
-            ) : isClosed ? (
-              <MarkdownEditor
-                content={content}
-                onChange={() => {}}
-                disabled={true}
-              />
             ) : (
-              <MarkdownEditor
-                content={content}
-                onChange={handleContentChange}
-                placeholder={
-                  isEmpty
-                    ? "Noch kein Inhalt -- nutze 'Generieren', um zu starten."
-                    : "Schreibe hier..."
-                }
-                disabled={isClosed}
-                autoScroll={streaming}
-              />
+              <div
+                className="overflow-y-auto overflow-x-hidden rounded-md border border-border/50 bg-secondary/30 p-3 [scrollbar-color:var(--color-border)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
+                style={{ maxHeight: "min(560px, 70vh)" }}
+              >
+                {isClosed ? (
+                  <MarkdownEditor
+                    content={content}
+                    onChange={() => {}}
+                    disabled={true}
+                    minHeight={120}
+                    maxHeight={4000}
+                  />
+                ) : (
+                  <MarkdownEditor
+                    content={content}
+                    onChange={handleContentChange}
+                    placeholder={
+                      isEmpty
+                        ? "Noch kein Inhalt — nutze „Generieren“, um zu starten. Markdown wird unterstützt."
+                        : "Schreibe hier… (Markdown möglich)"
+                    }
+                    disabled={isClosed}
+                    autoScroll={streaming}
+                    minHeight={120}
+                    maxHeight={4000}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}

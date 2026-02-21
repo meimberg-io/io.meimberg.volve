@@ -762,6 +762,26 @@ export async function copyProcess(
         if (!opts.is_process && field.type === "task") {
           await supabase.from("tasks").insert({ field_id: newField.id });
         }
+        if (!opts.is_process && field.type === "task_list") {
+          const { data: items } = await supabase
+            .from("task_list_items")
+            .select("order_index, title, notes, type, status, result")
+            .eq("field_id", field.id)
+            .order("order_index");
+          if (items?.length) {
+            await supabase.from("task_list_items").insert(
+              items.map((item) => ({
+                field_id: newField.id,
+                order_index: item.order_index,
+                title: item.title,
+                notes: item.notes,
+                type: item.type,
+                status: item.status,
+                result: item.result,
+              }))
+            );
+          }
+        }
       }
     }
   }

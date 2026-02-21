@@ -9,11 +9,19 @@
 
 BEGIN;
 
--- 1. Remove false _migrations entries so they won't block a re-run
-DELETE FROM _migrations WHERE filename IN (
-  '00012_rename_template_to_model.sql',
-  '00013_rename_model_to_process.sql'
-);
+-- 1. Remove false _migrations entries (only when using custom migration runner; table does not exist when using Supabase CLI locally)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = '_migrations'
+  ) THEN
+    DELETE FROM _migrations WHERE filename IN (
+      '00012_rename_template_to_model.sql',
+      '00013_rename_model_to_process.sql'
+    );
+  END IF;
+END $$;
 
 -- 2. Idempotent column renames (detect current state)
 DO $$
@@ -45,13 +53,11 @@ BEGIN
   END IF;
 END $$;
 
--- 3. Fix check constraint to accept 'process' instead of 'template'/'model'
+-- 3. Drop old check constraint and normalize status before adding new constraint
 ALTER TABLE processes DROP CONSTRAINT IF EXISTS processes_status_check;
+UPDATE processes SET status = 'process' WHERE status IN ('template', 'model');
 ALTER TABLE processes ADD CONSTRAINT processes_status_check
   CHECK (status IN ('process', 'seeding', 'active', 'completed', 'archived'));
-
--- 4. Update status values (handle both old states)
-UPDATE processes SET status = 'process' WHERE status IN ('template', 'model');
 
 -- 5. Fix indexes
 DROP INDEX IF EXISTS idx_processes_is_template;
@@ -136,8 +142,16 @@ CREATE POLICY "Manage tasks" ON tasks
     WHERE p.is_process = true OR p.user_id = auth.uid()
   ));
 
--- 7. Re-insert _migrations entries for 00012/00013 so they won't re-run
-INSERT INTO _migrations (filename) VALUES ('00012_rename_template_to_model.sql') ON CONFLICT DO NOTHING;
-INSERT INTO _migrations (filename) VALUES ('00013_rename_model_to_process.sql') ON CONFLICT DO NOTHING;
+-- 7. Re-insert _migrations entries for 00012/00013 (only when custom migration runner is used)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = '_migrations'
+  ) THEN
+    INSERT INTO _migrations (filename) VALUES ('00012_rename_template_to_model.sql') ON CONFLICT DO NOTHING;
+    INSERT INTO _migrations (filename) VALUES ('00013_rename_model_to_process.sql') ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
 
 COMMIT;

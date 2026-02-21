@@ -61,6 +61,7 @@ const fieldTypeColors: Record<FieldType, string> = {
   file: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   file_list: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   task: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  task_list: "bg-violet-500/10 text-violet-400 border-violet-500/20",
 };
 
 interface PipelineViewProps {
@@ -676,7 +677,7 @@ export function PipelineView({
                       variant="outline"
                       className={`ml-auto h-4 px-1.5 text-[9px] font-normal ${fieldTypeColors[activeField.type]}`}
                     >
-                      {activeField.type}
+                      {activeField.type === "task_list" ? "Task Liste" : activeField.type}
                     </Badge>
                   </div>
                 </div>

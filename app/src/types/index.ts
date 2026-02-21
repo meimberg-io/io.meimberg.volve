@@ -12,7 +12,7 @@ export type StepStatus = "open" | "in_progress" | "completed";
 
 export type FieldStatus = "empty" | "open" | "closed" | "skipped";
 
-export type FieldType = "text" | "long_text" | "file" | "file_list" | "task";
+export type FieldType = "text" | "long_text" | "file" | "file_list" | "task" | "task_list";
 
 export type TaskStatus =
   | "planned"
@@ -22,6 +22,15 @@ export type TaskStatus =
   | "accepted";
 
 export type TaskType = "self" | "delegated" | "agent";
+
+export type TaskListItemStatus =
+  | "not_started"
+  | "planned"
+  | "in_progress"
+  | "done"
+  | "wont_do";
+
+export type TaskListItemType = "self" | "delegated";
 
 export type AIActionSource = "generate" | "generate_advanced" | "optimize" | "manual";
 
@@ -109,6 +118,19 @@ export interface Task {
   assignee: string | null;
   type: TaskType;
   status: TaskStatus;
+  result: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskListItem {
+  id: string;
+  field_id: string;
+  order_index: number;
+  title: string;
+  notes: string;
+  type: TaskListItemType;
+  status: TaskListItemStatus;
   result: string | null;
   created_at: string;
   updated_at: string;

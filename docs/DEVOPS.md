@@ -224,9 +224,40 @@ Tracking: A `_migrations` table in PostgreSQL records which files have been appl
 
 ### Applying migrations locally
 
+When using the **Docker stack** (`supabase/docker`), apply all migrations in order (the deploy workflow uses a custom `_migrations` table; the migration files do not depend on it for the schema changes). To reset and re-apply everything:
+
 ```bash
-docker exec -i supabase-db psql -U postgres -d postgres < supabase/migrations/00003_next_change.sql
+# From repo root: run each migration in order (e.g. after a fresh DB)
+for f in supabase/migrations/*.sql; do
+  echo "Applying $(basename "$f")"
+  docker exec -i supabase-db psql -U postgres -d postgres --set ON_ERROR_STOP=on < "$f"
+done
 ```
+
+When using **Supabase CLI** (`supabase start`), migrations run automatically on `supabase db reset`; no `_migrations` table is used. Migration `00014_fix_rename_columns.sql` is written to work in both setups (it only touches `_migrations` if that table exists).
+
+### Checking migration state locally
+
+If processes/projects appear empty, the DB may still have old column names (`is_template`/`template_id` instead of `is_process`/`source_process_id`). Check with:
+
+```bash
+docker exec supabase-db psql -U postgres -d postgres -c "
+  SELECT column_name FROM information_schema.columns
+  WHERE table_name = 'processes' AND column_name IN ('is_process','is_template','is_model');
+"
+```
+
+You should see `is_process`. If you see `is_template` or `is_model`, re-run migrations (or run `00014_fix_rename_columns.sql` and then `00015_task_list_field_type.sql`). Then check row counts:
+
+```bash
+docker exec supabase-db psql -U postgres -d postgres -c "
+  SELECT 'processes' AS tbl, COUNT(*) FROM processes
+  UNION ALL SELECT 'process_definitions', COUNT(*) FROM processes WHERE is_process = true
+  UNION ALL SELECT 'projects', COUNT(*) FROM processes WHERE is_process = false AND status != 'archived';
+"
+```
+
+(Use `is_template` instead of `is_process` in the last query if the rename has not been applied yet.)
 
 ## Local Development
 

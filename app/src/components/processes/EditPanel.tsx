@@ -54,6 +54,7 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: "file", label: "File" },
   { value: "file_list", label: "File List" },
   { value: "task", label: "Task" },
+  { value: "task_list", label: "Task Liste" },
 ];
 
 interface EditPanelProps {

@@ -18,6 +18,8 @@ Use these first — they carry all default styling, so **no className overrides*
 - `components/field/MarkdownEditor.tsx` — TipTap markdown editor with shared min/max height, editor class, and scrollbar styling.
 - `components/field/MarkdownField.tsx` — standard markdown field wrapper (border, focus ring, scroll behavior).
 - `components/field/PromptField.tsx` — amber prompt textarea style used in AI flows.
+- `components/field/TaskFieldCard.tsx` — single-task field card (description, assignee, status, result).
+- `components/field/TaskListFieldCard.tsx` — task-list field card (multiple tasks per field: title, notes, type self/delegated, status, result with AI polish). Renders status indicator (red/yellow/green) and "Taskliste generieren" when `ai_prompt` is set.
 - `components/ui/ai-button.tsx` — consistent AI action button style.
 
 ## Reuse Rules

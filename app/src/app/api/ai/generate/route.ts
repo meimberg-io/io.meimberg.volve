@@ -1,6 +1,18 @@
-import { streamText } from "ai";
+import { streamText, generateObject } from "ai";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getModel } from "@/lib/ai/model";
+
+const taskListSchema = z.object({
+  tasks: z.array(
+    z.object({
+      title: z.string(),
+      notes: z.string(),
+      type: z.enum(["self", "delegated"]),
+      status: z.enum(["not_started", "planned", "in_progress", "done", "wont_do"]),
+    })
+  ),
+});
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -192,7 +204,7 @@ export async function POST(request: Request) {
 
   let userPrompt: string;
 
-  if (optimize && optimize_instruction) {
+  if (optimize && optimize_instruction && field.type !== "task_list") {
     systemPrompt += `\n\nDer Nutzer möchte einen bestehenden Inhalt optimieren. Behalte die Grundstruktur bei, verbessere aber gemäß der Anweisung.`;
     userPrompt = `## Aktueller Inhalt\n${field.content}\n\n## Optimierungsanweisung\n${optimize_instruction}`;
 
@@ -222,6 +234,39 @@ export async function POST(request: Request) {
 
   try {
     const model = await getModel();
+
+    if (field.type === "task_list") {
+      const jsonInstruction =
+        "Antworte ausschließlich mit gültigem JSON. Kein Markdown, kein Fließtext. Das JSON muss ein Objekt mit genau einem Array \"tasks\" sein. Jedes Element hat: title (string), notes (string), type (\"self\" oder \"delegated\"), status (\"not_started\", \"planned\", \"in_progress\", \"done\" oder \"wont_do\").";
+      const result = await generateObject({
+        model,
+        system: `${systemPrompt}\n\n${jsonInstruction}`,
+        prompt: userPrompt,
+        schema: taskListSchema,
+      });
+
+      await supabase.from("task_list_items").delete().eq("field_id", field.id);
+      const tasks = result.object.tasks ?? [];
+      if (tasks.length > 0) {
+        await supabase.from("task_list_items").insert(
+          tasks.map((t, i) => ({
+            field_id: field.id,
+            order_index: i,
+            title: t.title || "",
+            notes: t.notes || "",
+            type: t.type || "self",
+            status: t.status || "not_started",
+          }))
+        );
+      }
+      await supabase
+        .from("fields")
+        .update({ status: "open" })
+        .eq("id", field.id);
+
+      return Response.json({ ok: true, count: tasks.length });
+    }
+
     const result = streamText({
       model,
       system: systemPrompt,
