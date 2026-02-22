@@ -10,6 +10,7 @@ import {
   Loader2,
   History,
   MinusCircle,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,11 @@ import { GenerateAdvancedModal } from "@/components/ai/GenerateAdvancedModal";
 import { OptimizeModal } from "@/components/ai/OptimizeModal";
 import { VersionHistoryPanel } from "./VersionHistoryPanel";
 import { DependencyHint } from "./DependencyHint";
+import {
+  fieldContentToMarkdown,
+  sanitizeFilename,
+  triggerMarkdownDownload,
+} from "@/lib/markdown-export";
 import type { Field } from "@/types";
 
 interface FieldCardProps {
@@ -530,6 +536,25 @@ export function FieldCard({ field, processId, onUpdate }: FieldCardProps) {
                     maxHeight={4000}
                   />
                 )}
+              </div>
+            )}
+            {content.trim() && (
+              <div className="flex justify-end mt-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const md = `### ${field.name}\n\n${fieldContentToMarkdown(content, fieldType)}`;
+                        triggerMarkdownDownload(md, `${sanitizeFilename(field.name)}.md`);
+                      }}
+                      className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    >
+                      <Download className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">Als Markdown herunterladen</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>

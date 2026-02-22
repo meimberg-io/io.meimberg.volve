@@ -137,6 +137,7 @@ export function AddProcessDialog({
                   <SelectItem value="file_list">File List</SelectItem>
                   <SelectItem value="task">Task</SelectItem>
                   <SelectItem value="task_list">Task Liste</SelectItem>
+                  <SelectItem value="dossier">Dossier</SelectItem>
                 </SelectContent>
               </Select>
             </FormField>

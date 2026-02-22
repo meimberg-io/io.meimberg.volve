@@ -46,7 +46,9 @@ import {
   type ProcessWithStages,
 } from "@/lib/data/processes";
 import { GenerateDescriptionModal } from "./GenerateDescriptionModal";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Stage, Step, Field, FieldType } from "@/types";
+import type { ProcessWithStages as FullProcessWithStages } from "@/lib/data/processes";
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: "text", label: "Text" },
@@ -55,6 +57,7 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: "file_list", label: "File List" },
   { value: "task", label: "Task" },
   { value: "task_list", label: "Task Liste" },
+  { value: "dossier", label: "Dossier" },
 ];
 
 interface EditPanelProps {
@@ -487,15 +490,20 @@ function FieldForm({
   const [dependencies, setDependencies] = useState<string[]>(
     field.dependencies ?? []
   );
+  const [dossierFieldIds, setDossierFieldIds] = useState<string[]>(
+    field.dossier_field_ids ?? []
+  );
   const [modalMode, setModalMode] = useState<"generate_field_prompt" | "optimize_field_prompt" | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const isDossier = type === "dossier";
 
   const save = useCallback(
     (
       data: Partial<
         Pick<
           Field,
-          "name" | "description" | "type" | "ai_prompt" | "dependencies"
+          "name" | "description" | "type" | "ai_prompt" | "dependencies" | "dossier_field_ids"
         >
       >
     ) => {
@@ -576,90 +584,104 @@ function FieldForm({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField
-        label="AI Prompt"
-        htmlFor="field-ai-prompt"
-        actions={
-          <div className="flex gap-1.5">
-            <AiButton
-              onClick={() => setModalMode("generate_field_prompt")}
-              disabled={!processDescription}
-              title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
-            >
-              Generieren
-            </AiButton>
-            <AiButton
-              onClick={() => setModalMode("optimize_field_prompt")}
-              disabled={!processDescription || !hasPrompt}
-              title={!hasPrompt ? "Erst einen Prompt erstellen" : !processDescription ? "Prozessbeschreibung erforderlich" : undefined}
-            >
-              Optimieren
-            </AiButton>
-          </div>
-        }
-      >
-        <PromptField
-          id="field-ai-prompt"
-          variant="execution"
-          value={aiPrompt}
-          rows={4}
-          placeholder="Anweisungen für die KI-Generierung..."
-          onChange={(e) => {
-            setAiPrompt(e.target.value);
-            save({ ai_prompt: e.target.value || null });
+      {isDossier ? (
+        <DossierFieldSelector
+          model={model}
+          fieldId={field.id}
+          selectedIds={dossierFieldIds}
+          onChange={(ids) => {
+            setDossierFieldIds(ids);
+            save({ dossier_field_ids: ids.length > 0 ? ids : null });
           }}
         />
-      </FormField>
-
-      {/* Dependencies */}
-      <FormField label="Abhängigkeiten">
-
-        {/* Selected dependencies */}
-        {dependencies.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {dependencies.map((depId) => {
-              const depField = allFields.find((f) => f.id === depId);
-              return (
-                <Badge
-                  key={depId}
-                  variant="secondary"
-                  className="cursor-pointer gap-1 pr-1.5 text-[10px]"
-                  onClick={() => removeDependency(depId)}
+      ) : (
+        <>
+          <FormField
+            label="AI Prompt"
+            htmlFor="field-ai-prompt"
+            actions={
+              <div className="flex gap-1.5">
+                <AiButton
+                  onClick={() => setModalMode("generate_field_prompt")}
+                  disabled={!processDescription}
+                  title={!processDescription ? "Prozessbeschreibung erforderlich" : undefined}
                 >
-                  {depField?.name ?? depId}
-                  <span className="text-muted-foreground">&times;</span>
-                </Badge>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Available fields to add */}
-        {otherFields.length > 0 && (
-          <Select
-            value=""
-            onValueChange={(value) => {
-              if (value) toggleDependency(value);
-            }}
+                  Generieren
+                </AiButton>
+                <AiButton
+                  onClick={() => setModalMode("optimize_field_prompt")}
+                  disabled={!processDescription || !hasPrompt}
+                  title={!hasPrompt ? "Erst einen Prompt erstellen" : !processDescription ? "Prozessbeschreibung erforderlich" : undefined}
+                >
+                  Optimieren
+                </AiButton>
+              </div>
+            }
           >
-            <SelectTrigger className="text-xs">
-              <SelectValue placeholder="Abhängigkeit hinzufügen..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Verfügbare Fields</SelectLabel>
-                {otherFields
-                  .filter((f) => !dependencies.includes(f.id))
-                  .map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        )}
-      </FormField>
+            <PromptField
+              id="field-ai-prompt"
+              variant="execution"
+              value={aiPrompt}
+              rows={4}
+              placeholder="Anweisungen für die KI-Generierung..."
+              onChange={(e) => {
+                setAiPrompt(e.target.value);
+                save({ ai_prompt: e.target.value || null });
+              }}
+            />
+          </FormField>
+
+          {/* Dependencies */}
+          <FormField label="Abhängigkeiten">
+
+            {/* Selected dependencies */}
+            {dependencies.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {dependencies.map((depId) => {
+                  const depField = allFields.find((f) => f.id === depId);
+                  return (
+                    <Badge
+                      key={depId}
+                      variant="secondary"
+                      className="cursor-pointer gap-1 pr-1.5 text-[10px]"
+                      onClick={() => removeDependency(depId)}
+                    >
+                      {depField?.name ?? depId}
+                      <span className="text-muted-foreground">&times;</span>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Available fields to add */}
+            {otherFields.length > 0 && (
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (value) toggleDependency(value);
+                }}
+              >
+                <SelectTrigger className="text-xs">
+                  <SelectValue placeholder="Abhängigkeit hinzufügen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Verfügbare Fields</SelectLabel>
+                    {otherFields
+                      .filter((f) => !dependencies.includes(f.id))
+                      .map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+        </>
+      )}
 
       {modalMode && (
         <GenerateDescriptionModal
@@ -694,5 +716,71 @@ function FieldForm({
         />
       )}
     </div>
+  );
+}
+
+// =============================================
+// Dossier Reference Field Selector
+// =============================================
+
+function DossierFieldSelector({
+  model,
+  fieldId,
+  selectedIds,
+  onChange,
+}: {
+  model: FullProcessWithStages | null;
+  fieldId: string;
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  if (!model) return null;
+
+  const renderableTypes = new Set(["text", "long_text", "task_list", "task"]);
+
+  const toggleField = (id: string) => {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter((x) => x !== id)
+      : [...selectedIds, id];
+    onChange(next);
+  };
+
+  return (
+    <FormField label="Referenzfelder">
+      <div className="max-h-[320px] space-y-3 overflow-y-auto rounded-md border border-border/50 bg-secondary/30 p-3 [scrollbar-color:var(--color-border)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+        {model.stages.map((stage) => (
+          <div key={stage.id}>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {stage.name}
+            </p>
+            {stage.steps.map((step) => {
+              const fields = step.fields?.filter(
+                (f) => f.id !== fieldId && renderableTypes.has(f.type)
+              );
+              if (!fields?.length) return null;
+              return (
+                <div key={step.id} className="mb-2 ml-2">
+                  <p className="mb-0.5 text-[10px] text-muted-foreground">{step.name}</p>
+                  <div className="space-y-1 ml-2">
+                    {fields.map((f) => (
+                      <label key={f.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                        <Checkbox
+                          checked={selectedIds.includes(f.id)}
+                          onCheckedChange={() => toggleField(f.id)}
+                        />
+                        <span>{f.name}</span>
+                        <Badge variant="secondary" className="ml-auto h-4 px-1.5 text-[9px] font-normal">
+                          {f.type === "task_list" ? "Task Liste" : f.type}
+                        </Badge>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </FormField>
   );
 }

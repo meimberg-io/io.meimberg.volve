@@ -28,6 +28,7 @@ import {
   Plus,
   User,
   Share2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,11 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { DependencyHint } from "./DependencyHint";
+import {
+  taskListToMarkdown,
+  sanitizeFilename,
+  triggerMarkdownDownload,
+} from "@/lib/markdown-export";
 import type {
   Field,
   TaskListItem,
@@ -683,6 +689,26 @@ export function TaskListFieldCard({
             <Plus className="h-3.5 w-3.5" />
             Task hinzufügen
           </Button>
+        )}
+
+        {items.length > 0 && (
+          <div className="flex justify-end mt-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const md = `### ${field.name}\n\n${taskListToMarkdown(items)}`;
+                    triggerMarkdownDownload(md, `${sanitizeFilename(field.name)}.md`);
+                  }}
+                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                >
+                  <Download className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">Als Markdown herunterladen</TooltipContent>
+            </Tooltip>
+          </div>
         )}
 
         {!isClosed && allClosed && items.length > 0 && (

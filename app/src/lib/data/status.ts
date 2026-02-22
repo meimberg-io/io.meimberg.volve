@@ -15,13 +15,37 @@ export async function recalculateStatusCascade(
 
   const { data: stepFields } = await supabase
     .from("fields")
-    .select("status")
+    .select("status, type, dossier_field_ids")
     .eq("step_id", field.step_id);
 
-  const allFieldsDone =
-    stepFields?.every((f) => f.status === "closed" || f.status === "skipped") ?? false;
+  const dossierFields = (stepFields ?? []).filter(
+    (f) => f.type === "dossier" && f.dossier_field_ids?.length
+  );
+
+  let refFieldStatusMap: Record<string, string> = {};
+  if (dossierFields.length > 0) {
+    const allRefIds = [...new Set(dossierFields.flatMap((f) => f.dossier_field_ids!))];
+    const { data: refFields } = await supabase
+      .from("fields")
+      .select("id, status")
+      .in("id", allRefIds);
+    refFieldStatusMap = Object.fromEntries(
+      (refFields ?? []).map((f) => [f.id, f.status])
+    );
+  }
+
+  const isFieldDone = (f: { status: string | null; type: string; dossier_field_ids: string[] | null }) => {
+    if (f.type === "dossier" && f.dossier_field_ids?.length) {
+      return f.dossier_field_ids.every(
+        (id) => refFieldStatusMap[id] === "closed" || refFieldStatusMap[id] === "skipped"
+      );
+    }
+    return f.status === "closed" || f.status === "skipped";
+  };
+
+  const allFieldsDone = stepFields?.every(isFieldDone) ?? false;
   const anyFieldOpen =
-    stepFields?.some((f) => f.status !== "empty") ?? false;
+    stepFields?.some((f) => f.status !== "empty" || (f.type === "dossier" && f.dossier_field_ids?.length)) ?? false;
 
   const stepStatus = allFieldsDone
     ? "completed"

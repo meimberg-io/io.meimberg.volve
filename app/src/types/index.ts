@@ -12,7 +12,7 @@ export type StepStatus = "open" | "in_progress" | "completed";
 
 export type FieldStatus = "empty" | "open" | "closed" | "skipped";
 
-export type FieldType = "text" | "long_text" | "file" | "file_list" | "task" | "task_list";
+export type FieldType = "text" | "long_text" | "file" | "file_list" | "task" | "task_list" | "dossier";
 
 export type TaskStatus =
   | "planned"
@@ -86,6 +86,7 @@ export interface Field {
   ai_prompt: string | null;
   order_index: number;
   dependencies: string[] | null;
+  dossier_field_ids: string[] | null;
   content: string | null;
   status: FieldStatus | null;
   created_at: string;

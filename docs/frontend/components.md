@@ -20,6 +20,7 @@ Use these first — they carry all default styling, so **no className overrides*
 - `components/field/PromptField.tsx` — amber prompt textarea style used in AI flows.
 - `components/field/TaskFieldCard.tsx` — single-task field card (description, assignee, status, result).
 - `components/field/TaskListFieldCard.tsx` — task-list field card (multiple tasks per field: title, notes, type self/delegated, status, result with AI polish). Renders status indicator (red/yellow/green) and "Taskliste generieren" when `ai_prompt` is set.
+- `components/field/DossierFieldCard.tsx` — dossier field card (references other fields; displays completion status of referenced fields and provides a single download button to export all referenced content as a combined Markdown document with H1/H2/H3 hierarchy). No editor, no manual content.
 - `components/ui/ai-button.tsx` — consistent AI action button style.
 
 ## Reuse Rules

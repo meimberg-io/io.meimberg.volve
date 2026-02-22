@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { FieldCard } from "@/components/field/FieldCard";
 import { TaskFieldCard } from "@/components/field/TaskFieldCard";
 import { TaskListFieldCard } from "@/components/field/TaskListFieldCard";
+import { DossierFieldCard } from "@/components/field/DossierFieldCard";
 import { cn } from "@/lib/utils";
 import type { StageWithSteps } from "@/types";
 
@@ -173,6 +174,16 @@ export function StageDetail({ stage, processId, onFieldUpdate }: StageDetailProp
                     if (field.type === "task_list") {
                       return (
                         <TaskListFieldCard
+                          key={field.id}
+                          field={field}
+                          processId={processId}
+                          onUpdate={onFieldUpdate}
+                        />
+                      );
+                    }
+                    if (field.type === "dossier") {
+                      return (
+                        <DossierFieldCard
                           key={field.id}
                           field={field}
                           processId={processId}

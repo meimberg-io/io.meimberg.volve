@@ -255,7 +255,7 @@ export async function updateStep(
 export async function updateField(
   id: string,
   data: Partial<
-    Pick<Field, "name" | "description" | "type" | "ai_prompt" | "dependencies">
+    Pick<Field, "name" | "description" | "type" | "ai_prompt" | "dependencies" | "dossier_field_ids">
   >
 ): Promise<void> {
   const { error } = await supabase
